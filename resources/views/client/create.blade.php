@@ -24,7 +24,7 @@
         </div>
         <div>
             <Label>Relationship</Label>
-            <input type="text" name="realtionship" placeholder="Relationship">
+            <input type="text" name="relationship" placeholder="Relationship">
         </div><div>
             <Label>Sex</Label>
             <input type="text" name="sex" placeholder="Sex">
@@ -56,27 +56,17 @@
 
         <div>
             <Label>Municipality</Label>
-            <select name="municipality">
-                <option value="None">None</option>
-                <option value="Atok">Atok</option>
-                <option value="Bakun">Bakun</option>
-                <option value="Bokod">Bokod</option>
-                <option value="Bugias">Bugias</option>
-                <option value="Itogon">Itogon</option>
-                <option value="Trinidad">La Trinidad</option>
-                <option value="Kabayan">Kabayan</option>
-                <option value="Kapangan">Kapangan</option>
-                <option value="Mankayan">Mankayan</option>
-                <option value="Sablan">Sablan</option>
-                <option value="Tuba">Tuba</option>
-                <option value="Tublay">Tublay</option>
-                <option value="Kibungan">Kibungan</option>
+            <select name="municipality_id">
+                <option value="">Select Municipality</option>
+                @foreach($municipalities as $municipality)
+                    <option value="{{ $municipality->id }}">{{ $municipality->name }}</option>
+                @endforeach
             </select>
         </div>
         
         <div>
             <Label>Assistance Type</Label>
-            <select name="Assistance_Type">
+            <select name="assistance_type">
                 <option value="None">None</option>
                 <option value="Medical">Medical</option>
                 <option value="Burial">Burial</option>
@@ -86,10 +76,10 @@
         </div>
         <div>
             <Label>Assistance Category</Label>
-            <select name="Assistance_Category">
+            <select name="assistance_category">
                 <option value="None">None</option>
-                <option value="hospital">hospital</option>
-                <option value="Burial">Burial</option>
+                <option value="Hospital">hospital</option>
+                <option value="Purchasing Medicine">Burial</option>
                 <option value="ESA">ESA (Emergency Shelter Assistance)</option>
                 <option value="Transportation">Transportation</option>
             </select>
