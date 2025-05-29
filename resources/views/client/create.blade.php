@@ -6,7 +6,7 @@
     <title>Document</title>
 </head>
 <body>
-    <h1>Add Client</h1>
+    <h1>Patient Information</h1>
     <form method="post" action="{{ route('client.docs') }}">
         @csrf
         @method('POST')
@@ -23,9 +23,6 @@
             <input type="text" name="last_name" placeholder="Last_name">
         </div>
         <div>
-            <Label>Relationship</Label>
-            <input type="text" name="relationship" placeholder="Relationship">
-        </div><div>
             <Label>Sex</Label>
             <input type="text" name="sex" placeholder="Sex">
         </div>
@@ -34,20 +31,30 @@
             <input type="text" name="age" placeholder="Age">
         </div>
         <div>
-            <Label>4ps</Label>
-            <input type="text" name="4ps" placeholder="4ps?">
-        </div>
+            <Label>PWD</Label>
+            <select name="pwd" id="">
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
         <div>
-            <Label>Pwd</Label>
-            <input type="text" name="pwd" placeholder="Pwd?">
-        </div>
+
         <div>
+            <Label>4Ps</Label>
+            <select name="4ps" id="">
+                <option value="">Select</option>
+                <option value="yes">Yes</option>
+                <option value="no">No</option>
+            </select>
+        <div></div>
+
+        <div>    
             <Label>Address</Label>
             <input type="text" name="address" placeholder="Address">
         </div>
         <div>
             <Label>Contact Number</Label>
-            <input type="text" name="contact number" placeholder="Contact Number">
+            <input type="text" name="contact_number" placeholder="Contact Number">
         </div>
         <div>
             <Label>Valid Id</Label>
@@ -66,7 +73,7 @@
         
         <div>
             <Label>Assistance Type</Label>
-            <select name="assistance_type">
+            <select name="assistance_type" id="assistance_type">
                 <option value="None">None</option>
                 <option value="Medical">Medical</option>
                 <option value="Burial">Burial</option>
@@ -76,20 +83,70 @@
         </div>
         <div>
             <Label>Assistance Category</Label>
-            <select name="assistance_category">
-                <option value="None">None</option>
-                <option value="Hospital">hospital</option>
-                <option value="Purchasing Medicine">Burial</option>
-                <option value="ESA">ESA (Emergency Shelter Assistance)</option>
-                <option value="Transportation">Transportation</option>
+            <select name="assistance_category" id="assistance_category">
+                <option value="">None</option>
             </select>
         </div>
 
+        <h2>Client Information:</h2>
 
         <div>
-            
-            <input type="Submit" value="Add Client" class="btn btn-primary">
+            <Label>First Name</Label>
+            <input type="text" name="client_name" placeholder="Client First Name">
         </div>
+
+        <div>
+            <Label>Middle Name</Label>
+            <input type="text" name="client_middle_name" placeholder="Client Middle Name">
+        </div>
+    
+        <div>
+            <Label>Last Name</Label>
+            <input type="text" name="client_last_name" placeholder="Client Last Name">
+        </div>
+        <div>
+            <Label>Relationship</Label>
+            <input type="text" name="client_relationship" placeholder="Relationship to Patient">
+        </div>
+
+
+        <input type="Submit" value="Add" class="btn btn-primary">
+    
     </form>
+
+
+    <script>
+        const categories = {
+            Medical: [
+                { value: 'Hospital', text: 'Hospital' },
+                { value: 'Purchasing Medicine', text: 'Purchasing Medicine' }
+            ],
+            Burial: [
+                { value: 'Burial disaster/injured', text: 'Burial disaster/Injured' },
+                { value: 'Burial illness/natural death', text: 'Burial illness/Natural Death' }
+            ],
+            "ESA (Emergency Shelter Assistance)": [
+                { value:'House totally damaged', text: 'House totally damaged' },
+                { value:'House partially damaged', text: 'House partially damaged' }
+            ],
+            Transportation: [
+                { value: 'Abused', text: 'Abused' }
+            ]
+        };
+
+        document.getElementById('assistance_type').addEventListener('change', function() {
+            const type = this.value;
+            const categorySelect = document.getElementById('assistance_category');
+            categorySelect.innerHTML = '<option value="">None</option>';
+            if (categories[type]) {
+                categories[type].forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.value;
+                    option.text = cat.text;
+                    categorySelect.appendChild(option);
+                });
+            }
+        });
+    </script>
 </body>
 </html>

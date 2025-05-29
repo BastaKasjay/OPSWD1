@@ -21,20 +21,28 @@ class ClientController extends Controller
         $municipality = Municipality::find($municipalityId);
 
         return view('client.docs', [
+            //patient information
             'name' => $request->input('name'),
             'middle_name' => $request->input('middle_name'),
             'last_name' => $request->input('last_name'),
-            'relationship' => $request->input('relationship'),
             'sex' => $request->input('sex'),
             'age' => $request->input('age'),
-            '4ps' => $request->input('4ps') ? true : false,
-            'pwd' => $request->input('pwd') ? true : false,
+            'pwd' => $request->input('pwd'),
+            '_4ps' => $request->input('4ps'),
             'address' => $request->input('address'),
             'contact_number' => $request->input('contact_number'),
             'valid_id' => $request->input('valid_id'),
             'municipality' => $municipality ? $municipality ->name : 'Not Found',
             'assistance_type' => $request->input('assistance_type'),
             'assistance_category' => $request->input('assistance_category'),
+
+            //client information
+            'client_name' => $request->input('client_name'),
+            'client_middle_name' => $request->input('client_middle_name'),
+            'client_last_name' => $request->input('client_last_name'),
+            'client_relationship' => $request->input('client_relationship'),
+
+
         ]);
     }
     
