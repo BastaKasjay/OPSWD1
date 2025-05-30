@@ -16,7 +16,7 @@
         .sidebar {
             width: 180px;
             height: 100vh;
-            background-color: #81f1ad;
+            background-color:rgb(10, 90, 40);
             padding-top: 1rem;
         }
 
@@ -48,11 +48,25 @@
 </head>
 <body>
     <div class="sidebar">
-        <h5 class="text-white text-center">Dashboard</h5>
+        <h5 class="text-white text-center">ADMIN</h5>
 
         <div class="dropdown">
-            <a class>
-                Manage clients
+            <a href="{{ route('client.create') }}" class="">
+                Client Management
+            </a>
+            
+        </div>
+
+        <div class="dropdown">
+            <a href="" class="">
+                System Management
+            </a>
+            
+        </div>
+
+        <div class="dropdown">
+            <a href="" class="">
+                User Management
             </a>
             
         </div>
@@ -67,19 +81,11 @@
             </ul>
         </div>
         
-        <div class="dropdown">
-            <a class>
-                Settings
-            </a>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Feature 1</a></li>
-                <li><a class="dropdown-item" href="#">Feature 2</a></li>
-            </ul>
-        </div>
+        
 
         <form action="{{ route('logout') }}" method="POST">
             @csrf
-            <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
+            <button type="submit" class="btn btn-danger w-100 mt-3">
                 Logout
             </button>
         </form>

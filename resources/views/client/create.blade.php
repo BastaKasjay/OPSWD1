@@ -6,6 +6,13 @@
     <title>Document</title>
 </head>
 <body>
+    <form action="">
+        <button>
+            <a href="{{ route('home') }}" class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
+            ← Back to Home
+        </a>
+        </button>
+    </form>
     <h1>Patient Information</h1>
     <form method="post" action="{{ route('client.docs') }}">
         @csrf
