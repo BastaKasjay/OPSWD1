@@ -37,7 +37,8 @@
                     Provincial Social Welfare & Development
                 </p>
             </div>
-            <form>
+            <form method="POST" action="{{ route('login.submit') }}">
+                @csrf
                 <div class="space-y-6">
                     <div class="relative">
                         <input type="text" name="username" id="username" placeholder="Username"
@@ -70,6 +71,12 @@
                         class="w-full bg-gradient-to-tr from-govgreen to-govgreen/70 text-white py-3 px-4 rounded-lg hover:bg-govgreen/90 transition-all active:scale-[0.98] font-medium h-14">
                         LOG IN
                     </button>
+
+                     {{-- Display login error --}}
+                    @if($errors->has('login'))
+                    <p class="text-red-500 text-sm mt-4 text-center">{{ $errors->first('login') }}</p>
+                    @endif
+
                 </div>
             </form>
         </div>
