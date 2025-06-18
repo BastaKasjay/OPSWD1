@@ -1,159 +1,144 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <form action="">
-        <button>
-            <a href="{{ route('home') }}" class="inline-block bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300">
-            ← Back to Home
-        </a>
-        </button>
-    </form>
-    <h1>Patient Information</h1>
-    <form method="post" action="{{ route('client.docs') }}">
+@extends('layouts.app')
+
+@section('content')
+<div class="container">
+    <h2>Add Client</h2>
+    <form action="{{ route('clients.store') }}" method="POST">
         @csrf
-        @method('POST')
-        <div>
-            <Label>First Name</Label>
-            <input type="text" name="name" placeholder="Name">
+
+        <!-- Basic client info -->
+        <div class="form-group">
+            <label>First Name:</label>
+            <input type="text" name="first_name" class="form-control" required>
         </div>
-        <div>
-            <Label>Middle Name</Label>
-            <input type="text" name="middle_name" placeholder="Middle name">
+
+        <div class="form-group">
+            <label>Last Name:</label>
+            <input type="text" name="last_name" class="form-control" required>
         </div>
-        <div>
-            <Label>Last Name</Label>
-            <input type="text" name="last_name" placeholder="Last_name">
-        </div>
-        <div>
-            <Label>Sex</Label>
-            <input type="text" name="sex" placeholder="Sex">
-        </div>
-        <div>
-            <Label>Age</Label>
-            <input type="text" name="age" placeholder="Age">
-        </div>
-        <div>
-            <Label>PWD</Label>
-            <select name="pwd" id="">
-                <option value="">Select</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
+
+        <div class="form-group">
+            <label>Sex:</label>
+            <select name="sex" class="form-control" required>
+                <option value="">Select Sex</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
             </select>
-        <div>
-
-        <div>
-            <Label>4Ps</Label>
-            <select name="4ps" id="">
-                <option value="">Select</option>
-                <option value="yes">Yes</option>
-                <option value="no">No</option>
-            </select>
-        <div></div>
-
-        <div>    
-            <Label>Address</Label>
-            <input type="text" name="address" placeholder="Address">
-        </div>
-        <div>
-            <Label>Contact Number</Label>
-            <input type="text" name="contact_number" placeholder="Contact Number">
-        </div>
-        <div>
-            <Label>Valid Id</Label>
-            <input type="text" name="valid id" placeholder="Valid Id">
         </div>
 
-        <div>
-            <Label>Municipality</Label>
-            <select name="municipality_id">
+        <div class="form-group">
+            <label>Age:</label>
+            <input type="number" name="age" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label>Municipality:</label>
+            <select name="municipality_id" class="form-control" required>
                 <option value="">Select Municipality</option>
                 @foreach($municipalities as $municipality)
                     <option value="{{ $municipality->id }}">{{ $municipality->name }}</option>
                 @endforeach
             </select>
         </div>
-        
-        <div>
-            <Label>Assistance Type</Label>
-            <select name="assistance_type" id="assistance_type">
-                <option value="None">None</option>
-                <option value="Medical">Medical</option>
-                <option value="Burial">Burial</option>
-                <option value="ESA (Emergency Shelter Assistance)">ESA (Emergency Shelter Assistance)</option>
-                <option value="Transportation">Transportation</option>
+
+        <div class="form-group">
+            <label>Address:</label>
+            <input type="text" name="address" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label>Contact Number:</label>
+            <input type="text" name="contact_number" class="form-control" required>
+        </div>
+
+        <div class="form-group">
+            <label>Vulnerability Sectors:</label>
+            @foreach($vulnerabilitySectors as $sector)
+                <div class="form-check">
+                    <input type="checkbox" name="vulnerability_sectors[]" value="{{ $sector->id }}" class="form-check-input">
+                    <label class="form-check-label">{{ $sector->name }}</label>
+                </div>
+            @endforeach
+        </div>
+
+        <hr>
+
+        <!-- Assistance Type -->
+        <div class="form-group">
+            <label>Assistance Type:</label>
+            <select name="assistance_type_id" id="assistance_type" class="form-control" required>
+                <option value="">Select Assistance Type</option>
+                @foreach($assistanceTypes as $type)
+                    <option value="{{ $type->id }}">{{ $type->type_name }}</option>
+                @endforeach
             </select>
         </div>
-        <div>
-            <Label>Assistance Category</Label>
-            <select name="assistance_category" id="assistance_category">
-                <option value="">None</option>
-            </select>
+
+        <!-- Categories Placeholder -->
+        <div class="form-group">
+            <h5>Assistance Categories:</h5>
+            <div id="categories_section">
+                <p>Please select an assistance type to view categories.</p>
+            </div>
         </div>
 
-        <h2>Client Information:</h2>
-
-        <div>
-            <Label>First Name</Label>
-            <input type="text" name="client_name" placeholder="Client First Name">
-        </div>
-
-        <div>
-            <Label>Middle Name</Label>
-            <input type="text" name="client_middle_name" placeholder="Client Middle Name">
-        </div>
-    
-        <div>
-            <Label>Last Name</Label>
-            <input type="text" name="client_last_name" placeholder="Client Last Name">
-        </div>
-        <div>
-            <Label>Relationship</Label>
-            <input type="text" name="client_relationship" placeholder="Relationship to Patient">
+        <!-- Requirements Placeholder -->
+        <div class="form-group">
+            <h5>Requirements:</h5>
+            <div id="requirements_section">
+                <p>Please select an assistance type to view requirements.</p>
+            </div>
         </div>
 
 
-        <input type="Submit" value="Add" class="btn btn-primary">
-    
+        <button type="submit" class="btn btn-primary">Save</button>
+
     </form>
+</div>
 
+<script>
+document.getElementById('assistance_type').addEventListener('change', function() {
+    const typeId = this.value;
 
-    <script>
-        const categories = {
-            Medical: [
-                { value: 'Hospital', text: 'Hospital' },
-                { value: 'Purchasing Medicine', text: 'Purchasing Medicine' }
-            ],
-            Burial: [
-                { value: 'Burial disaster/injured', text: 'Burial disaster/Injured' },
-                { value: 'Burial illness/natural death', text: 'Burial illness/Natural Death' }
-            ],
-            "ESA (Emergency Shelter Assistance)": [
-                { value:'House totally damaged', text: 'House totally damaged' },
-                { value:'House partially damaged', text: 'House partially damaged' }
-            ],
-            Transportation: [
-                { value: 'Abused', text: 'Abused' }
-            ]
-        };
-
-        document.getElementById('assistance_type').addEventListener('change', function() {
-            const type = this.value;
-            const categorySelect = document.getElementById('assistance_category');
-            categorySelect.innerHTML = '<option value="">None</option>';
-            if (categories[type]) {
-                categories[type].forEach(cat => {
-                    const option = document.createElement('option');
-                    option.value = cat.value;
-                    option.text = cat.text;
-                    categorySelect.appendChild(option);
+    // Load requirements as checkboxes
+    fetch(`/get-requirements/${typeId}`)
+        .then(res => res.json())
+        .then(data => {
+            let html = '';
+            if (data.length === 0) {
+                html = '<p>No requirements found.</p>';
+            } else {
+                data.forEach(r => {
+                    html += `
+                        <div class="form-check">
+                            <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input" id="requirement_${r.id}">
+                            <label class="form-check-label" for="requirement_${r.id}">${r.requirement_name}</label>
+                        </div>
+                    `;
                 });
             }
+            document.getElementById('requirements_section').innerHTML = html;
         });
-    </script>
-</body>
-</html>
+
+    // Load categories as checkboxes
+    fetch(`/get-categories/${typeId}`)
+        .then(res => res.json())
+        .then(data => {
+            let html = '';
+            if (data.length === 0) {
+                html = '<p>No categories found.</p>';
+            } else {
+                data.forEach(c => {
+                    html += `
+                        <div class="form-check">
+                            <input type="checkbox" name="assistance_categories[]" value="${c.id}" class="form-check-input" id="category_${c.id}">
+                            <label class="form-check-label" for="category_${c.id}">${c.category_name}</label>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('categories_section').innerHTML = html;
+        });
+});
+</script>
+@endsection

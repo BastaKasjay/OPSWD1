@@ -11,20 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('client', function (Blueprint $table) {
+        Schema::create('clients', function (Blueprint $table) {
             $table->id();
             $table->string('first_name');
             $table->string('middle_name');
             $table->string('last_name');
-            $table->string('relationship');
             $table->string('sex');
             $table->integer('age')->unsigned();
-            $table->boolean('4ps')->default(false);
-            $table->boolean('pwd')->default(false);
             $table->string('address');
             $table->string('contact_number');
-            $table->unsignedBigInteger('valid_id');
-            $table->string('assessed_by');
+            $table->string('valid_id');
+
+
+            // Foreign Key
+            $table->unsignedBigInteger('assessed_by');
+            $table->foreign('assessed_by')->references('id')->on('users')->onDelete('restrict');
+
+
+            $table->unsignedBigInteger('municipality_id');
+            $table->foreign('municipality_id')->references('id')->on('municipalities')->onDelete('cascade');
             $table->timestamps();
         });
     }
@@ -34,6 +39,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('client');
+        Schema::dropIfExists('clients');
     }
 };

@@ -13,19 +13,15 @@ class MunicipalitySeeder extends Seeder
      */
     public function run(): void
     {
-        Municipality::create(['Atok' => 'Atok']);
-        Municipality::create(['Bakun' => 'Bakun']);
-        Municipality::create(['Bokod' => 'Bokod']);
-        Municipality::create(['Bugias' => 'Bugias']);
-        Municipality::create(['Itogon' => 'Itogon']);
-        Municipality::create(['La Trinidad' => 'La Trinidad']);
-        Municipality::create(['Kabayan' => 'Kabayan']);
-        Municipality::create(['Kapangan' => 'Kapangan']);
-        Municipality::create(['Mankayan' => 'Mankayan']);
-        Municipality::create(['Sablan' => 'Sablan']);
-        Municipality::create(['Tuba' => 'Tuba']);
-        Municipality::create(['Tublay' => 'Tublay']);
-        Municipality::create(['Kibungan' => 'Kibungan']);
+        $municipalities = [
+            'Atok', 'Bakun', 'Bokod', 'Bugias', 'Itogon',
+            'La Trinidad', 'Kabayan', 'Kapangan', 'Mankayan',
+            'Sablan', 'Tuba', 'Tublay', 'Kibungan'
+        ];
 
+        foreach ($municipalities as $muni) {
+            Municipality::create(['name' => $muni]);
+        }
     }
+    
 }
