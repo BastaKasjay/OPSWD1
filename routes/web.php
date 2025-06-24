@@ -56,6 +56,7 @@ Route::post('/logout', function (Request $request) {
 // Client routes
 Route::resource('clients', ClientController::class);
 
+
 // Municipality routes (optional edit only)
 Route::resource('municipalities', MunicipalityController::class)->only(['index', 'edit', 'update']);
 

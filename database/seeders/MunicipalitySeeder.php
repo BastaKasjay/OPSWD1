@@ -20,7 +20,7 @@ class MunicipalitySeeder extends Seeder
         ];
 
         foreach ($municipalities as $muni) {
-            Municipality::create(['name' => $muni]);
+            Municipality::firstOrCreate(['name' => $muni]);
         }
     }
     

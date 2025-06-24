@@ -17,7 +17,7 @@ return new class extends Migration
             //foreign keys
             $table->unsignedBigInteger('client_id');
             $table->unsignedBigInteger('assistance_type_id');
-            $table->unsignedBigInteger('payee_id')->nullable();
+            $table->unsignedBigInteger('payee_id')->nullable(); // Payee ID can be null if no payee is assigned
 
             // Request Details
             $table->date('date_received_request');

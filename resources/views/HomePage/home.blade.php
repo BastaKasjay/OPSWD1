@@ -3,6 +3,6 @@
 @section('title', 'Dashboard Home')
 
 @section('content')
-    <h1>Welcome to OPSWD</h1>
-    <p>This is your dashboard homepage.</p>
+    <h1>Benguet Assistance to Individuals in Crisis Situation - Management System</h1>
+    <p>Alright</p>
 @endsection

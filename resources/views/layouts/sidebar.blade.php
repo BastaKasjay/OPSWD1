@@ -26,17 +26,12 @@
     <div class="sidebar">
         <h5 class="text-white text-center">ADMIN</h5>
 
-        <a href="{{ route('clients.create') }}" class="button">Client Management</a>
+        <a href="{{ route('clients.index') }}" class="button">Client Management</a>
         <a href="#" class="button disabled" aria-disabled="true">System Management</a>
         <a href="#" class="button disabled" aria-disabled="true">User Management</a>
-
-        <div class="dropdown">
-            <a class="dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Reports</a>
-            <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Clients with complete requirements</a></li>
-                <li><a class="dropdown-item" href="#">Clients with incomplete requirements</a></li>
-            </ul>
-        </div>
+        <a href="#" role="button" data-bs-toggle="dropdown">Reports</a>
+            
+        
 
         <form action="{{ route('logout') }}" method="POST">
             @csrf

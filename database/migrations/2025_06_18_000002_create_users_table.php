@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('role')->default('user');
 
             //foreign key to employee table
-            $table->foreignId('employee_id')->constrained('employee')->onDelete('cascade');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->rememberToken();
             $table->timestamps();
             
