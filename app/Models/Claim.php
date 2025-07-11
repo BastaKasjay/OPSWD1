@@ -21,4 +21,22 @@ class Claim extends Model
         'form_of_payment',
         'confirmation',
     ];
+
+    public function clientAssistance()
+    {
+        return $this->belongsTo(\App\Models\ClientAssistance::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(\App\Models\Client::class);
+    }
+
+    public function cashPayment()
+    {
+        return $this->hasOne(\App\Models\CashPayment::class, 'claim_id');
+    }
+
+
+
 }

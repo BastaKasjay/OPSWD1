@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientAssistance;
 use App\Models\Client;
 use App\Models\Municipality;
 use App\Models\VulnerabilitySector;
 use App\Models\AssistanceType;
+use App\Models\AssistanceCategory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +15,7 @@ class ClientController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Client::with(['municipality', 'vulnerabilitySectors', 'assistanceType', 'assistanceCategory']);
+        $query = Client::with(['municipality', 'vulnerabilitySectors', 'payee']);
 
         if ($request->municipality_id) {
             $query->where('municipality_id', $request->municipality_id);
@@ -30,6 +32,10 @@ class ClientController extends Controller
         $clients = $query->get();
         $municipalities = Municipality::all();
         $clientIds = $clients->pluck('id')->toArray();
+        $vulnerabilitySectors = VulnerabilitySector::all();
+        $assistanceTypes = AssistanceType::all();
+        $assistanceCategories = AssistanceCategory::all();
+
 
         // Vulnerability sectors count per sector
         $vulnerabilityCounts = VulnerabilitySector::withCount([
@@ -43,7 +49,7 @@ class ClientController extends Controller
             ->whereIn('client_id', $clientIds)
             ->count();
 
-        return view('client.index', compact('clients', 'municipalities', 'vulnerabilityCounts', 'totalVulnerable'));
+        return view('client.index', compact('clients', 'municipalities', 'assistanceTypes', 'assistanceCategories', 'vulnerabilitySectors', 'vulnerabilityCounts', 'totalVulnerable'));
     }
 
     public function show($id)
@@ -52,10 +58,22 @@ class ClientController extends Controller
             'municipality',
             'vulnerabilitySectors',
             'assistanceType',
-            'assistanceCategory'
+            'assistanceCategory',
+            'payee'
         ])->findOrFail($id);
 
-        return view('client.show', compact('client'));
+        $municipalities = Municipality::all();
+        $vulnerabilitySectors = VulnerabilitySector::all();
+        $assistanceTypes = AssistanceType::all();
+        $assistanceCategories = AssistanceCategory::all();
+
+        return view('client.show', compact(
+        'client',
+        'municipalities',
+        'vulnerabilitySectors',
+        'assistanceTypes',
+        'assistanceCategories'
+    ));
     }
 
     public function create()
@@ -76,29 +94,63 @@ class ClientController extends Controller
             'sex' => 'required',
             'age' => 'required|integer',
             'address' => 'required|string',
-            'contact_number' => 'required|string',
+            'contact_number' => 'nullable|string',
+            'birthday' => 'nullable|date',
+            'municipality_id' => 'required|exists:municipalities,id',
+            'vulnerability_sectors' => 'array|nullable'
+        ]);
+
+        $payeeData = $request->validate([
             'representative_first_name' => 'nullable|string',
             'representative_middle_name' => 'nullable|string',
             'representative_last_name' => 'nullable|string',
             'representative_contact_number' => 'nullable|string',
-            'municipality_id' => 'required|exists:municipalities,id',
-            'assistance_type_id' => 'required|exists:assistance_types,id',
-            'assistance_category_id' => 'required|exists:assistance_categories,id',
-            'vulnerability_sectors' => 'array|nullable'
+            'relationship' => 'nullable|string',
+            'proof_of_relationship' => 'nullable|boolean',
         ]);
 
-        $client = Client::create($validated);
+        DB::beginTransaction();
 
-        if ($request->has('vulnerability_sectors')) {
-            $client->vulnerabilitySectors()->attach($request->vulnerability_sectors);
+        try {
+            $client = Client::create($validated);
+
+            if ($request->has('vulnerability_sectors')) {
+                $client->vulnerabilitySectors()->attach($request->vulnerability_sectors);
+            }
+
+            // Determine if representative info is filled
+            $hasRepresentativeData = $request->filled('representative_first_name') && $request->filled('relationship');
+
+            $payee = \App\Models\Payee::create([
+                'client_id' => $client->id,
+                'first_name' => $hasRepresentativeData ? $request->representative_first_name : null,
+                'middle_name' => $hasRepresentativeData ? $request->representative_middle_name : null,
+                'last_name' => $hasRepresentativeData ? $request->representative_last_name : null,
+                'full_name' => $hasRepresentativeData
+                    ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
+                    : null,
+                'contact_number' => $hasRepresentativeData ? $request->representative_contact_number : null,
+                'relationship' => $hasRepresentativeData ? $request->relationship : null,
+                'proof_of_relationship' => $request->has('proof_of_relationship') ? 1 : 0,
+                'is_self_payee' => $request->filled('representative_first_name') ? 0 : 1, // 👈 flag client as payee if no rep
+            ]);
+
+
+
+            DB::commit();
+            return redirect()->route('clients.index')->with('success', 'Client created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Something went wrong while saving client: ' . $e->getMessage());
         }
-
-        return redirect()->route('clients.index')->with('success', 'Client created successfully');
     }
+
+
+
 
     public function edit($id)
     {
-        $client = Client::with(['vulnerabilitySectors'])->findOrFail($id);
+        $client = Client::with(['vulnerabilitySectors', 'payee'])->findOrFail($id);
 
         $municipalities = Municipality::all();
         $vulnerabilitySectors = VulnerabilitySector::all();
@@ -123,6 +175,7 @@ class ClientController extends Controller
 
 
 
+
     public function update(Request $request, $id)
     {
         $validated = $request->validate([
@@ -132,25 +185,104 @@ class ClientController extends Controller
             'sex' => 'required',
             'age' => 'required|integer',
             'address' => 'required|string',
-            'contact_number' => 'required|string',
+            'contact_number' => 'nullable|string',
+            'birthday' => 'nullable|date',
             'representative_first_name' => 'nullable|string',
             'representative_middle_name' => 'nullable|string',
             'representative_last_name' => 'nullable|string',
             'representative_contact_number' => 'nullable|string',
+            'relationship' => 'nullable|string',
+            'proof_of_relationship' => 'nullable|boolean',
             'municipality_id' => 'required|exists:municipalities,id',
-            'assistance_type_id' => 'required|exists:assistance_types,id',
-            'assistance_category_id' => 'required|exists:assistance_categories,id',
             'vulnerability_sectors' => 'array|nullable'
         ]);
 
         $client = Client::findOrFail($id);
         $client->update($validated);
 
-        // Sync vulnerability sectors
         $client->vulnerabilitySectors()->sync($request->vulnerability_sectors ?? []);
 
-        // ✅ Redirect to show page after successful update
+        // 🔁 Update or Create Payee
+        $hasRepresentative = $request->has('has_representative');
+
+        $payeeData = [
+            'client_id' => $client->id,
+            'first_name' => $hasRepresentative ? $request->representative_first_name : null,
+            'middle_name' => $hasRepresentative ? $request->representative_middle_name : null,
+            'last_name' => $hasRepresentative ? $request->representative_last_name : null,
+            'full_name' => $hasRepresentative
+                ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
+                : null,
+            'relationship' => $hasRepresentative && $request->filled('relationship') ? $request->relationship : null,
+            'contact_number' => $hasRepresentative ? $request->representative_contact_number : null,
+            'proof_of_relationship' => $hasRepresentative && $request->has('proof_of_relationship') ? 1 : 0,
+            'is_self_payee' => $hasRepresentative ? 0 : 1,
+        ];
+
+        \App\Models\Payee::updateOrCreate(
+            ['client_id' => $client->id],
+            $payeeData
+        );
+
+
         return redirect()->route('clients.show', $client->id)
             ->with('success', 'Client updated successfully');
     }
+
+
+    public function assistancesView(Request $request)
+    {
+        $query = Client::whereHas('assistances')
+        ->with([
+            'municipality',
+            'vulnerabilitySectors',
+            'assistances.assistanceType',
+            'assistances.assistanceCategory',
+            'payee'
+        ]);
+
+
+        if ($request->search) {
+            $query->where(function ($q) use ($request) {
+                $q->where('first_name', 'like', '%' . $request->search . '%')
+                    ->orWhere('middle_name', 'like', '%' . $request->search . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->search . '%');
+            });
+        } else {
+
+            $query->whereHas('assistances');
+        }
+
+        $clients = $query->get();
+        $assistanceTypes = AssistanceType::all(); 
+
+        return view('client.assistance', compact('clients', 'assistanceTypes')); 
+    }
+
+    public function searchClients(Request $request)
+    {
+        $query = $request->get('q');
+
+        $clients = Client::where('first_name', 'LIKE', "%{$query}%")
+            ->orWhere('middle_name', 'LIKE', "%{$query}%")
+            ->orWhere('last_name', 'LIKE', "%{$query}%")
+            ->with('municipality')
+            ->limit(10)
+            ->get()
+            ->map(function ($client) {
+                return [
+                    'id' => $client->id,
+                    'first_name' => $client->first_name,
+                    'middle_name' => $client->middle_name,
+                    'last_name' => $client->last_name,
+                    'municipality' => $client->municipality->name ?? 'N/A',
+                ];
+            });
+
+        return response()->json($clients);
+    }
+
+
+
+
 }

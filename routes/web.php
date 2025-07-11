@@ -25,6 +25,7 @@ Route::get('/home', function () {
 })->name('home');
 
 
+
 // Redirect root URL to home page
 Route::get('/', function () {
     return redirect()->route('login');
