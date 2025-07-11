@@ -19,16 +19,11 @@ return new class extends Migration
             $table->string('sex');
             $table->integer('age')->unsigned();
             $table->string('address');
-            $table->string('contact_number');
-
-            // Representative details
-            $table->string('representative_first_name')->nullable();
-            $table->string('representative_middle_name')->nullable();
-            $table->string('representative_last_name')->nullable();
-            $table->string('representative_contact_number')->nullable();
-            $table->boolean('representative_valid_id')->default(false);  // ✅ NEW FIELD
-
+            $table->string('contact_number')->nullable();
+            $table->date('birthday')->nullable();
             $table->boolean('valid_id')->default(false);
+
+            
 
             $table->unsignedBigInteger('municipality_id');
             $table->foreign('municipality_id')->references('id')->on('municipalities')->onDelete('cascade');

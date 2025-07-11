@@ -14,6 +14,7 @@ class ClientAssistance extends Model
     protected $fillable = [
         'client_id',
         'assistance_type_id',
+        'assistance_category_id',
         'payee_id',
         'date_received_request',
     ];
@@ -33,4 +34,16 @@ class ClientAssistance extends Model
     {
         return $this->belongsTo(Payee::class, 'payee_id');
     }
+
+    public function claim()
+    {
+        return $this->hasOne(\App\Models\Claim::class);
+    }
+
+    public function assistanceCategory()
+    {
+        return $this->belongsTo(\App\Models\AssistanceCategory::class);
+    }
+
+
 }

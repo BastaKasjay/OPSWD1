@@ -2,7 +2,11 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
+use App\Models\Client;
 
+use App\Http\Controllers\ClaimController;
+use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MunicipalityController;
 use App\Http\Controllers\AssistanceController;
@@ -13,26 +17,63 @@ use App\Http\Controllers\AssistanceCategoryController;
 use App\Http\Controllers\VulnerabilitySectorController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\RoleController;
+use Illuminate\Support\Facades\Auth;
 
 // Home page (login protected)
 Route::get('/home', function () {
-    if (!session('is_admin')) {
-        return redirect()->route('login');
-    }
     return view('HomePage.home');
 })->name('home');
 
-// Redirect root URL to login
+
+// Redirect root URL to home page
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Login page
-Route::get('/login', function () {
-    return view('auth.login');
-})->name('login');
+// claims
+Route::get('/claims/grouped', [ClaimController::class, 'groupedClaims'])->name('claims.grouped');
 
-// Login submit route
+
+// assistance
+Route::get('/clients/assistance', [ClientController::class, 'assistancesView'])->name('clients.assistance');
+
+// Route::patch('/claims/{id}/update-status', function() { dd('teee')})->name('claims.update-status');
+Route::patch('/claims/{id}/update-status', [ClaimController::class, 'updateStatus'])->name('claims.update-status');
+// Route for updating claim record directly
+Route::put('/claims/{id}', [ClaimController::class, 'update'])->name('claims.update');
+
+// Client routes
+Route::resource('clients', ClientController::class);
+
+
+
+
+
+// Municipality routes
+Route::resource('municipalities', MunicipalityController::class)->only(['index', 'edit', 'update']);
+
+// Dynamic dropdowns
+Route::get('/get-requirements/{id}', [AssistanceController::class, 'getRequirements']);
+Route::get('/get-categories/{id}', [AssistanceController::class, 'getCategories']);
+
+//Reports rooutes
+Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+
+// Other resource routes
+Route::resource('payees', PayeeController::class);
+Route::resource('requirements', RequirementController::class);
+Route::resource('assistance-categories', AssistanceCategoryController::class);
+Route::resource('vulnerability-sectors', VulnerabilitySectorController::class);
+Route::resource('client-assistances', ClientAssistanceController::class);
+Route::resource('assistance-types', AssistanceController::class);
+Route::resource('employees', EmployeeController::class);
+Route::resource('roles', RoleController::class);
+
+// User Management Routes (now public)
+Route::resource('users', UserController::class);
+
+
+// Custom Login submit
 Route::post('/login', function (Request $request) {
     $username = $request->input('username');
     $password = $request->input('password');
@@ -47,29 +88,35 @@ Route::post('/login', function (Request $request) {
     ]);
 })->name('login.submit');
 
-// Logout route
+
+
+
+// Logout
 Route::post('/logout', function (Request $request) {
-    $request->session()->flush();
-    return redirect()->route('login');
-})->name('logout');
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect('/login');
+})->middleware('auth')->name('logout');
 
-// Client routes
-Route::resource('clients', ClientController::class);
 
+// add assistance search bar
+Route::get('/api/search-clients', function (Request $request) {
+    $query = $request->get('q');
 
-// Municipality routes (optional edit only)
-Route::resource('municipalities', MunicipalityController::class)->only(['index', 'edit', 'update']);
+    $clients = Client::where('first_name', 'LIKE', "%{$query}%")
+        ->orWhere('middle_name', 'LIKE', "%{$query}%")
+        ->orWhere('last_name', 'LIKE', "%{$query}%")
+        ->limit(10)
+        ->get()
+        ->map(function ($client) {
+            return [
+                'id' => $client->id,
+                'first_name' => $client->first_name,
+                'middle_name' => $client->middle_name,
+                'last_name' => $client->last_name,
+            ];
+        });
 
-// Dynamic loading routes for dependent dropdowns (Assistance Type)
-Route::get('/get-requirements/{id}', [AssistanceController::class, 'getRequirements']);
-Route::get('/get-categories/{id}', [AssistanceController::class, 'getCategories']);
-
-// Full resource routes for other models
-Route::resource('payees', PayeeController::class);
-Route::resource('requirements', RequirementController::class);
-Route::resource('assistance-categories', AssistanceCategoryController::class);
-Route::resource('vulnerability-sectors', VulnerabilitySectorController::class);
-Route::resource('client-assistances', ClientAssistanceController::class);
-Route::resource('assistance-types', AssistanceController::class);
-Route::resource('employees', EmployeeController::class);
-Route::resource('roles', RoleController::class);
+    return response()->json($clients);
+});

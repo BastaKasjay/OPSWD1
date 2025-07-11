@@ -1,29 +1,64 @@
-<!-- resources/views/layouts/app.blade.php -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Financial Assistance System</title>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+    <!-- Your Custom CSS -->
+    <link rel="stylesheet" href="{{ asset('main/css/styles.css') }}">
+
+
+    <!-- Tailwind CSS via CDN
+    <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'mint-green': {
+                            50: '#F8FCFA',
+                            100: '#EEF6F0',
+                            200: '#DDEEE1',
+                            300: '#CDE5D3',
+                            400: '#BCE0C5',
+                            500: '#aee0c1',
+                            600: '#9CD1B5',
+                            700: '#89C0A3',
+                            800: '#76AE91',
+                            900: '#639D7F',
+                            DEFAULT: '#aee0c1',
+                        },
+                    }
+                }
+            }
+        }
+    </script> -->
+
+    
 </head>
-<body>
+<body class="d-flex">
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
-  <div class="container">
-    <a class="navbar-brand" href="{{ route('home') }}">Dashboard</a>
-    <li class="nav-item"><a class="nav-link" href="{{ route('clients.index') }}">Clients</a></li>
-  </div>    
-</nav>
+    {{-- Sidebar stays on the left --}}
+    @include('layouts.sidebar')
 
-<div class="container">
-  @yield('content')
-</div>
+    {{-- Main content area grows beside sidebar --}}
+    <div class="main flex-grow-1">
+        @yield('content')
+    </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-
-
-
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    @yield('scripts')
 </body>
+
 </html>

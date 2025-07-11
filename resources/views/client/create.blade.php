@@ -1,6 +1,8 @@
 @extends('layouts.app')
 
+
 @section('content')
+
 <div class="container">
     <h2>Add Client</h2>
     <form action="{{ route('clients.store') }}" method="POST" enctype="multipart/form-data">
@@ -56,26 +58,42 @@
             <input type="text" name="contact_number" class="form-control" required>
         </div>
 
+        <!-- Representative Toggle -->
+        <div class="form-check mb-3">
+            <input type="checkbox" name="has_representative" id="has_representative" class="form-check-input" value="1" onchange="toggleRepresentativeFields()">
+            <label class="form-check-label" for="has_representative">Client has a Representative</label>
+        </div>
+
         <!-- Representative Details -->
-        <div class="form-group">
-            <label>Representative First Name:</label>
-            <input type="text" name="representative_first_name" class="form-control">
+        <div id="representativeFields" style="display: none;">
+            <div class="form-group">
+                <label>Representative First Name:</label>
+                <input type="text" name="representative_first_name" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Representative Middle Name:</label>
+                <input type="text" name="representative_middle_name" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Representative Last Name:</label>
+                <input type="text" name="representative_last_name" class="form-control">
+            </div>
+
+            <div class="form-group">
+                <label>Representative Contact Number:</label>
+                <input type="text" name="representative_contact_number" class="form-control">
+            </div>
+
+            <!-- Proof of Relationship -->
+            <div class="form-check mt-2">
+                <input type="checkbox" name="proof_of_relationship" id="proof_of_relationship" class="form-check-input" value="1">
+                <label for="proof_of_relationship" class="form-check-label">Proof of Relationship Provided</label>
+            </div>
         </div>
 
-        <div class="form-group">
-            <label>Representative Middle Name:</label>
-            <input type="text" name="representative_middle_name" class="form-control">
-        </div>
 
-        <div class="form-group">
-            <label>Representative Last Name:</label>
-            <input type="text" name="representative_last_name" class="form-control">
-        </div>
-
-        <div class="form-group">
-            <label>Representative Contact Number:</label>
-            <input type="text" name="representative_contact_number" class="form-control">
-        </div>
 
         <!-- Vulnerability Sectors -->
         <div class="form-group">
@@ -125,60 +143,64 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
     const saveBtn = document.getElementById('saveBtn');
+    const assistanceTypeSelect = document.getElementById('assistance_type');
+    const representativeCheckbox = document.getElementById('has_representative');
 
-    document.getElementById('assistance_type').addEventListener('change', function() {
-        const typeId = this.value;
-        saveBtn.disabled = true; // Always disable on change
+    if (assistanceTypeSelect) {
+        assistanceTypeSelect.addEventListener('change', function () {
+            const typeId = this.value;
+            saveBtn.disabled = true;
 
-        // Load requirements
-        fetch(`/get-requirements/${typeId}`)
-            .then(res => res.json())
-            .then(data => {
-                let html = '';
-                if (data.length === 0) {
-                    html = '<p>No requirements found.</p>';
-                } else {
-                    data.forEach(r => {
-                        html += `
-                            <div class="form-check">
-                                <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input requirement-checkbox" id="requirement_${r.id}">
-                                <label class="form-check-label" for="requirement_${r.id}">${r.requirement_name}</label>
-                            </div>
-                        `;
-                    });
-                }
-                document.getElementById('requirements_section').innerHTML = html;
-                addValidationListeners();
-            });
+            // Load requirements
+            fetch(`/get-requirements/${typeId}`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = '';
+                    if (data.length === 0) {
+                        html = '<p>No requirements found.</p>';
+                    } else {
+                        data.forEach(r => {
+                            html += `
+                                <div class="form-check">
+                                    <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input requirement-checkbox" id="requirement_${r.id}">
+                                    <label class="form-check-label" for="requirement_${r.id}">${r.requirement_name}</label>
+                                </div>
+                            `;
+                        });
+                    }
+                    document.getElementById('requirements_section').innerHTML = html;
+                    addValidationListeners();
+                });
 
-        // Load categories
-        fetch(`/get-categories/${typeId}`)
-            .then(res => res.json())
-            .then(data => {
-                let html = '';
-                if (data.length === 0) {
-                    html = '<p>No categories found.</p>';
-                } else {
-                    data.forEach(c => {
-                        html += `
-                            <div class="form-check">
-                                <input type="radio" name="assistance_category_id" value="${c.id}" class="form-check-input category-radio" id="category_${c.id}">
-                                <label class="form-check-label" for="category_${c.id}">${c.category_name}</label>
-                            </div>
-                        `;
-                    });
-                }
-                document.getElementById('categories_section').innerHTML = html;
-                addValidationListeners();
-            });
-    });
+            // Load categories
+            fetch(`/get-categories/${typeId}`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = '';
+                    if (data.length === 0) {
+                        html = '<p>No categories found.</p>';
+                    } else {
+                        data.forEach(c => {
+                            html += `
+                                <div class="form-check">
+                                    <input type="radio" name="assistance_category_id" value="${c.id}" class="form-check-input category-radio" id="category_${c.id}">
+                                    <label class="form-check-label" for="category_${c.id}">${c.category_name}</label>
+                                </div>
+                            `;
+                        });
+                    }
+                    document.getElementById('categories_section').innerHTML = html;
+                    addValidationListeners();
+                });
+        });
+    }
 
     function addValidationListeners() {
-        document.querySelectorAll('.requirement-checkbox').forEach(checkbox => {
-            checkbox.addEventListener('change', validateForm);
+        document.querySelectorAll('.requirement-checkbox').forEach(cb => {
+            cb.addEventListener('change', validateForm);
         });
-        document.querySelectorAll('.category-radio').forEach(radio => {
-            radio.addEventListener('change', validateForm);
+        document.querySelectorAll('.category-radio').forEach(rb => {
+            rb.addEventListener('change', validateForm);
         });
         validateForm();
     }
@@ -194,11 +216,21 @@ document.addEventListener('DOMContentLoaded', function () {
             saveBtn.disabled = true;
         }
     }
-});
-document.addEventListener('DOMContentLoaded', function () {
-    // Initial validation on page load
-    validateForm();
-});
 
+    // Representative toggle
+    if (representativeCheckbox) {
+        representativeCheckbox.addEventListener('change', toggleRepresentativeFields);
+        toggleRepresentativeFields(); // Initial state
+    }
+
+    function toggleRepresentativeFields() {
+        const isChecked = representativeCheckbox.checked;
+        const repFields = document.getElementById('representativeFields');
+        if (repFields) {
+            repFields.style.display = isChecked ? 'block' : 'none';
+        }
+    }
+});
 </script>
+
 @endsection

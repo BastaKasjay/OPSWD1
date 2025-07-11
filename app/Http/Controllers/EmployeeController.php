@@ -7,34 +7,64 @@ use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
 {
+    // Show all employees
     public function index()
     {
-        return Employee::all();
+        $employees = Employee::all();
+        return view('employee.index', compact('employees'));
     }
 
+    // Show form to create new employee
+    public function create()
+    {
+        return view('employee.create');
+    }
+
+    // Store a new employee
     public function store(Request $request)
     {
-        $employee = Employee::create($request->all());
-        return response()->json($employee, 201);
+        $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'position' => 'required|string|max:100',
+        ]);
+
+        Employee::create($request->all());
+
+        return redirect()->route('employees.index')->with('success', 'Employee added successfully.');
     }
 
+    // Show single employee (optional)
     public function show($id)
     {
-        return Employee::findOrFail($id);
-    }
-
-    public function update(Request $request, $id)
-    {
         $employee = Employee::findOrFail($id);
-        $employee->update($request->all());
-        return response()->json($employee, 200);
+        return view('employee.show', compact('employee'));
     }
 
-    public function destroy($id)
+    // Show form to edit an existing employee
+    public function edit(Employee $employee)
     {
-        Employee::destroy($id);
-        return response()->json(null, 204);
+        return view('employee.edit', compact('employee'));
+    }
+
+    // Update the employee record
+    public function update(Request $request, Employee $employee)
+    {
+        $request->validate([
+            'first_name' => 'required|string|max:50',
+            'last_name' => 'required|string|max:50',
+            'position' => 'required|string|max:100',
+        ]);
+
+        $employee->update($request->all());
+
+        return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+    }
+
+    // Delete the employee
+    public function destroy(Employee $employee)
+    {
+        $employee->delete();
+        return redirect()->route('employees.index')->with('success', 'Employee deleted.');
     }
 }
-// This controller provides basic CRUD operations for the Employee model.
-// It includes methods to list all employees, create a new employee, show a specific employee, update an existing employee, and delete an employee.

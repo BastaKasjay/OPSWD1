@@ -9,10 +9,10 @@ class CheckPayment extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'check_payment_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'approved_claims_id',
+        'claim_id',
         'client_id',
         'date_prepared',
         'amount',
@@ -20,4 +20,9 @@ class CheckPayment extends Model
         'date_claimed',
         'status',
     ];
+
+    public function claim()
+    {
+        return $this->belongsTo(\App\Models\Claim::class, 'claim_id');
+    }
 }

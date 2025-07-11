@@ -18,16 +18,21 @@ class PayeeController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'client_id' => 'required|exists:clients,client_id',
+            'client_id' => 'required|exists:clients,id',
             'first_name' => 'required|string',
             'middle_name' => 'nullable|string',
             'last_name' => 'required|string',
-            'full_name' => 'required|string',
             'relationship' => 'required|string',
             'proof_of_relationship' => 'nullable|string',
             'updated_to_new_payee' => 'boolean',
-            'previous_payee_name' => 'boolean',
+            'previous_payee_id' => 'nullable|exists:payees,id',
         ]);
+
+        $validated['full_name'] = trim(
+    ($validated['first_name'] ?? '') . ' ' .
+            ($validated['middle_name'] ?? '') . ' ' .
+            ($validated['last_name'] ?? '')
+        );
 
         $payee = Payee::create($validated);
 
@@ -54,7 +59,7 @@ class PayeeController extends Controller
             'relationship' => 'sometimes|string',
             'proof_of_relationship' => 'nullable|string',
             'updated_to_new_payee' => 'boolean',
-            'previous_payee_name' => 'boolean',
+            'previous_payee_id' => 'nullable|exists:payees,id',
         ]);
 
         $payee->update($validated);

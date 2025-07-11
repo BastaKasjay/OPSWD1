@@ -16,7 +16,7 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'email',
+        'username',
         'password',
         'role',
         'employee_id',
@@ -51,5 +51,21 @@ class User extends Authenticatable
     public function setPasswordAttribute($value)
     {
         $this->attributes['password'] = bcrypt($value);
+    }
+
+    /**
+     * Check if the user has admin role.
+     */
+    public function isAdmin()
+    {
+        return $this->role === 'admin';
+    }
+
+    /**
+     * Override the default auth identifier to use username instead of email.
+     */
+    public function getAuthIdentifierName()
+    {
+        return 'username';
     }
 }

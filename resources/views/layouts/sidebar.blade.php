@@ -1,48 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>@yield('title', 'Dashboard')</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<div class="sidebar bg-success text-white d-flex flex-column justify-between" style="width: 300px; height: 100vh; padding: 1rem; background-color: #639D7F;">
+    <div>
+        <!-- Logo -->
+        <div class="text-center mb-4">
+            <svg class="text-white" width="80" height="80" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 
+                         10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 
+                         3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 
+                         1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 
+                         4-3.08 6-3.08 1.99 0 5.97 1.09 6 
+                         3.08-1.29 1.94-3.5 3.22-6 3.22z"/>
+            </svg>
+        </div>
 
-    <style>
-        body { display: flex; }
-        .sidebar {
-            width: 180px; height: 100vh;
-            background-color: rgb(10, 90, 40);
-            padding-top: 1rem;
-        }
-        .sidebar a { color: #fff; padding: 10px; text-decoration: none; display: block; }
-        .sidebar a:hover { background-color: #53e28b; }
-        .dropdown-menu { background-color: #53e28b; border: none; }
-        .dropdown-menu a { color: #fff; }
-        .main { flex-grow: 1; padding: 20px; }
-    </style>
-</head>
-<body>
+        <!-- Navigation Links -->
+        <a href="{{ route('home') }}" class="btn btn-outline-light w-100 text-start mb-2">
+            <i class="fas fa-tachometer-alt me-2"></i> Dashboard
+        </a>
+        <a href="{{ route('clients.index') }}" class="btn btn-outline-light w-100 text-start mb-2">
+            <i class="fas fa-users me-2"></i> Client Management
+        </a>
+        <a href="{{ route('clients.assistance') }}" class="btn btn-outline-light w-100 text-start mb-2">
+            <i class="fas fa-info-circle me-2"></i> Assistance Management
+        </a>
+        <a href="{{ route('users.index') }}" class="btn btn-outline-light w-100 text-start mb-2">
+            <i class="fas fa-user-cog me-2"></i> User Management
+        </a>
+        <a href="{{ route('reports.index') }}" class="btn btn-outline-light w-100 text-start mb-2">
+            <i class="fas fa-book-open me-2"></i> Reports
+        </a>
+    </div>
 
-    <div class="sidebar">
-        <h5 class="text-white text-center">ADMIN</h5>
-
-        <a href="{{ route('clients.index') }}" class="button">Client Management</a>
-        <a href="#" class="button disabled" aria-disabled="true">System Management</a>
-        <a href="#" class="button disabled" aria-disabled="true">User Management</a>
-        <a href="#" role="button" data-bs-toggle="dropdown">Reports</a>
-            
-        
-
-        <form action="{{ route('logout') }}" method="POST">
+    <!-- Logout Button -->
+     <div class="Logout_btn">
+        <form action="{{ route('logout') }}" method="POST" class="mt-auto">
             @csrf
-            <button type="submit" class="btn btn-danger w-100 mt-3">Logout</button>
+            <button type="submit" class="btn btn-light w-100 mt-3">
+                <i class="fas fa-sign-out-alt me-2"></i> Logout
+            </button>
         </form>
     </div>
-
-    <div class="main">
-        @yield('content')
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+</div>

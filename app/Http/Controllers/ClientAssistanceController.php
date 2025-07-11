@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\DB;
 use App\Models\ClientAssistance;
 use Illuminate\Http\Request;
 
@@ -23,14 +24,30 @@ class ClientAssistanceController extends Controller
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'assistance_type_id' => 'required|exists:assistance_types,id',
-            'payee_id' => 'nullable|exists:payee,payee_id',
             'date_received_request' => 'required|date',
         ]);
 
-        ClientAssistance::create($request->all());
+        $payee_id = \App\Models\Payee::where('client_id', $request->client_id)->value('id');
 
-        return redirect()->route('client-assistance.index')->with('success', 'Client assistance added successfully.');
+        $assistance = ClientAssistance::create([
+            'client_id' => $request->client_id,
+            'assistance_type_id' => $request->assistance_type_id,
+            'date_received_request' => $request->date_received_request,
+            'payee_id' => $payee_id,
+        ]);
+
+
+        \App\Models\Claim::firstOrCreate([
+            'client_id' => $assistance->client_id,
+            'client_assistance_id' => $assistance->id,
+        ], [
+            'status' => 'pending',
+        ]);
+
+        return redirect()->route('clients.assistance')->with('success', 'Client assistance added successfully.');
     }
+
+
 
     public function show(ClientAssistance $clientAssistance)
     {
@@ -47,7 +64,7 @@ class ClientAssistanceController extends Controller
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'assistance_type_id' => 'required|exists:assistance_types,id',
-            'payee_id' => 'nullable|exists:payee,payee_id',
+            'payee_id' => 'nullable|exists:payees_id',
             'date_received_request' => 'required|date',
         ]);
 
@@ -61,4 +78,19 @@ class ClientAssistanceController extends Controller
         $clientAssistance->delete();
         return redirect()->route('client-assistance.index')->with('success', 'Client assistance deleted.');
     }
+
+    public function updateStatus(Request $request, $id)
+{
+    $request->validate([
+        'status' => 'required|in:pending,approved,disapproved'
+    ]);
+
+    $assistance = ClientAssistance::findOrFail($id);
+    $assistance->status = $request->status;
+    $assistance->save();
+
+    return back()->with('success', 'Status updated successfully!');
+}
+
+
 }

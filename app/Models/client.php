@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Claim;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -17,14 +18,10 @@ class Client extends Model
         'age',
         'address',
         'contact_number',
-
+        'birthday',
         'municipality_id',
         'assistance_type_id',
         'assistance_category_id',
-        'representative_first_name',
-        'representative_middle_name',
-        'representative_last_name',
-        'representative_contact_number',
 
         'assessed_by'
     ];
@@ -36,7 +33,8 @@ class Client extends Model
 
     public function vulnerabilitySectors()
     {
-        return $this->belongsToMany(VulnerabilitySector::class, 'client_vulnerability_sector');
+        return $this->belongsToMany(VulnerabilitySector::class, 'client_vulnerability_sector')
+                ->withTimestamps();
     }
 
     public function assistanceType()
@@ -48,4 +46,24 @@ class Client extends Model
     {
         return $this->belongsTo(\App\Models\AssistanceCategory::class);
     }
-}
+
+    public function claims()
+    {
+        return $this->hasMany(Claim::class);
+    }
+    public function assistances()
+    {
+        return $this->hasMany(ClientAssistance::class);
+    }
+    public function payee()
+    {
+        return $this->hasOne(Payee::class);
+    }
+
+    public function getFullNameAttribute()
+    {
+        return "{$this->first_name} {$this->middle_name} {$this->last_name}";
+    }
+
+
+    }

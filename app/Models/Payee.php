@@ -9,9 +9,7 @@ class Payee extends Model
 {
     use HasFactory;
 
-    protected $table = 'payee'; // since the table is not plural
-
-    protected $primaryKey = 'payee_id';
+    protected $table = 'payees';
 
     protected $fillable = [
         'client_id',
@@ -21,13 +19,26 @@ class Payee extends Model
         'full_name',
         'relationship',
         'proof_of_relationship',
+        'contact_number',
         'updated_to_new_payee',
-        'previous_payee_name',
+        'previous_payee_id',
+        'valid_id',
+        'is_self_payee', // ✅ Important
     ];
 
-    // Define relationship to Client
+    // Corrected relationship
     public function client()
     {
-        return $this->belongsTo(Client::class, 'client_id', 'client_id');
+        return $this->belongsTo(Client::class, 'client_id', 'id');
     }
+
+    protected static function booted()
+    {
+        static::saving(function ($payee) {
+            if (!$payee->is_self_payee) {
+                $payee->full_name = trim("{$payee->first_name} {$payee->middle_name} {$payee->last_name}");
+            }
+        });
+    }
+
 }

@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Models\CashPayment;
 use App\Models\CashDisbursement;
 use App\Models\Client;
 use Illuminate\Database\Eloquent\Factories\Factory;

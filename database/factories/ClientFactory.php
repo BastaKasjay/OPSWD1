@@ -12,7 +12,7 @@ class ClientFactory extends Factory
 
     public function definition(): array
     {
-        $user = User::factory()->create(); // CHANGED: create a user for assessed_by
+        //$user = User::factory()->create(); // CHANGED: create a user for assessed_by
 
         return [
             'first_name' => $this->faker->firstName(),
@@ -24,7 +24,7 @@ class ClientFactory extends Factory
             'contact_number' => $this->faker->phoneNumber(),
             'municipality_id' => 1, // You may want to ensure this exists or use a factory
             'assistance_type_id' => 1, // You may want to ensure this exists or use a factory
-            'assessed_by' => $user->id, // CHANGED: use created user's ID
+            //'assessed_by' => $user->id, // CHANGED: use created user's ID
             'valid_id' => $this->faker->boolean(),
         ];
     }

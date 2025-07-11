@@ -1,0 +1,901 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+
+/* sidebar */
+body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light grey background for the main body */
+            min-height: 100vh;
+            display: flex;
+            overflow: hidden !important; /* Hide body scrollbar */
+        }
+
+        /* Custom Mint Green Palette from Tailwind Config */
+        :root {
+            --mint-green-50: #F8FCFA;
+            --mint-green-100: #EEF6F0;
+            --mint-green-200: #DDEEE1;
+            --mint-green-300: #CDE5D3; /* Main text and icon color */
+            --mint-green-400: #BCE0C5;
+            --mint-green-500: #aee0c1;
+            --mint-green-600: #9CD1B5;
+            --mint-green-700: #89C0A3;
+            --mint-green-800: #76AE91; /* Sidebar background color */
+            --mint-green-900: #639D7F;
+        }
+
+        /* Sidebar styles */
+        .sidebar {
+            width: 256px; /* Adjusted to 256px to match Tailwind's w-64 */
+            background-color: var(--mint-green-800); /* Adjusted to mint-green-800 for main background */
+            color: var(--mint-green-300); /* Default text color from image */
+            display: flex;
+            flex-direction: column;
+            padding: 1rem; /* p-4 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+            border-top-right-radius: 0.5rem; /* rounded-r-lg */
+            border-bottom-right-radius: 0.5rem; /* rounded-r-lg */
+        }
+
+        .sidebar .logo-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 2rem; /* mb-8 */
+        }
+
+        .sidebar .logo-circle {
+            background-color: var(--mint-green-800); /* Adjusted to mint-green-800 for logo circle background */
+            padding: 1rem; /* p-4 */
+            border-radius: 9999px; /* rounded-full */
+        }
+
+        .sidebar .logo-svg {
+            width: 3rem; /* w-12 */
+            height: 3rem; /* h-12 */
+            color: var(--mint-green-300); /* Adjusted to mint-green-300 for logo SVG color */
+        }
+
+        .sidebar .nav-list ul { /* Target the ul directly for list-style */
+            list-style: none; /* remove default list bullets */
+            padding: 0; /* remove default padding */
+            margin: 0; /* remove default margin */
+        }
+
+        .sidebar .nav-item {
+            margin-bottom: 0.5rem; /* mb-2 */
+        }
+
+        .sidebar .nav-link {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* Align items to the left */
+            padding: 0.75rem; /* p-3 */
+            border-radius: 0.5rem; /* rounded-lg */
+            color: #fff; /* Adjusted to mint-green-300 for text */
+            text-decoration: none; /* remove underline */
+            transition: background-color 0.2s ease, color 0.2s ease; /* transition-colors duration-200 */
+        }
+
+        .sidebar .nav-link:hover {
+            background-color: var(--mint-green-700); /* hover:bg-mint-green-700 */
+            color: #fff; /* Text becomes white on hover */
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 0.75rem; /* mr-3 */
+            font-size: 1.1rem; /* Adjust icon size */
+            color: #fff; /* Adjusted to mint-green-300 for icons */
+        }
+
+        .sidebar .nav-link:hover i {
+            color: #fff; /* Icon becomes white on hover */
+        }
+
+        .sidebar .nav-link span { /* Added style for the text span */
+            white-space: nowrap; /* Prevent text from wrapping */
+            overflow: hidden; /* Hide overflow if it still occurs */
+            text-overflow: ellipsis; /* Add ellipsis for overflow */
+        }
+
+        .sidebar .logout-container {
+            margin-top: auto; /* mt-auto */
+        }
+
+        .sidebar .logout-button {
+            width: 100%; /* w-full */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem; /* p-3 */
+            border-radius: 0.5rem; /* rounded-lg */
+            background: none; /* remove default button background */
+            border: none; /* remove default button border */
+            color: #fff; /* Adjusted to mint-green-300 for text */
+            transition: background-color 0.2s ease, color 0.2s ease; /* transition-colors duration-200 */
+            cursor: pointer;
+            font-size: 1rem; /* Adjust font size */
+        }
+
+        .sidebar .logout-button:hover {
+            background-color: var(--mint-green-700); /* hover:bg-mint-green-700 */
+            color: #fff; /* Text becomes white on hover */
+        }
+
+        .sidebar .logout-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(174, 224, 193, 0.5); /* focus:ring-2 focus:ring-mint-green-400 */
+        }
+
+        .sidebar .logout-button i {
+            margin-right: 0.75rem; /* mr-3 */
+            font-size: 1.1rem; /* Adjust icon size */
+            color: #fff; /* Adjusted to mint-green-300 for icons */
+        }
+
+        .sidebar .logout-button:hover i {
+            color: #fff; /* Icon becomes white on hover */
+        }
+
+
+
+/* ========================================================================================================================== */
+/* homepage */
+
+body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light grey background */
+            min-height: 100vh; /* Ensure full viewport height */
+            overflow: hidden !important; /* Hide body scrollbar */
+        }
+
+        /* Custom Colors from Tailwind Config */
+        :root {
+            --purple-card: #8e44ad;
+            --orange-card: #e67e22;
+            --green-card: #27ae60;
+            --red-card: #e74c3c;
+            --light-grey-bg: #f0f2f5;
+            --table-header-bg: #f8f9fa;
+            --table-hover-bg: #e9ecef;
+            --border-light: #dee2e6;
+            /* Mint Green Palette (if needed, though not directly used in this dashboard image) */
+            --mint-green-50: '#F8FCFA';
+            --mint-green-100: '#EEF6F0';
+            --mint-green-200: '#DDEEE1';
+            --mint-green-300: '#CDE5D3';
+            --mint-green-400: '#BCE0C5';
+            --mint-green-500: '#aee0c1';
+            --mint-green-600: '#9CD1B5';
+            --mint-green-700: '#89C0A3';
+            --mint-green-800: '#76AE91';
+            --mint-green-900: '#639D7F';
+        }
+
+        /* Main content area */
+        .main-content {
+            flex-grow: 1; /* Take remaining space */
+            padding: 30px;
+            overflow-y: auto; /* Allow main content to scroll */
+            -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE and Edge */
+        }
+        .main-content::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+
+        /* Header styling */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-light); /* Light border at the bottom */
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            font-weight: 600;
+            color: #000000; /* Changed to black */
+        }
+
+        .header .dropdown .btn {
+            color: #4a5568; /* text-gray-700 */
+        }
+
+        /* Dashboard cards */
+        .dashboard-card {
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 1.5rem; /* p-6 */
+            color: #fff;
+            margin-bottom: 1.5rem; /* mb-6 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-5px); /* Slight lift on hover */
+        }
+
+        .dashboard-card .card-title {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 500; /* font-medium */
+            margin-bottom: 0.5rem; /* mb-2 */
+            opacity: 0.9; /* Slightly transparent */
+        }
+
+        .dashboard-card .card-value {
+            font-size: 3.125rem; /* text-5xl */
+            font-weight: 700; /* font-bold */
+        }
+
+        /* Specific card colors */
+        .card-purple { background-color: var(--purple-card); } /* Payouts */
+        .card-orange { background-color: var(--orange-card); } /* Total Clients */
+        .card-green { background-color: var(--green-card); } /* Disbursed Amount */
+        .card-red { background-color: var(--red-card); } /* Total Accomplishment Rate */
+
+        /* Served Clients Card */
+        .served-clients-card {
+            background-color: #fff;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+        }
+
+        .served-clients-card .card-title {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #000000; /* Changed to black */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+
+        .served-clients-chart-wrapper {
+            display: flex;
+            flex-direction: column; /* flex-col */
+            align-items: center; /* items-center */
+            justify-content: center; /* justify-center */
+            gap: 0.5rem; /* gap-2 */
+        }
+
+        @media (min-width: 768px) { /* md:flex-row md:justify-start */
+            .served-clients-chart-wrapper {
+                flex-direction: row;
+                justify-content: flex-start;
+            }
+        }
+
+        .chart-circle-outer {
+            width: 80px;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+
+        .chart-circle-inner {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            /* Conic gradient from the provided Tailwind code, adjusted for 4 segments */
+            background: conic-gradient(
+                #FF8C00 0% 40%, /* Medical Assistance - Orange */
+                #E74C3C 40% 70%, /* Funeral - Red */
+                #3498db 70% 90%, /* Educational Assistance - Blue */
+                #2ecc71 90% 100% /* Transportation - Green */
+            );
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-center-value {
+            width: 50px;
+            height: 50px;
+            background: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .legend-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.125rem; /* space-y-0.5 */
+            color: #4a5568; /* text-gray-700 */
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.75rem; /* text-xs */
+        }
+
+        .legend-color-box {
+            width: 0.625rem; /* w-2.5 */
+            height: 0.625rem; /* h-2.5 */
+            border-radius: 9999px; /* rounded-full */
+            margin-right: 0.375rem; /* mr-1.5 */
+        }
+
+        /* Specific legend colors (matching the conic gradient) */
+        .legend-orange { background-color: #FF8C00; }
+        .legend-red { background-color: #E74C3C; }
+        .legend-blue { background-color: #3498db; }
+        .legend-green { background-color: #2ecc71; }
+
+
+        /* Table styling */
+        .table-card {
+            background-color: #fff;
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+        }
+
+        .table-card .card-title {
+            font-size: 1.125rem; /* text-lg */
+            font-weight: 600; /* font-semibold */
+            color: #000000; /* Changed to black */
+            margin-bottom: 1rem; /* mb-4 */
+        }
+
+        .table-responsive-wrapper {
+            overflow-x: auto; /* overflow-x-auto */
+            border-radius: 0.5rem; /* rounded-lg */
+        }
+
+        .upcoming-payouts-table {
+            min-width: 100%; /* min-w-full */
+            border-collapse: collapse; /* divide-y divide-gray-200 */
+        }
+
+        .upcoming-payouts-table thead {
+            background-color: #f9fafb; /* bg-gray-50 */
+        }
+
+        .upcoming-payouts-table th {
+            padding: 0.375rem 0.75rem; /* px-1.5 py-1 */
+            text-align: left; /* text-left */
+            font-size: 0.75rem; /* text-xs */
+            font-weight: 500; /* font-medium */
+            color: #6b7280; /* text-gray-500 */
+            text-transform: uppercase; /* uppercase */
+            letter-spacing: 0.05em; /* tracking-wider */
+            border-bottom: 1px solid #e5e7eb; /* divide-y divide-gray-200 */
+        }
+        .upcoming-payouts-table th:first-child {
+            border-top-left-radius: 0.5rem; /* rounded-tl-lg */
+        }
+        .upcoming-payouts-table th:last-child {
+            border-top-right-radius: 0.5rem; /* rounded-tr-lg */
+        }
+
+        .upcoming-payouts-table tbody {
+            background-color: #fff; /* bg-white */
+        }
+
+        .upcoming-payouts-table td {
+            padding: 0.375rem 0.75rem; /* px-1.5 py-1 */
+            white-space: nowrap; /* whitespace-nowrap */
+            font-size: 0.75rem; /* text-xs */
+            color: #1a202c; /* text-gray-900 */
+            border-bottom: 1px solid #e5e7eb; /* divide-y divide-gray-200 */
+        }
+
+        .upcoming-payouts-table tbody tr:hover {
+            background-color: var(--table-hover-bg); /* hover:bg-gray-100 */
+        }
+        .upcoming-payouts-table tbody tr:last-child td {
+            border-bottom: none; /* Remove border for last row */
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .main-content {
+                padding: 15px;
+            }
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .header h1 {
+                margin-bottom: 10px;
+            }
+            .dashboard-card .card-value {
+                font-size: 2rem;
+            }
+            .served-clients-chart-wrapper {
+                flex-direction: column;
+                text-align: center;
+            }
+            .chart-circle-outer {
+                margin-bottom: 1rem;
+            }
+        }
+
+/* ======================= */
+/* === CLIENT PAGE CSS === */
+/* ======================= */
+
+.clients-container {
+    background-color: #ffffff;
+    border-radius: 0.75rem;
+    box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+/* Button Styling */
+.clients-container .btn {
+    background-color: var(--mint-green-800);
+    color: #fff;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    transition: background-color 0.3s ease;
+    border: none;
+}
+
+.clients-container .btn:hover {
+    background-color: var(--mint-green-600);
+    color: #fff;
+}
+
+/* Table Styling */
+.clients-container table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #fff;
+}
+
+.clients-container th,
+.clients-container td {
+    padding: 0.75rem;
+    text-align: left;
+    border: 1px solid #dee2e6;
+    font-size: 0.9rem;
+}
+
+.clients-container th {
+    background-color: var(--mint-green-100);
+    font-weight: 600;
+    color: #374151;
+}
+
+.clients-container tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+/* Dropdown Summary Styling */
+.clients-container .dropdown-menu {
+    background-color: var(--mint-green-500);
+    border-radius: 0.5rem;
+}
+
+.clients-container .dropdown-item {
+    color: #fff;
+    font-weight: 500;
+}
+
+.clients-container .dropdown-item:hover {
+    background-color: var(--mint-green-600);
+    color: #fff;
+}
+
+/* Search and filter inputs */
+.clients-container .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ccc;
+    padding: 0.5rem 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.clients-container .form-control:focus {
+    border-color: var(--mint-green-600);
+    box-shadow: 0 0 0 0.2rem rgba(174, 224, 193, 0.5);
+    outline: none;
+}
+
+/* Modal button overrides */
+.clients-container .modal .btn {
+    border-radius: 0.5rem;
+}
+
+.clients-container .modal .btn-success {
+    background-color: var(--mint-green-700);
+    border-color: var(--mint-green-700);
+}
+
+.clients-container .modal .btn-success:hover {
+    background-color: var(--mint-green-800);
+    border-color: var(--mint-green-800);
+}
+
+
+/* ==================================================================================================================== */
+
+
+/* users */
+body {
+    font-family: 'Inter', sans-serif;
+}
+/* Custom scrollbar for better aesthetics */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
+/* clients */
+/* Import Google Font (optional: if not already handled in app.blade) */
+
+/* Apply Inter font */
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+.clients-container button {
+    background-color: #aee0c1; /* Mint Green */
+    color: white;
+    padding: 0.5rem 1rem;
+    border: 1px solid #639D7F; /* Darker mint */
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+.clients-container button:hover {
+    background-color: #639D7F; /* Darker mint */
+}
+
+/* Scrollbar customization */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+
+/* //////////////////////////////////////////////////////////////////////// */
+/* ============================= */
+/* Bootstrap Create Modal Styling */
+/* ============================= */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f5f5;
+}
+
+/* Mint Green Theme Variables */
+:root {
+    --mint-green-100: #eef6f0;
+    --mint-green-300: #cde5d3;
+    --mint-green-500: #aee0c1;
+    --mint-green-600: #89c0a3;
+    --mint-green-700: #76ae91;
+    --mint-green-800: #639d7f;
+}
+
+/* Card Style for the Form */
+.card-form {
+    background-color: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* Labels */
+label {
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.3rem;
+}
+
+/* Inputs & Selects */
+.form-control, .form-select {
+    border-radius: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid #ccc;
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--mint-green-500);
+    box-shadow: 0 0 0 0.2rem rgba(174, 224, 193, 0.5);
+    outline: none;
+}
+
+/* Form Sections (Categories & Requirements) */
+#categories_section, #requirements_section {
+    padding: 0.5rem 1rem;
+    background-color: var(--mint-green-100);
+    border-radius: 0.5rem;
+}
+
+/* Checkbox & Radio */
+.form-check-input:checked {
+    background-color: var(--mint-green-600);
+    border-color: var(--mint-green-600);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(174, 224, 193, 0.4);
+}
+
+/* Buttons */
+.btn-mint {
+    background-color: var(--mint-green-800);
+    color: #fff;
+    font-weight: 600;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.btn-mint:hover {
+    background-color: var(--mint-green-700);
+    color: #fff;
+}
+
+.btn-cancel {
+    background-color: #e2e8f0;
+    color: #1f2937;
+    border-radius: 0.5rem;
+    padding: 0.5rem 1rem;
+}
+
+.btn-cancel:hover {
+    background-color: #cbd5e0;
+    color: #1f2937;
+}
+
+/* Section Titles */
+.section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .card-form {
+        padding: 1rem;
+    }
+}
+
+
+/* ////////////////////////////////////////////////////////////////////// */
+/* edit modal style */
+:root {
+    --mint-green: #aee0c1;
+    --mint-green-dark: #76AE91;
+    --mint-green-hover: #89C0A3;
+}
+
+/* Modal wrapper */
+.modal-edit {
+    z-index: 1050;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Modal content */
+.modal-edit .bg-white {
+    border-radius: 0.75rem;
+    padding: 2rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-width: 800px;
+    margin: auto;
+}
+
+/* Modal title */
+.modal-edit h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #343a40;
+}
+
+/* Form inputs */
+.modal-edit .form-control {
+    border-radius: 0.5rem;
+    border: 1px solid #ced4da;
+    padding: 0.5rem 0.75rem;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.modal-edit .form-control:focus {
+    border-color: var(--mint-green);
+    box-shadow: 0 0 0 0.2rem rgba(174, 224, 193, 0.5);
+}
+
+/* Checkbox styling */
+.modal-edit .form-check-input:checked {
+    background-color: var(--mint-green);
+    border-color: var(--mint-green);
+}
+
+/* Buttons */
+.modal-edit .btn-primary {
+    background-color: var(--mint-green);
+    border-color: var(--mint-green);
+    font-weight: 500;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.modal-edit .btn-primary:hover {
+    background-color: var(--mint-green-hover);
+    border-color: var(--mint-green-hover);
+}
+
+.modal-edit .btn-secondary {
+    background-color: #dee2e6;
+    border-color: #dee2e6;
+    color: #212529;
+    font-weight: 500;
+}
+
+.modal-edit .btn-secondary:hover {
+    background-color: #ced4da;
+    border-color: #ced4da;
+}
+
+
+/* ======================================================================================== */
+/* ShOW.BLADE */
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+}
+
+.btn-mint {
+    background-color: #76AE91;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-mint:hover {
+    background-color: #639D7F;
+    color: #fff;
+}
+
+.card {
+    border-radius: 0.75rem;
+    border: none;
+}
+
+.card h4 {
+    color: #374151;
+}
+
+.card strong {
+    color: #1f2937;
+}
+
+h1, h4 {
+    color: #1f2937;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f8f9fa;
+}
+
+h1, h4 {
+    color: #1f2937;
+}
+
+/* Card Specific Styles */
+.card {
+    border-radius: 0.75rem;
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card h4.fw-semibold,
+.card h5.fw-semibold {
+    color: #374151;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.card strong {
+    color: #1f2937;
+}
+
+.card .form-control[readonly] {
+    background-color: #e9ecef;
+    opacity: 1;
+    border: 1px solid #ced4da;
+}
+
+/* Button Styles */
+.btn-mint {
+    background-color: #76AE91;
+    color: #fff;
+    border: none;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    border-radius: 0.3rem;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.btn-mint:hover {
+    background-color: #639D7F;
+    color: #fff;
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529;
+    border-color: #ffc107;
+}
+
+.btn-warning:hover {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    color: #212529;
+}
+
+/* Layout & Utility Adjustments */
+.container .text-secondary {
+    font-size: 1.5rem;
+    color: #6c757d !important;
+    transition: color 0.2s ease-in-out;
+}
+
+.container .text-secondary:hover {
+    color: #5a6268 !important;
+}
+
+.card.p-4.mt-4 {
+    position: relative;
+}
+
+/* Modal Specific Adjustments */
+#reason-container {
+    display: none;
+}
+
+#check-no-field {
+    display: none;
+}
+
+/* List Styling (for Vulnerability Sectors) */
+.list-unstyled {
+    padding-left: 0;
+    list-style: none;
+}
+
+.list-unstyled li {
+    margin-bottom: 0.25rem;
+}

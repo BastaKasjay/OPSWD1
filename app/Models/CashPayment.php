@@ -9,10 +9,10 @@ class CashPayment extends Model
 {
     use HasFactory;
 
-    protected $primaryKey = 'cash_payment_id';
+    protected $primaryKey = 'id';
 
     protected $fillable = [
-        'approved_claims_id',
+        'claim_id',
         'client_id',
         'date_prepared',
         'confirmed_people',
@@ -24,4 +24,11 @@ class CashPayment extends Model
     protected $casts = [
         'confirmed_people' => 'array',
     ];
+
+    public function claim()
+    {
+        return $this->belongsTo(\App\Models\Claim::class, 'claim_id');
+    }
+    
+
 }

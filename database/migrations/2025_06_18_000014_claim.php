@@ -9,14 +9,14 @@ return new class extends Migration {
             $table->id();
             $table->unsignedBigInteger('client_id');
             $table->unsignedBigInteger('client_assistance_id');
-            $table->enum('status', ['approved', 'disapproved']);
+            $table->enum('status', ['approved', 'disapproved', 'pending'])->default('pending');
             $table->string('reason_of_disapprovement')->nullable();
             $table->decimal('amount_approved', 12, 2)->nullable();
             $table->date('date_cafoa_prepared')->nullable();
             $table->date('date_pgo_received')->nullable();
             $table->date('date_pto_received')->nullable();
-            $table->string('form_of_payment')->nullable();
-            $table->enum('confirmation', ['check', 'cash'])->nullable();
+            $table->enum('form_of_payment', ['cheque', 'cash'])->nullable();
+            $table->date('confirmation')->nullable();
             $table->timestamps();
 
             // Foreign keys (assume clients and client_assistances tables exist)

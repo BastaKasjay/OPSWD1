@@ -1,7 +1,5 @@
-
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <title>OPSWD Login</title>
     <script src="https://cdn.tailwindcss.com"></script>
@@ -24,7 +22,6 @@
         }
     </style>
 </head>
-
 <body class="bg-lightgreen">
     <div class="min-h-screen flex items-center justify-center p-4">
         <div class="bg-white p-10 rounded-xl shadow-lg w-full max-w-md border border-gray-100">
@@ -37,25 +34,44 @@
                     Provincial Social Welfare & Development
                 </p>
             </div>
-            <form method="POST" action="{{ route('login.submit') }}">
+
+            <form method="POST" action="{{ route('login') }}">
                 @csrf
                 <div class="space-y-6">
+                    <!-- Username -->
                     <div class="relative">
                         <input type="text" name="username" id="username" placeholder="Username"
-                            class="peer h-14 w-full px-4 rounded-xl border border-gray-300 bg-white placeholder-transparent focus:border-govgreen focus:ring-2 focus:ring-govgreen/30 outline-none transition-colors" />
+                            class="peer h-14 w-full px-4 rounded-xl border border-gray-300 bg-white placeholder-transparent focus:border-govgreen focus:ring-2 focus:ring-govgreen/30 outline-none transition-colors"
+                            value="{{ old('username') }}" required autofocus autocomplete="username" />
                         <label for="username"
                             class="absolute left-4 -top-3.5 bg-white p-1 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-placeholder-shown:p-0 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-govgreen peer-focus:bg-white peer-focus:p-1 text-gray-600">
                             Username
                         </label>
+                        @error('username')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
+
+                        {{-- Show general login failure message here too --}}
+                        @if($errors->has('login'))
+                        <p class="text-red-500 text-xs mt-1">{{ $errors->first('login') }}</p>
+                        @endif
                     </div>
+
+                    <!-- Password -->
                     <div class="relative">
                         <input type="password" name="password" id="password" placeholder="Password"
-                            class="peer h-14 w-full px-4 rounded-xl border border-gray-300 bg-white placeholder-transparent focus:border-govgreen focus:ring-2 focus:ring-govgreen/30 outline-none transition-colors" />
+                            class="peer h-14 w-full px-4 rounded-xl border border-gray-300 bg-white placeholder-transparent focus:border-govgreen focus:ring-2 focus:ring-govgreen/30 outline-none transition-colors"
+                            required autocomplete="current-password" />
                         <label for="password"
                             class="absolute left-4 -top-3.5 bg-white p-1 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-placeholder-shown:p-0 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-govgreen peer-focus:bg-white peer-focus:p-1 text-gray-600">
                             Password
                         </label>
+                        @error('password')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
+
+                    <!-- Remember Me and Forgot Password -->
                     <div class="flex items-center justify-between">
                         <label class="flex items-center gap-2">
                             <input type="checkbox"
@@ -63,24 +79,21 @@
                                 name="remember" />
                             <span class="text-sm text-gray-600">Remember me</span>
                         </label>
-                        <a href="#" class="text-sm text-govgreen hover:text-govgreen/80 transition-colors">
+                        @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}" class="text-sm text-govgreen hover:text-govgreen/80 transition-colors">
                             Forgot password?
                         </a>
+                        @endif
                     </div>
+
+                    <!-- Submit Button -->
                     <button
                         class="w-full bg-gradient-to-tr from-govgreen to-govgreen/70 text-white py-3 px-4 rounded-lg hover:bg-govgreen/90 transition-all active:scale-[0.98] font-medium h-14">
                         LOG IN
                     </button>
-
-                     {{-- Display login error --}}
-                    @if($errors->has('login'))
-                    <p class="text-red-500 text-sm mt-4 text-center">{{ $errors->first('login') }}</p>
-                    @endif
-
                 </div>
             </form>
         </div>
     </div>
 </body>
-
 </html>

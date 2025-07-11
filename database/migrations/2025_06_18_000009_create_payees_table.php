@@ -9,27 +9,31 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('payees', function (Blueprint $table) {
-    $table->id();
-    // Foreign Key to clients table
-    $table->unsignedBigInteger('client_id');
-    $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->id();
 
-    // Reference to previous payee (if needed)
-    $table->unsignedBigInteger('previous_payee_id')->nullable();
-    $table->foreign('previous_payee_id')->references('id')->on('payees')->onDelete('set null');
+            // Foreign Key to clients table
+            $table->unsignedBigInteger('client_id');
+            $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
 
-    // Payee Details
-    $table->string('first_name');
-    $table->string('middle_name')->nullable();
-    $table->string('last_name');
-    $table->string('full_name');
-    $table->string('relationship');
-    $table->string('proof_of_relationship')->nullable();
+            // Reference to previous payee (if needed)
+            $table->unsignedBigInteger('previous_payee_id')->nullable();
+            $table->foreign('previous_payee_id')->references('id')->on('payees')->onDelete('set null');
 
-    // Boolean Flags
-    $table->boolean('updated_to_new_payee')->default(false);
+            // Payee Details — make nullable to support self-payees
+            $table->string('first_name')->nullable();
+            $table->string('middle_name')->nullable();
+            $table->string('last_name')->nullable();
+            $table->string('full_name')->nullable();
+            $table->string('contact_number')->nullable();
+            $table->string('relationship')->nullable();
+            $table->string('proof_of_relationship')->nullable();
+            $table->boolean('valid_id')->default(false);
 
-    $table->timestamps();
+            // Boolean Flags
+            $table->boolean('updated_to_new_payee')->default(false);
+            $table->boolean('is_self_payee')->default(false); // ✅ Track self-payees
+
+            $table->timestamps();
         });
     }
 
