@@ -23,8 +23,8 @@ class ClaimFactory extends Factory
             'date_cafoa_prepared' => $this->faker->optional()->date(),
             'date_pgo_received' => $this->faker->optional()->date(),
             'date_pto_received' => $this->faker->optional()->date(),
-            'form_of_payment' => $this->faker->optional()->word(),
-            'confirmation' => $this->faker->randomElement(['check', 'cash']),
+            'form_of_payment' => $this->faker->optional()->randomElement(['cash', 'cheque']),
+            'confirmation' => $this->faker->optional()->date(),
         ];
     }
 }

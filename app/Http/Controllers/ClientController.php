@@ -57,9 +57,9 @@ class ClientController extends Controller
         $client = Client::with([
             'municipality',
             'vulnerabilitySectors',
-            'assistanceType',
-            'assistanceCategory',
-            'payee'
+            'payee',
+            'assistances.assistanceType',
+            'assistances.assistanceCategory',
         ])->findOrFail($id);
 
         $municipalities = Municipality::all();
@@ -68,13 +68,14 @@ class ClientController extends Controller
         $assistanceCategories = AssistanceCategory::all();
 
         return view('client.show', compact(
-        'client',
-        'municipalities',
-        'vulnerabilitySectors',
-        'assistanceTypes',
-        'assistanceCategories'
-    ));
+            'client',
+            'municipalities',
+            'vulnerabilitySectors',
+            'assistanceTypes',
+            'assistanceCategories'
+        ));
     }
+
 
     public function create()
     {
@@ -100,15 +101,6 @@ class ClientController extends Controller
             'vulnerability_sectors' => 'array|nullable'
         ]);
 
-        $payeeData = $request->validate([
-            'representative_first_name' => 'nullable|string',
-            'representative_middle_name' => 'nullable|string',
-            'representative_last_name' => 'nullable|string',
-            'representative_contact_number' => 'nullable|string',
-            'relationship' => 'nullable|string',
-            'proof_of_relationship' => 'nullable|boolean',
-        ]);
-
         DB::beginTransaction();
 
         try {
@@ -118,25 +110,6 @@ class ClientController extends Controller
                 $client->vulnerabilitySectors()->attach($request->vulnerability_sectors);
             }
 
-            // Determine if representative info is filled
-            $hasRepresentativeData = $request->filled('representative_first_name') && $request->filled('relationship');
-
-            $payee = \App\Models\Payee::create([
-                'client_id' => $client->id,
-                'first_name' => $hasRepresentativeData ? $request->representative_first_name : null,
-                'middle_name' => $hasRepresentativeData ? $request->representative_middle_name : null,
-                'last_name' => $hasRepresentativeData ? $request->representative_last_name : null,
-                'full_name' => $hasRepresentativeData
-                    ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
-                    : null,
-                'contact_number' => $hasRepresentativeData ? $request->representative_contact_number : null,
-                'relationship' => $hasRepresentativeData ? $request->relationship : null,
-                'proof_of_relationship' => $request->has('proof_of_relationship') ? 1 : 0,
-                'is_self_payee' => $request->filled('representative_first_name') ? 0 : 1, // 👈 flag client as payee if no rep
-            ]);
-
-
-
             DB::commit();
             return redirect()->route('clients.index')->with('success', 'Client created successfully.');
         } catch (\Exception $e) {
@@ -144,6 +117,7 @@ class ClientController extends Controller
             return redirect()->back()->with('error', 'Something went wrong while saving client: ' . $e->getMessage());
         }
     }
+
 
 
 
@@ -178,7 +152,9 @@ class ClientController extends Controller
 
     public function update(Request $request, $id)
     {
-        $validated = $request->validate([
+        $client = Client::findOrFail($id);
+
+        $request->validate([
             'first_name' => 'required|string',
             'middle_name' => 'nullable|string',
             'last_name' => 'required|string',
@@ -187,22 +163,27 @@ class ClientController extends Controller
             'address' => 'required|string',
             'contact_number' => 'nullable|string',
             'birthday' => 'nullable|date',
+            'municipality_id' => 'required|exists:municipalities,id',
             'representative_first_name' => 'nullable|string',
             'representative_middle_name' => 'nullable|string',
             'representative_last_name' => 'nullable|string',
             'representative_contact_number' => 'nullable|string',
             'relationship' => 'nullable|string',
             'proof_of_relationship' => 'nullable|boolean',
-            'municipality_id' => 'required|exists:municipalities,id',
             'vulnerability_sectors' => 'array|nullable'
         ]);
 
-        $client = Client::findOrFail($id);
-        $client->update($validated);
+        $clientData = $request->only([
+            'first_name', 'middle_name', 'last_name',
+            'sex', 'age', 'address', 'contact_number',
+            'birthday', 'municipality_id'
+        ]);
+        $client->update($clientData);
 
+        // Sync vulnerability sectors
         $client->vulnerabilitySectors()->sync($request->vulnerability_sectors ?? []);
 
-        // 🔁 Update or Create Payee
+        // Handle payee
         $hasRepresentative = $request->has('has_representative');
 
         $payeeData = [
@@ -224,7 +205,6 @@ class ClientController extends Controller
             $payeeData
         );
 
-
         return redirect()->route('clients.show', $client->id)
             ->with('success', 'Client updated successfully');
     }
@@ -238,7 +218,7 @@ class ClientController extends Controller
             'vulnerabilitySectors',
             'assistances.assistanceType',
             'assistances.assistanceCategory',
-            'payee'
+            'assistances.payee'
         ]);
 
 

@@ -24,28 +24,63 @@ class ClientAssistanceController extends Controller
         $request->validate([
             'client_id' => 'required|exists:clients,id',
             'assistance_type_id' => 'required|exists:assistance_types,id',
+            'assistance_category_id' => 'required|exists:assistance_categories,id',
             'date_received_request' => 'required|date',
         ]);
 
-        $payee_id = \App\Models\Payee::where('client_id', $request->client_id)->value('id');
+        DB::beginTransaction();
 
-        $assistance = ClientAssistance::create([
-            'client_id' => $request->client_id,
-            'assistance_type_id' => $request->assistance_type_id,
-            'date_received_request' => $request->date_received_request,
-            'payee_id' => $payee_id,
-        ]);
+        try {
+            // Try to fetch existing payee
+            $payee = \App\Models\Payee::where('client_id', $request->client_id)->first();
 
+            // If no payee exists yet, create one (either representative or self-payee)
+            if (!$payee) {
+                $hasRepresentative = $request->has('has_representative') && $request->filled('representative_first_name') && $request->filled('relationship');
 
-        \App\Models\Claim::firstOrCreate([
-            'client_id' => $assistance->client_id,
-            'client_assistance_id' => $assistance->id,
-        ], [
-            'status' => 'pending',
-        ]);
+                $payee = \App\Models\Payee::create([
+                    'client_id' => $request->client_id,
+                    'first_name' => $hasRepresentative ? $request->representative_first_name : null,
+                    'middle_name' => $hasRepresentative ? $request->representative_middle_name : null,
+                    'last_name' => $hasRepresentative ? $request->representative_last_name : null,
+                    'contact_number' => $hasRepresentative ? $request->representative_contact_number : null,
+                    'relationship' => $hasRepresentative ? $request->relationship : null,
+                    'proof_of_relationship' => $hasRepresentative && $request->has('proof_of_relationship') ? 1 : 0,
+                    'full_name' => $hasRepresentative
+                        ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
+                        : null,
+                    'is_self_payee' => $hasRepresentative ? 0 : 1,
+                ]);
+            }
 
-        return redirect()->route('clients.assistance')->with('success', 'Client assistance added successfully.');
+            // Create client assistance
+            $assistance = ClientAssistance::create([
+                'client_id' => $request->client_id,
+                'assistance_type_id' => $request->assistance_type_id,
+                'assistance_category_id' => $request->assistance_category_id,
+                'date_received_request' => $request->date_received_request,
+                'payee_id' => $payee->id,
+            ]);
+
+            // Create claim record (status = pending by default)
+            \App\Models\Claim::firstOrCreate([
+                'client_id' => $assistance->client_id,
+                'client_assistance_id' => $assistance->id,
+            ], [
+                'status' => 'pending',
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('clients.assistance')->with('success', 'Client assistance added successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Failed to add assistance: ' . $e->getMessage());
+        }
     }
+
+
+
 
 
 

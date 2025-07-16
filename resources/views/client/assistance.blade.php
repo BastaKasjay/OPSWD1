@@ -30,7 +30,8 @@
                     <th>Sex</th>
                     <th>Age</th>
                     <th>Contact Number</th>
-                    <th>Representative</th>
+                    <th>Representaive</th>
+                    <th>Representative Contact</th>
                     <th>Municipality</th>
                     <th>Assistance Type</th>
                     <th>Assistance Category</th>
@@ -50,7 +51,9 @@
                         <td>{{ $client->sex }}</td>
                         <td>{{ $client->age }}</td>
                         <td>{{ $client->contact_number }}</td>
-                        <td>{{ optional($client->payee)->full_name ?? '-' }}</td>
+                        <td>
+    {{ $assistance->payee && !empty($assistance->payee->full_name) ? $assistance->payee->full_name : '-' }}</td>
+                        <td>{{ optional($assistance->payee)->contact_number ?? '-' }}</td>
                         <td>{{ $client->municipality->name ?? '-' }}</td>
                         <td>{{ $assistance->assistanceType->type_name ?? '-' }}</td>
                         <td>{{ $assistance->assistanceCategory->category_name ?? '-' }}</td>
@@ -138,6 +141,46 @@
                 <input type="date" name="date_received_request" id="date_received_request" class="form-control" required>
             </div>
 
+            <!-- Representative Toggle -->
+            <div class="form-check mb-3">
+                <input type="checkbox" name="has_representative" id="has_representative" class="form-check-input" value="1" onchange="toggleRepresentativeFields()">
+                <label class="form-check-label" for="has_representative">Client has a Representative?</label>
+            </div>
+
+            <!-- Representative Details -->
+            <div id="representativeFields" style="display: none;">
+                <div class="form-group">
+                    <label>Representative First Name:</label>
+                    <input type="text" name="representative_first_name" class="form-control" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Representative Middle Name:</label>
+                    <input type="text" name="representative_middle_name" class="form-control" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Representative Last Name:</label>
+                    <input type="text" name="representative_last_name" class="form-control" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Relationship to the Client:</label>
+                    <input type="text" name="relationship" class="form-control" autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <label>Representative Contact Number:</label>
+                    <input type="text" name="representative_contact_number" class="form-control" autocomplete="off">
+                </div>
+
+                <!-- Proof of Relationship -->
+                <div class="form-check mt-2">
+                    <input type="checkbox" name="proof_of_relationship" id="proof_of_relationship" class="form-check-input" value="1">
+                    <label for="proof_of_relationship" class="form-check-label">Proof of Relationship Provided?</label>
+                </div>
+            </div>
+
             <div class="mb-3">
                 <label class="form-label">Assistance Type:</label>
                 <select name="assistance_type_id" id="assistance_type" class="form-select" required>
@@ -181,6 +224,17 @@ function openAssistanceModalFromSearch() {
 function closeAssistanceModal() {
     document.getElementById('addAssistanceModal').classList.add('d-none');
 }
+
+function toggleRepresentativeFields() {
+        const checkbox = document.getElementById('has_representative');
+        const repFields = document.getElementById('representativeFields');
+        repFields.style.display = checkbox.checked ? 'block' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleRepresentativeFields();
+        document.getElementById('has_representative')?.addEventListener('change', toggleRepresentativeFields);
+    });
 
 document.addEventListener('DOMContentLoaded', function () {
     const searchInput = document.getElementById('search_client_input');
@@ -258,19 +312,19 @@ document.addEventListener('DOMContentLoaded', function () {
             });
 
         fetch(`/get-categories/${typeId}`)
-            .then(res => res.json())
-            .then(data => {
-                let html = data.length ? '' : '<p>No categories found.</p>';
-                data.forEach(c => {
-                    html += `<div class="form-check">
-                                <input type="radio" value="{{ $client->id }}" class="form-check-input category-radio">
-
-                                <label class="form-check-label">${c.category_name}</label>
-                            </div>`;
-                });
-                document.getElementById('categories_section').innerHTML = html;
-                attachValidation();
+        .then(res => res.json())
+        .then(data => {
+            let html = data.length ? '' : '<p>No categories found.</p>';
+            data.forEach(c => {
+                html += `<div class="form-check">
+                            <input type="radio" name="assistance_category_id" value="${c.id}" class="form-check-input category-radio" id="category-${c.id}">
+                            <label class="form-check-label" for="category-${c.id}">${c.category_name}</label>
+                        </div>`;
             });
+            document.getElementById('categories_section').innerHTML = html;
+            attachValidation();
+        });
+
     });
 
     function attachValidation() {

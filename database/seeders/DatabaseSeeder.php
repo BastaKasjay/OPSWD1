@@ -16,7 +16,7 @@ class DatabaseSeeder extends Seeder
             // ClientSeeder::class, // Removed to stop seeding default clients
             UnclaimedCheckSeeder::class,
             CashPaymentSeeder::class,
-            CashDisbursementSeeder::class,
+            DisbursementSeeder::class,
         ]);
     }
 }

@@ -22,6 +22,20 @@ class Claim extends Model
         'confirmation',
     ];
 
+    public function isClaimed()
+    {
+        if ($this->form_of_payment === 'cash') {
+            return $this->cashDisbursement()->exists();
+        }
+
+        if ($this->form_of_payment === 'cheque') {
+            return $this->checkDisbursement()->exists();
+        }
+
+        return false;
+    }
+
+
     public function clientAssistance()
     {
         return $this->belongsTo(\App\Models\ClientAssistance::class);
@@ -35,6 +49,11 @@ class Claim extends Model
     public function cashPayment()
     {
         return $this->hasOne(\App\Models\CashPayment::class, 'claim_id');
+    }
+
+    public function disbursement()
+    {
+        return $this->hasOne(\App\Models\Disbursement::class);
     }
 
 

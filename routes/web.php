@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Client;
 
+use App\Http\Controllers\DisbursementController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ReportsController;
 use App\Http\Controllers\UserController;
@@ -33,6 +34,7 @@ Route::get('/', function () {
 
 // claims
 Route::get('/claims/grouped', [ClaimController::class, 'groupedClaims'])->name('claims.grouped');
+Route::post('/claims/update-status/{clientId}', [ClaimController::class, 'updateStatus'])->name('claims.updateStatus');
 
 
 // assistance
@@ -47,6 +49,8 @@ Route::put('/claims/{id}', [ClaimController::class, 'update'])->name('claims.upd
 Route::resource('clients', ClientController::class);
 
 
+// Disbursement routes
+Route::patch('/disbursements/{id}/update-claim-status', [DisbursementController::class, 'updateClaimStatus'])->name('disbursements.updateClaimStatus');
 
 
 

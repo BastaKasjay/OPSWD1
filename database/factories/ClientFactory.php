@@ -23,7 +23,6 @@ class ClientFactory extends Factory
             'address' => $this->faker->address(),
             'contact_number' => $this->faker->phoneNumber(),
             'municipality_id' => 1, // You may want to ensure this exists or use a factory
-            'assistance_type_id' => 1, // You may want to ensure this exists or use a factory
             //'assessed_by' => $user->id, // CHANGED: use created user's ID
             'valid_id' => $this->faker->boolean(),
         ];

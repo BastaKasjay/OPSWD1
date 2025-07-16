@@ -28,12 +28,6 @@ return new class extends Migration
             $table->unsignedBigInteger('municipality_id');
             $table->foreign('municipality_id')->references('id')->on('municipalities')->onDelete('cascade');
 
-            $table->unsignedBigInteger('assistance_type_id')->nullable();
-            $table->foreign('assistance_type_id')->references('id')->on('assistance_types')->onDelete('set null');
-
-            $table->unsignedBigInteger('assistance_category_id')->nullable();
-            $table->foreign('assistance_category_id')->references('id')->on('assistance_categories')->onDelete('set null');
-
             $table->unsignedBigInteger('assessed_by')->nullable();
             $table->foreign('assessed_by')->references('id')->on('users')->onDelete('restrict');
 

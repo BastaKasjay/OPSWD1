@@ -15,6 +15,8 @@ class ClientAssistance extends Model
         'client_id',
         'assistance_type_id',
         'assistance_category_id',
+        'assistance_type_id',
+        'assistance_category_id',
         'payee_id',
         'date_received_request',
     ];
@@ -44,6 +46,7 @@ class ClientAssistance extends Model
     {
         return $this->belongsTo(\App\Models\AssistanceCategory::class);
     }
+    
 
 
 }

@@ -5,7 +5,7 @@
 /* sidebar */
 body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Light grey background for the main body */
+            background-color: #f0f5f5; /* Light grey background for the main body */
             min-height: 100vh;
             display: flex;
             overflow: hidden !important; /* Hide body scrollbar */
@@ -22,7 +22,7 @@ body {
             --mint-green-600: #9CD1B5;
             --mint-green-700: #89C0A3;
             --mint-green-800: #76AE91; /* Sidebar background color */
-            --mint-green-900: #639D7F;
+            --mint-green-900: #4d8568;
         }
 
         /* Sidebar styles */

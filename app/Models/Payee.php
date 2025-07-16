@@ -23,7 +23,7 @@ class Payee extends Model
         'updated_to_new_payee',
         'previous_payee_id',
         'valid_id',
-        'is_self_payee', // ✅ Important
+        'is_self_payee', 
     ];
 
     // Corrected relationship
@@ -40,5 +40,11 @@ class Payee extends Model
             }
         });
     }
+
+    public function getFullNameAttribute()
+    {
+        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
 
 }
