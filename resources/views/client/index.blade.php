@@ -30,7 +30,7 @@
                     <th>Age</th>
                     <th>Address</th>
                     <th>Contact Number</th>
-                    <!-- <th>Birthday</th> -->
+                    <th>Valid_ID</th>
                     <th>
                         Municipality
                         <form method="GET" action="{{ route('clients.index') }}">
@@ -61,6 +61,7 @@
                         <td>{{ $client->age }}</td>
                         <td>{{ $client->address }}</td>
                         <td>{{ $client->contact_number }}</td>
+                        <td>{{ $client->valid}}</td>
                         <td>{{ $client->municipality ? $client->municipality->name : '-' }}</td>
                         <td>
                             @if ($client->vulnerabilitySectors->isNotEmpty())
@@ -75,9 +76,7 @@
                         </td>
                         <td>
                             <div class="d-flex gap-2 justify-content-center">
-                                <!-- <button onclick="openEditModal({{ $client->id }})" class="btn btn-sm btn-warning" title="Edit Client">
-                                    <i class="fas fa-edit"></i>
-                                </button> -->
+                                
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn btn-sm btn-success" title="View Client">
                                     <i class="fas fa-eye"></i>
                                 </a>
@@ -85,88 +84,6 @@
                         </td>
                     </tr>
 
-                    <!-- edit modal -->
-                    <div id="editModal_{{ $client->id }}" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50" style="z-index: 1050;">
-                        <div class="bg-white rounded shadow-lg p-4 overflow-auto" style="max-width: 800px; max-height: 90vh; width: 100%;">
-                            <h2 class="h4 fw-bold text-center text-mint-green mb-4">Edit Info</h2>
-
-                            <form action="{{ route('clients.update', $client->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-
-                                <div class="row g-3">
-                                    <!-- Personal Details -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">First Name:</label>
-                                        <input type="text" name="first_name" class="form-control rounded border border-success" value="{{ $client->first_name }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Middle Name:</label>
-                                        <input type="text" name="middle_name" class="form-control rounded border border-success" value="{{ $client->middle_name }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Last Name:</label>
-                                        <input type="text" name="last_name" class="form-control rounded border border-success" value="{{ $client->last_name }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Sex:</label>
-                                        <select name="sex" class="form-select rounded border border-success" required>
-                                            <option value="Male" {{ $client->sex == 'Male' ? 'selected' : '' }}>Male</option>
-                                            <option value="Female" {{ $client->sex == 'Female' ? 'selected' : '' }}>Female</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Age:</label>
-                                        <input type="number" name="age" class="form-control rounded border border-success" value="{{ $client->age }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Address:</label>
-                                        <input type="text" name="address" class="form-control rounded border border-success" value="{{ $client->address }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Contact Number:</label>
-                                        <input type="text" name="contact_number" class="form-control rounded border border-success" value="{{ $client->contact_number }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Birthday:</label>
-                                        <input type="date" name="birthday" class="form-control rounded border border-success" value="{{ $client->birthday }}">
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Municipality:</label>
-                                        <select name="municipality_id" class="form-select rounded border border-success" required>
-                                            <option value="">Select Municipality</option>
-                                            @foreach($municipalities as $municipality)
-                                                <option value="{{ $municipality->id }}" {{ $client->municipality_id == $municipality->id ? 'selected' : '' }}>
-                                                    {{ $municipality->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <label class="form-label">Vulnerability Sectors:</label>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            @foreach($vulnerabilitySectors as $sector)
-                                                <div class="form-check">
-                                                    <input type="checkbox" name="vulnerability_sectors[]" value="{{ $sector->id }}" 
-                                                        class="form-check-input" id="sector_{{ $client->id }}_{{ $sector->id }}"
-                                                        {{ $client->vulnerabilitySectors->contains($sector->id) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="sector_{{ $client->id }}_{{ $sector->id }}">{{ $sector->name }}</label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-
-                                    
-
-                                <div class="mt-4 d-flex justify-content-end gap-2">
-                                    <button type="submit" class="btn btn-success">Save Changes</button>
-                                    <a href="{{ route('clients.index', $client->id) }}" class="btn btn-secondary">Cancel</a>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
 
                 
                 @endforeach
@@ -221,6 +138,33 @@
                         @endforeach
                     </select>
                 </div>
+
+
+                <div class="col-md-6">
+                    <label class="form-label">Valid ID:</label>
+                    <select name="valid_id" class="form-select" required>
+                        <option value="">Select Valid ID</option>
+                        <option value="PhilHealth ID">PhilHealth ID</option>
+                        <option value="SSS ID">SSS ID</option>
+                        <option value="GSIS ID">GSIS ID</option>
+                        <option value="Passport">Passport</option>
+                        <option value="Driver’s License">Driver’s License</option>
+                        <option value="Voter’s ID">Voter’s ID</option>
+                        <option value="Postal ID">Postal ID</option>
+                        <option value="PRC ID">PRC ID</option>
+                        <option value="UMID">UMID</option>
+                        <option value="Barangay ID">Barangay ID</option>
+                        <option value="Senior Citizen ID">Senior Citizen ID</option>
+                        <option value="PWD ID">PWD ID</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6">
+                    <label class="form-label">ID No.</label>
+                    <input type="number" name="id_no" class="form-control" required>
+                </div>
+
+                
 
                 <div class="col-md-12">
                     <label class="form-label">Address:</label>

@@ -16,7 +16,7 @@
     <div class="card p-4 ">
         <div class="d-flex gap-2 justify-content-center">
         <button onclick="openEditModal({{ $client->id }})" class="btn btn-sm btn-warning" title="Edit Client">
-            <i class="fas fa-edit"></i>
+            <i class="fas fa-edit"></i> Edit Personal Info
         </button>
     </div>
       
@@ -28,7 +28,11 @@
                     <div class="col-md-4"><strong>Municipality:</strong> {{ optional($client->municipality)->name ?? '-' }}</div>
                     <div class="col-md-4"><strong>Sex:</strong> {{ $client->sex }}</div>
                     <div class="col-md-4"><strong>Age:</strong> {{ $client->age }}</div>
-                    <div class="col-md-4"><strong>Birth Date:</strong> {{ $client->birthday ?? '-' }}</div>
+                    <div class="col-md-4">
+                        <strong>Birth Date:</strong>
+                        {{ $client->birthday ? \Carbon\Carbon::parse($client->birthday)->format('F d, Y') : '-' }}
+                    </div>
+
                     <div class="col-md-4"><strong>Contact:</strong> {{ $client->contact_number ?? '-' }}</div>
                     <div class="col-md-4">
                         <strong>Vulnerability Sectors:</strong>
@@ -51,26 +55,28 @@
    
 
 
-            <h5 class="fw-semibold mb-3 text-center">Assistance</h5>
-
+            <h4 class="fw-semibold mb-3 text-center">Assistance</h4>
             @if ($client->assistances && $client->assistances->isNotEmpty())
                 @foreach ($client->assistances as $assistance)
-                    <div class="row border rounded mb-3 p-3">
+                    <div class="row g-3 border rounded mb-4 p-3">
                         <div class="col-md-4">
-                            <h5 class="fw-semibold mb-2">Assistance Type:</h5>
-                            <div>{{ $assistance->assistanceType->type_name ?? '-' }}</div>
+                            <strong>Assistance Type:</strong> {{ $assistance->assistanceType->type_name ?? '-' }}
                         </div>
-
                         <div class="col-md-4">
-                            <h5 class="fw-semibold mb-2">Assistance Category:</h5>
-                            <div>{{ $assistance->assistanceCategory->category_name ?? '-' }}</div>
+                            <strong>Assistance Category:</strong> {{ $assistance->assistanceCategory->category_name ?? '-' }}
                         </div>
-
+                        <div class="col-md-4">
+                            <strong>Medical Case:</strong> {{ $assistance->medical_case ?? '-' }}
+                        </div>
+                        <div class="col-md-4">
+                            <strong>Date Received:</strong> {{ $assistance->date_received_request ?? '-' }}
+                        </div>
                     </div>
                 @endforeach
             @else
-                <p class="text-muted text-center">No assistance records found.</p>
+                <p class="text-muted text-center">No assistance records available.</p>
             @endif
+
 
             <!-- edit modal -->
                     <div id="editModal_{{ $client->id }}" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center bg-dark bg-opacity-50" style="z-index: 1050;">

@@ -15,8 +15,7 @@ class ClientAssistance extends Model
         'client_id',
         'assistance_type_id',
         'assistance_category_id',
-        'assistance_type_id',
-        'assistance_category_id',
+        'medical_case',
         'payee_id',
         'date_received_request',
     ];

@@ -30,9 +30,10 @@
                     <th>Sex</th>
                     <th>Age</th>
                     <th>Contact Number</th>
-                    <th>Representaive</th>
+                    <th>Representative</th>
                     <th>Representative Contact</th>
                     <th>Municipality</th>
+                    <th>Medical Case</th>
                     <th>Assistance Type</th>
                     <th>Assistance Category</th>
                     <th>Status</th>
@@ -55,6 +56,7 @@
     {{ $assistance->payee && !empty($assistance->payee->full_name) ? $assistance->payee->full_name : '-' }}</td>
                         <td>{{ optional($assistance->payee)->contact_number ?? '-' }}</td>
                         <td>{{ $client->municipality->name ?? '-' }}</td>
+                        <td>{{ $assistance->medical_case ?? '-' }}</td>
                         <td>{{ $assistance->assistanceType->type_name ?? '-' }}</td>
                         <td>{{ $assistance->assistanceCategory->category_name ?? '-' }}</td>
 
@@ -186,9 +188,10 @@
                 <select name="assistance_type_id" id="assistance_type" class="form-select" required>
                     <option value="">Select Assistance Type</option>
                     @foreach($assistanceTypes as $type)
-                        <option value="{{ $type->id }}">{{ $type->type_name }}</option>
+                        <option value="{{ $type->id }}" data-name="{{ strtolower($type->type_name) }}">{{ $type->type_name }}</option>
                     @endforeach
                 </select>
+
             </div>
 
             <div class="mb-3">
@@ -196,6 +199,20 @@
                 <div id="categories_section" class="ps-3">
                     <p class="text-muted">Please select an assistance type to view categories.</p>
                 </div>
+            </div>
+
+            <!-- medical case -->
+            <div class="mb-3" id="medical_case_section" style="display: none;">
+                <label class="form-label">Medical Case:</label>
+                <select name="medical_case" class="form-select">
+                    <option value="">Select Case</option>
+                    <option value="CKD">CKD</option>
+                    <option value="Cancer">Cancer</option>
+                    <option value="Heart Illness">Heart Illness</option>
+                    <option value="Diabetes">Diabetes</option>
+                    <option value="Hypertension">Hypertension</option>
+                    <option value="Others">Others</option>
+                </select>
             </div>
 
             <div class="mb-3">
@@ -291,6 +308,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 resultsContainer.innerHTML = '';
             }
         }, 100);
+    });
+
+    // medical case
+    document.getElementById('assistance_type')?.addEventListener('change', function () {
+        const selected = this.options[this.selectedIndex];
+        const selectedName = selected.getAttribute('data-name');
+        const medicalCaseSection = document.getElementById('medical_case_section');
+
+        if (selectedName?.includes('medical')) {
+            medicalCaseSection.style.display = 'block';
+        } else {
+            medicalCaseSection.style.display = 'none';
+        }
     });
 
     typeSelect.addEventListener('change', function () {

@@ -22,6 +22,7 @@ return new class extends Migration
 
             // Request Details
             $table->date('date_received_request');
+            $table->string('medical_case')->nullable();
         
 
             $table->timestamps();

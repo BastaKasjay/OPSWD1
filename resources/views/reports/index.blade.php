@@ -68,26 +68,27 @@
                 </tr>
             </thead>
             <tbody class="text-center">
+            @foreach($reports as $i => $r)
                 <tr>
-                    <td>1</td>
-                    <td>Sample Town</td>
-                    <td>5</td>
-                    <td>7</td>
-                    <td>1</td>
-                    <td>0</td>
-                    <td>2</td>
-                    <td>1</td>
-                    <td>0</td>
-                    <td>1000</td>
-                    <td>2000</td>
-                    <td>500</td>
-                    <td>1500</td>
-                    <td>1000</td>
-                    <td>200</td>
-                    <td>5000</td>
-                    <td>1</td>
+                    <td>{{ $i + 1 }}</td>
+                    <td>{{ $r->municipality }}</td>
+                    <td>{{ $r->male }}</td>
+                    <td>{{ $r->female }}</td>
+                    <td>{{ $r->CKD }}</td>
+                    <td>{{ $r->Cancer }}</td>
+                    <td>{{ $r->HeartIllness }}</td>
+                    <td>{{ $r->DiabetesHypertension }}</td>
+                    <td>{{ $r->Others }}</td>
+                    <td>{{ $r->MedFund }}</td>
+                    <td>{{ $r->BurialFund }}</td>
+                    <td>{{ $r->ESAFund }}</td>
+                    <td>{{ $r->MedFund /* if you need a second Medical ESA column, adjust */ }}</td>
+                    <td>{{ $r->BurialFund /* adjust as per your 2nd ESA grouping */ }}</td>
+                    <td>{{ $r->ESAFund /* and so on… */ }}</td>
+                    <td>{{ $r->AmountPaid }}</td>
+                    <td>{{ $r->NoOfUnreserved }}</td>
                 </tr>
-                <!-- Add more rows dynamically -->
+            @endforeach
             </tbody>
         </table>
     </div>

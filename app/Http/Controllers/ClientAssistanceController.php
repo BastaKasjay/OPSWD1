@@ -59,6 +59,7 @@ class ClientAssistanceController extends Controller
                 'assistance_type_id' => $request->assistance_type_id,
                 'assistance_category_id' => $request->assistance_category_id,
                 'date_received_request' => $request->date_received_request,
+                'medical_case' => $request->medical_case,
                 'payee_id' => $payee->id,
             ]);
 

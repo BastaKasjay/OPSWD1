@@ -6,7 +6,7 @@ use App\Models\Client;
 
 use App\Http\Controllers\DisbursementController;
 use App\Http\Controllers\ClaimController;
-use App\Http\Controllers\ReportsController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\MunicipalityController;
@@ -62,7 +62,7 @@ Route::get('/get-requirements/{id}', [AssistanceController::class, 'getRequireme
 Route::get('/get-categories/{id}', [AssistanceController::class, 'getCategories']);
 
 //Reports rooutes
-Route::get('/reports', [ReportsController::class, 'index'])->name('reports.index');
+Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
 // Other resource routes
 Route::resource('payees', PayeeController::class);
