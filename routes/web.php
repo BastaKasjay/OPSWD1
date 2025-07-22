@@ -77,6 +77,10 @@ Route::resource('roles', RoleController::class);
 // User Management Routes (now public)
 Route::resource('users', UserController::class);
 
+// Employee Management Routes
+Route::resource('employees', EmployeeController::class);
+
+
 
 // Custom Login submit
 Route::post('/login', function (Request $request) {

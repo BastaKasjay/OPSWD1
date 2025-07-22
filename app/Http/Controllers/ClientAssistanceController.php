@@ -31,27 +31,30 @@ class ClientAssistanceController extends Controller
         DB::beginTransaction();
 
         try {
-            // Try to fetch existing payee
-            $payee = \App\Models\Payee::where('client_id', $request->client_id)->first();
+        // Determine if representative is provided
+        $hasRepresentative = $request->has('has_representative') 
+            && $request->filled('representative_first_name') 
+            && $request->filled('relationship');
 
-            // If no payee exists yet, create one (either representative or self-payee)
-            if (!$payee) {
-                $hasRepresentative = $request->has('has_representative') && $request->filled('representative_first_name') && $request->filled('relationship');
+        // Try to fetch existing payee
+        $payee = \App\Models\Payee::where('client_id', $request->client_id)->first();
 
-                $payee = \App\Models\Payee::create([
-                    'client_id' => $request->client_id,
-                    'first_name' => $hasRepresentative ? $request->representative_first_name : null,
-                    'middle_name' => $hasRepresentative ? $request->representative_middle_name : null,
-                    'last_name' => $hasRepresentative ? $request->representative_last_name : null,
-                    'contact_number' => $hasRepresentative ? $request->representative_contact_number : null,
-                    'relationship' => $hasRepresentative ? $request->relationship : null,
-                    'proof_of_relationship' => $hasRepresentative && $request->has('proof_of_relationship') ? 1 : 0,
-                    'full_name' => $hasRepresentative
-                        ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
-                        : null,
-                    'is_self_payee' => $hasRepresentative ? 0 : 1,
-                ]);
-            }
+        // If no payee exists yet, create one
+        if (!$payee) {
+            $payee = \App\Models\Payee::create([
+                'client_id' => $request->client_id,
+                'first_name' => $hasRepresentative ? $request->representative_first_name : null,
+                'middle_name' => $hasRepresentative ? $request->representative_middle_name : null,
+                'last_name' => $hasRepresentative ? $request->representative_last_name : null,
+                'contact_number' => $hasRepresentative ? $request->representative_contact_number : null,
+                'relationship' => $hasRepresentative ? $request->relationship : null,
+                'proof_of_relationship' => $hasRepresentative && $request->has('proof_of_relationship') ? 1 : 0,
+                'full_name' => $hasRepresentative
+                    ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
+                    : null,
+                'is_self_payee' => $hasRepresentative ? 0 : 1,
+            ]);
+        }
 
             // Create client assistance
             $assistance = ClientAssistance::create([
@@ -59,7 +62,9 @@ class ClientAssistanceController extends Controller
                 'assistance_type_id' => $request->assistance_type_id,
                 'assistance_category_id' => $request->assistance_category_id,
                 'date_received_request' => $request->date_received_request,
-                'medical_case' => $request->medical_case,
+                'medical_case' => $request->medical_case === 'Others' && $request->filled('other_case') 
+                    ? $request->other_case 
+                    : $request->medical_case,
                 'payee_id' => $payee->id,
             ]);
 
@@ -70,6 +75,7 @@ class ClientAssistanceController extends Controller
             ], [
                 'status' => 'pending',
             ]);
+            
 
             DB::commit();
 
@@ -78,6 +84,7 @@ class ClientAssistanceController extends Controller
             DB::rollBack();
             return back()->with('error', 'Failed to add assistance: ' . $e->getMessage());
         }
+
     }
 
 

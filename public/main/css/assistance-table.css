@@ -1,0 +1,98 @@
+/* Assistance Table Custom Styles (Bootstrap-based, do not change design) */
+.assistance-th {
+    border: none;
+    background-color: var(--mint-green-100);
+    font-weight: 600;
+    color: #374151;
+    padding: 0.75rem;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.assistance-td {
+    border: none;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+}
+
+.assistance-actions {
+    /* Use Bootstrap flex utilities for layout */
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+/* Button styles for modal and actions (Bootstrap override, do not change design) */
+.btn-success {
+    background-color: var(--mint-green-800) !important;
+    color: #fff !important;
+    font-weight: 600;
+    border: none;
+}
+.btn-success:hover {
+    background-color: var(--mint-green-600) !important;
+    color: #fff !important;
+}
+.btn-light {
+    background-color: #fff !important;
+    color: #374151 !important;
+    border: 1px solid #ccc !important;
+}
+.btn-light:hover {
+    background-color: var(--mint-green-100) !important;
+    color: #374151 !important;
+}
+
+/* Dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Minimalist dropdown menu styling for actions */
+/* Prevent dropdown from being cut off */
+.dropdown {
+  position: relative;
+  overflow: visible !important;
+}
+
+/* Ensure dropdown menu is on top and not clipped */
+.dropdown-menu {
+  position: absolute;
+  z-index: 1050 !important;
+  overflow: visible !important;
+  max-height: none !important;
+  min-width: max-content;
+  inset: auto auto auto 0; /* Aligns correctly */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: for visibility */
+  border-radius: 0.5rem;
+  background: #fff !important;
+  color: #76AE91 !important;
+}
+
+/* Prevent scrollbars caused by dropdown */
+body,
+html {
+  overflow-y: auto !important;
+}
+
+/* Fix overflow on scrollable containers (like modals or table wrappers) */
+.container,
+.table-responsive,
+.card-body,
+.scroll-wrapper {
+  overflow: visible !important;
+}
+
+/* Optional: Hide scrollbars in dropdown */
+.dropdown-menu::-webkit-scrollbar {
+  display: none;
+}
+.dropdown-menu {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}
+

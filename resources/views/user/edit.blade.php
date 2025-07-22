@@ -34,8 +34,8 @@
                 @endforeach
             </select>
         </div>
-        <button type="submit" class="btn btn-primary">Save Changes</button>
-        <a href="{{ route('users.index') }}" class="btn btn-secondary">Cancel</a>
+        <button type="submit" class="btn" style="background: #3edbb3; color: #fff; border: none;">Save Changes</button>
+        <a href="{{ route('users.index') }}" class="btn" style="background: #3edbb3; color: #fff; border: none;">Cancel</a>
     </form>
 </div>
 @endsection

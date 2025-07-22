@@ -18,6 +18,7 @@
 
     <!-- Your Custom CSS -->
     <link rel="stylesheet" href="{{ asset('main/css/styles.css') }}">
+    <link rel="stylesheet" href="{{ asset('main/css/assistance-table.css') }}">
 
 
     <!-- Tailwind CSS via CDN
@@ -47,6 +48,7 @@
     </script> -->
 
     
+   
 </head>
 <body class="d-flex">
 

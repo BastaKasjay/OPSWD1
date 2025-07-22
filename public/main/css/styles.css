@@ -520,6 +520,20 @@ body {
     border-color: var(--mint-green-800);
 }
 
+.modal-overlay {
+    animation: slideInModal 0.3s ease-out;
+}
+
+@keyframes slideInModal {
+    from {
+        transform: translateY(-40px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
 
 /* ==================================================================================================================== */
 
@@ -899,3 +913,17 @@ h1, h4 {
 .list-unstyled li {
     margin-bottom: 0.25rem;
 }
+
+/* \button colors show.blade*/
+        .custom-green-btn {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+            color: #fff !important;
+        }
+        .custom-green-btn:hover,
+        .custom-green-btn:focus,
+        .custom-green-btn:active {
+            background-color: #157347 !important;
+            border-color: #157347 !important;
+            color: #fff !important;
+        }

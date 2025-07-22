@@ -25,8 +25,9 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'first_name' => 'required|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
             'last_name' => 'required|string|max:50',
-            'position' => 'required|string|max:100',
+            'office' => 'required|string|max:100',
         ]);
 
         Employee::create($request->all());
@@ -52,8 +53,9 @@ class EmployeeController extends Controller
     {
         $request->validate([
             'first_name' => 'required|string|max:50',
+            'middle_name' => 'nullable|string|max:50',
             'last_name' => 'required|string|max:50',
-            'position' => 'required|string|max:100',
+            'office' => 'required|string|max:100',
         ]);
 
         $employee->update($request->all());

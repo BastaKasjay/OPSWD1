@@ -170,7 +170,9 @@ class ClientController extends Controller
             'representative_contact_number' => 'nullable|string',
             'relationship' => 'nullable|string',
             'proof_of_relationship' => 'nullable|boolean',
-            'vulnerability_sectors' => 'array|nullable'
+            'vulnerability_sectors' => 'array|nullable',
+            'assistanceTypes' => 'array|nullable',
+            'assistanceCategories' => 'array|nullable'
         ]);
 
         $clientData = $request->only([
@@ -204,6 +206,16 @@ class ClientController extends Controller
             ['client_id' => $client->id],
             $payeeData
         );
+
+        // Update assistance type/category/medical_case for the first assistance record
+        if ($client->assistances()->exists()) {
+            $assistance = $client->assistances()->first();
+            $assistance->update([
+                'assistance_type_id' => $request->input('assistance_type_id'),
+                'assistance_category_id' => $request->input('assistance_category_id'),
+                'medical_case' => $request->input('medical_case'),
+            ]);
+        }
 
         return redirect()->route('clients.show', $client->id)
             ->with('success', 'Client updated successfully');

@@ -21,7 +21,17 @@
                 </li>
                 <li class="nav-item">
                     <a href="{{ route('clients.assistance') }}" class="nav-link">
-                        <i class="fas fa-hand-holding-usd"></i> <span>Assistance Management</span>
+                        <i class="fas fa-hands-helping"></i> <span>Assistance Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('claims.grouped') }}" class="nav-link">
+                        <i class="fas fa-hand-holding-usd"></i> <span>Payout Management</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ route('employees.index') }}" class="nav-link">
+                        <i class="fas fa-chart-bar"></i> <span>Employee Management</span>
                     </a>
                 </li>
                 <li class="nav-item">
@@ -37,9 +47,13 @@
             </ul>
         </nav>
         <div class="logout-container">
-            <button type="submit" class="logout-button">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Log out</span>
-            </button>
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+                <button type="submit" class="logout-button">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Log out</span>
+                </button>
+            </form>
         </div>
+
     </aside>

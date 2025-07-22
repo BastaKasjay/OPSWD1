@@ -42,7 +42,7 @@
                     <div class="relative">
                         <input type="text" name="username" id="username" placeholder="Username"
                             class="peer h-14 w-full px-4 rounded-xl border border-gray-300 bg-white placeholder-transparent focus:border-govgreen focus:ring-2 focus:ring-govgreen/30 outline-none transition-colors"
-                            value="{{ old('username') }}" required autofocus autocomplete="username" />
+                            value="{{ old('username') }}" required autofocus autocomplete="off" />
                         <label for="username"
                             class="absolute left-4 -top-3.5 bg-white p-1 text-sm transition-all peer-placeholder-shown:text-base peer-placeholder-shown:top-4 peer-placeholder-shown:bg-transparent peer-placeholder-shown:p-0 peer-focus:-top-3.5 peer-focus:text-sm peer-focus:text-govgreen peer-focus:bg-white peer-focus:p-1 text-gray-600">
                             Username

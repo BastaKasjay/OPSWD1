@@ -11,9 +11,7 @@ class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
-    /**
-     * The attributes that are mass assignable.
-     */
+
     protected $fillable = [
         'name',
         'username',
@@ -22,32 +20,24 @@ class User extends Authenticatable
         'employee_id',
     ];
 
-    /**
-     * The attributes that should be hidden for arrays and JSON.
-     */
+
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * The attributes that should be cast.
-     */
+
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
 
-    /**
-     * Relationship: a User belongs to an Employee.
-     */
+
     public function employee()
     {
         return $this->belongsTo(Employee::class);
     }
 
-    /**
-     * Optionally: Add a mutator to automatically hash passwords
-     */
+
     public function setPasswordAttribute($value)
     {
         $this->attributes['password'] = bcrypt($value);
@@ -68,4 +58,16 @@ class User extends Authenticatable
     {
         return 'username';
     }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'users_roles');
+    }
+
+    public function hasRole($roleName)
+    {
+        return $this->roles()->where('name', $roleName)->exists();
+    }
+
+
 }
