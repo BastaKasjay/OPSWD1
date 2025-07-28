@@ -16,7 +16,7 @@ return new class extends Migration {
 
             $table->enum('form_of_payment', ['cash', 'cheque'])->nullable(); // new column
             $table->decimal('amount', 12, 2);
-            $table->date('confirmation_date')->nullable();
+            $table->date('payout_date')->nullable();
             $table->date('date_received_claimed')->nullable();
             $table->date('date_released')->nullable();
             $table->decimal('total_amount_claimed', 12, 2)->nullable();

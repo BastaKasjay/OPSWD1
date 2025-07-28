@@ -17,7 +17,7 @@ class Disbursement extends Model
         'check_payment_id',
         'form_of_payment',
         'amount',
-        'confirmation_date',
+        'payment_date',
         'date_received_claimed',
         'date_released',
         'total_amount_claimed',

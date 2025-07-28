@@ -9,7 +9,7 @@
         <div>
             <button class="btn btn-success custom-green-btn rounded px-4 py-2 fw-semibold shadow-sm me-2" style="border-radius: 0.7rem; font-size: 1rem; background-color: #198754; border: none;" id="addAssistanceBtn">
                 <i class="fas fa-plus me-2"></i> Add Assistance
-</button>
+            </button>
         </div>
         <form method="GET" action="{{ route('clients.assistance') }}" class="d-flex align-items-center" style="max-width: 350px;">
             <input type="text" name="search" class="form-control me-2" value="{{ request('search') }}" placeholder="Search by name" style="width: 180px; border-radius: 0.5rem; border: 1px solid #ccc;">
@@ -52,7 +52,10 @@
                         <td class="assistance-td">{{ $client->municipality->name ?? '-' }}</td>
                         <td class="assistance-td">{{ $assistance->medical_case ?? '-' }}</td>
                         <td class="assistance-td">{{ $assistance->assistanceType->type_name ?? '-' }}</td>
-                        <td class="assistance-td">{{ $assistance->assistanceCategory->category_name ?? '-' }}</td>
+                        <td>
+                            {{ $assistance->other_category_name ?? $assistance->assistanceCategory->category_name }}
+                        </td>
+
                         <td class="assistance-td">
                             <span class="fw-semibold {{ $status === 'approved' ? 'text-success' : ($status === 'disapproved' ? 'text-danger' : 'text-warning') }}">
                                 {{ ucfirst($status) }}
@@ -192,20 +195,29 @@
                                 <input type="text" name="other_case" id="other_case" class="form-control" placeholder="Enter other medical case">
                             </div>
                         </div>
+                        <!-- Category Section -->
                         <div class="col-md-6">
-                        <label class="form-label fw-semibold">Category</label>
-                        <div id="categories_section" class="ps-3">
-                            <p class="text-muted">Please select an assistance type to view categories.</p>
+                            <label class="form-label fw-semibold">Category</label>
+                            <div id="categories_section" class="ps-3">
+                                <p class="text-muted">Please select an assistance type to view categories.</p>
+                            </div>
+                            <div id="other_category_input" class="mt-2" style="display: none;">
+                                <input type="text" name="other_category" class="form-control" placeholder="Please specify other category">
+                            </div>
                         </div>
-                    </div>
 
+                        <!-- Requirements Section -->
                         <div class="col-md-6">
                             <label class="form-label fw-semibold">Requirements</label>
                             <div id="requirements_section" class="ps-3">
                                 <p class="text-muted">Please select an assistance type to view requirements.</p>
                             </div>
-                        </div>
 
+                            <!-- "Others" input field (optional) -->
+                            <div id="other_requirement_input" class="mt-2" style="display: none;">
+                                <input type="text" name="other_requirement" class="form-control" placeholder="(Optional) Specify other requirement">
+                            </div>
+                        </div>
                     </div>
                     <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2" style="background: none;">
                         <button type="submit" class="btn btn-success custom-green-btn rounded-pill px-4" id="saveAssistanceBtn" disabled>Save</button>
@@ -360,52 +372,91 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     
 
-    // Otherwise fetch and populate requirements and categories
+    // fetch the requirements
     fetch(`/get-requirements/${typeId}`)
-    .then(res => res.json())
-    .then(data => {
-        let html = data.length
-            ? `<div class="form-check mb-2">
-                    <input type="checkbox" id="check_all_requirements" class="form-check-input">
-                    <label class="form-check-label fw-semibold" for="check_all_requirements">Check All Requirements</label>
-               </div>`
-            : '<p>No requirements found.</p>';
+        .then(res => res.json())
+        .then(data => {
+            // ✅ Sort so "Others" is always last
+            data.sort((a, b) => {
+                if (a.requirement_name.toLowerCase().includes("others")) return 1;
+                if (b.requirement_name.toLowerCase().includes("others")) return -1;
+                return 0;
+            });
 
-        data.forEach(r => {
-            html += `<div class="form-check">
-                        <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input requirement-checkbox">
-                        <label class="form-check-label">${r.requirement_name}</label>
-                    </div>`;
-        });
+            let html = data.length
+                ? `<div class="form-check mb-2">
+                        <input type="checkbox" id="check_all_requirements" class="form-check-input">
+                        <label class="form-check-label fw-semibold" for="check_all_requirements">Check All Requirements</label>
+                </div><ol class="ps-3">`
+                : '<p>No requirements found.</p>';
 
-        const requirementsSection = document.getElementById('requirements_section');
-        if (requirementsSection) {
-            requirementsSection.innerHTML = html;
+            data.forEach(r => {
+                html += `<li>
+                            <div class="form-check">
+                                <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input requirement-checkbox">
+                                <label class="form-check-label">${r.requirement_name}</label>
+                            </div>
+                        </li>`;
+            });
 
-            const checkAll = document.getElementById('check_all_requirements');
-            const checkboxes = requirementsSection.querySelectorAll('.requirement-checkbox');
+            html += data.length ? `</ol>` : '';
 
-            if (checkAll) {
-                checkAll.addEventListener('change', function () {
-                    checkboxes.forEach(cb => cb.checked = this.checked);
-                    if (typeof validate === 'function') validate();
-                });
+            const requirementsSection = document.getElementById('requirements_section');
+            if (requirementsSection) {
+                requirementsSection.innerHTML = html;
 
-                checkboxes.forEach(cb => {
-                    cb.addEventListener('change', function () {
-                        const allChecked = [...checkboxes].every(cb => cb.checked);
-                        checkAll.checked = allChecked;
+                const checkAll = document.getElementById('check_all_requirements');
+                const checkboxes = requirementsSection.querySelectorAll('.requirement-checkbox');
+
+                if (checkAll) {
+                    checkAll.addEventListener('change', function () {
+                        checkboxes.forEach(cb => {
+                            cb.checked = this.checked;
+
+                            // ✅ Delay dispatch so the checked state is updated first
+                            setTimeout(() => {
+                                cb.dispatchEvent(new Event('change'));
+                            }, 0);
+                        });
+
                         if (typeof validate === 'function') validate();
                     });
-                });
-            }
 
-            if (typeof attachValidation === 'function') attachValidation();
-        }
-    })
-    .catch(err => {
-        console.error('Error fetching requirements:', err);
-    });
+                    checkboxes.forEach(cb => {
+                        cb.addEventListener('change', function () {
+                            const allChecked = [...checkboxes].every(cb => cb.checked);
+                            checkAll.checked = allChecked;
+                            if (typeof validate === 'function') validate();
+                        });
+                    });
+                }
+
+
+                // ✅ Show/hide "Others" input field dynamically
+                const otherInput = document.getElementById('other_requirement_input');
+                if (otherInput) {
+                    otherInput.style.display = "none";
+                    checkboxes.forEach(cb => {
+                        cb.addEventListener('change', function () {
+                            const labelText = this.nextElementSibling.textContent.trim().toLowerCase();
+                            if (labelText.includes("others") && this.checked) {
+                                otherInput.style.display = "block";
+                            } else if (labelText.includes("others") && !this.checked) {
+                                otherInput.style.display = "none";
+                                otherInput.querySelector("input").value = "";
+                            }
+                        });
+                    });
+                }
+
+                if (typeof attachValidation === 'function') attachValidation();
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching requirements:', err);
+        });
+
+
 
     // Fetch and populate categories
 fetch(`/get-categories/${typeId}`)
@@ -416,42 +467,88 @@ fetch(`/get-categories/${typeId}`)
             : '<p class="text-muted">No categories found.</p>';
 
         data.forEach(c => {
-            html += `<div class="form-check">
-                        <input type="radio" name="assistance_category_id" value="${c.id}" class="form-check-input category-radio" id="category-${c.id}">
-                        <label class="form-check-label" for="category-${c.id}">${c.category_name}</label>
-                    </div>`;
+            const isOthers = c.category_name.toLowerCase() === "others";
+            html += `
+                <div class="form-check">
+                    <input type="radio" 
+                           name="assistance_category_id" 
+                           value="${c.id}" 
+                           class="form-check-input category-radio ${isOthers ? 'others-radio' : ''}" 
+                           id="category-${c.id}">
+                    <label class="form-check-label" for="category-${c.id}">${c.category_name}</label>
+                </div>`;
         });
 
         const categoriesSection = document.getElementById('categories_section');
-        if (categoriesSection) {
-            categoriesSection.innerHTML = html;
-            if (typeof attachValidation === 'function') attachValidation();
+        if (!categoriesSection) return;
+
+        categoriesSection.innerHTML = html;
+
+        const otherCategoryInput = document.getElementById("other_category_input");
+        if (!otherCategoryInput) return;
+
+        otherCategoryInput.style.display = "none";
+
+        const othersRadio = categoriesSection.querySelector(".others-radio");
+
+        // Show input when "Others" is clicked
+        if (othersRadio) {
+            othersRadio.addEventListener("change", function () {
+                if (this.checked) {
+                    otherCategoryInput.style.display = "block";
+                }
+            });
         }
+
+        // Hide input when any non-"Others" radio is clicked
+        categoriesSection.querySelectorAll(".category-radio").forEach(radio => {
+            radio.addEventListener("change", function () {
+                if (!this.classList.contains("others-radio")) {
+                    otherCategoryInput.style.display = "none";
+                    otherCategoryInput.querySelector("input").value = "";
+                }
+            });
+        });
+
+        // ✅ Check immediately if "Others" is already selected (important for edit forms)
+        if (othersRadio && othersRadio.checked) {
+            otherCategoryInput.style.display = "block";
+        }
+
+        if (typeof attachValidation === 'function') attachValidation();
     })
     .catch(err => {
         console.error('Error fetching categories:', err);
-        document.getElementById('categories_section').innerHTML = '<p class="text-danger">Failed to load categories.</p>';
+        document.getElementById('categories_section').innerHTML =
+            '<p class="text-danger">Failed to load categories.</p>';
     });
 
-});
 
+    });
 
-    function attachValidation() {
-        const requirements = document.querySelectorAll('.requirement-checkbox');
-        const categories = document.querySelectorAll('.category-radio');
-        requirements.forEach(cb => cb.addEventListener('change', validate));
-        categories.forEach(rb => rb.addEventListener('change', validate));
-        validate();
-    }
 
     function validate() {
         const clientSelected = clientIdField.value.trim() !== '';
-        const allChecked = [...document.querySelectorAll('.requirement-checkbox')].every(cb => cb.checked);
         const categorySelected = document.querySelector('.category-radio:checked') !== null;
-        const noRequirements = document.querySelectorAll('.requirement-checkbox').length === 0;
-        saveBtn.disabled = !(clientSelected && categorySelected && (noRequirements || allChecked));
+
+        // ✅ Get all requirement checkboxes
+        const checkboxes = [...document.querySelectorAll('.requirement-checkbox')];
+
+        // ✅ Ignore "Others" in validation
+        const normalReqs = checkboxes.filter(cb => 
+            !cb.nextElementSibling.textContent.trim().toLowerCase().includes("others")
+        );
+
+        // ✅ Check if all normal requirements are checked
+        const allNormalChecked = normalReqs.every(cb => cb.checked);
+
+        const noRequirements = checkboxes.length === 0;
+
+        // ✅ Enable save if client + category selected + all normal checked (others optional)
+        saveBtn.disabled = !(clientSelected && categorySelected && (noRequirements || allNormalChecked));
     }
-});
+
+    });
 </script>
 @endsection
 @endsection

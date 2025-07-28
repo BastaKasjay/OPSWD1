@@ -18,6 +18,7 @@ return new class extends Migration
             $table->unsignedBigInteger('client_id');
             $table->unsignedBigInteger('assistance_type_id');
             $table->unsignedBigInteger('assistance_category_id');
+            $table->string('other_category_name')->nullable();
             $table->unsignedBigInteger('payee_id')->nullable(); // Payee ID can be null if no payee is assigned
 
             // Request Details

@@ -17,6 +17,7 @@ return new class extends Migration
             // Foreign key to the assistance_type table
             $table->unsignedBigInteger('assistance_type_id');
             $table->string('requirement_name', 512);
+            $table->text('value')->nullable();
             $table->timestamps();
 
             // Foreign key constraint

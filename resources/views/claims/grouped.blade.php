@@ -15,9 +15,9 @@
             ->filter(fn($claim) => $claim->disbursement?->claim_status === 'claimed')
             ->sum(fn($claim) => $claim->disbursement->total_amount_claimed ?? 0);
 
-        // Get unique payment methods and confirmation dates for filters
+        // Get unique payment methods and payout dates for filters
         $methods = $allClaims->pluck('form_of_payment')->unique()->filter()->values();
-        $dates = $allClaims->pluck('confirmation')->unique()->filter()->sort()->values();
+        $dates = $allClaims->pluck('payout_date')->unique()->filter()->sort()->values();
     @endphp
 
     @if ($allClaims->isNotEmpty())
@@ -27,13 +27,13 @@
                 <label class="form-label fw-semibold">Filter by Payment Method:</label>
                 <select id="methodFilter" class="form-select">
                     <option value="">All Methods</option>
-                    @foreach($methods as $method)
-                        <option value="{{ $method }}">{{ ucfirst($method) }}</option>
-                    @endforeach
+                    <option value="cash">Cash</option>
+                    <option value="cheque">Cheque</option>
                 </select>
+
             </div>
             <div class="col-md-3">
-                <label class="form-label fw-semibold">Filter by Confirmation Date:</label>
+                <label class="form-label fw-semibold">Filter by Payout Date:</label>
                 <select id="dateFilter" class="form-select">
                     <option value="">All Dates</option>
                     @foreach($dates as $date)
@@ -56,7 +56,7 @@
                         <th class="fw-semibold text-success" style="background: none; border: none;">Date Released</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Claim Status</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Payment Method</th>
-                        <th class="fw-semibold text-success" style="background: none; border: none;">Confirmation Date</th>
+                        <th class="fw-semibold text-success" style="background: none; border: none;">Payout Date</th>
                         <th class="fw-semibold text-success text-center" style="background: none; width: 70px; border: none;">Action</th>
                     </tr>
                 </thead>
@@ -64,7 +64,7 @@
                     @foreach($allClaims->sortBy(fn($c) => $c->client->municipality->name ?? '') as $claim)
                         <tr 
                             data-method="{{ $claim->form_of_payment }}" 
-                            data-date="{{ $claim->confirmation }}"
+                            data-date="{{ $claim->payout_date }}"
                             style="border: none;"
                         >
                             <td style="border: none;">{{ $claim->client->full_name ?? '-' }}</td>
@@ -88,12 +88,14 @@
                                 @endif
                             </td>
                             <td style="border: none;">{{ ucfirst($claim->form_of_payment ?? '-') }}</td>
-                            <td style="border: none;">{{ $claim->confirmation ? \Carbon\Carbon::parse($claim->confirmation)->format('F d, Y') : '-' }}</td>
+                            <td style="border: none;">{{ $claim->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</td>
                             <td class="text-center" style="border: none;">
                                 <div class="d-flex justify-content-center gap-1">
-                                    <button class="btn p-1" style="border: none; background: none;" data-bs-toggle="modal" data-bs-target="#editDisbursementModal{{ $claim->id }}" title="Edit">
-                                        <i class="bi bi-pencil-square text-success"></i>
-                                    </button>
+                                    @if($claim->disbursement?->claim_status !== 'claimed')
+                                        <button class="btn p-1" style="border: none; background: none;" data-bs-toggle="modal" data-bs-target="#editDisbursementModal{{ $claim->id }}" title="Edit">
+                                            <i class="bi bi-pencil-square text-success"></i>
+                                        </button>
+                                    @endif
                                     <a href="{{ route('clients.show', $claim->client_id) }}" class="btn p-1" style="border: none; background: none;" title="View Client">
                                         <i class="fas fa-eye text-success"></i>
                                     </a>

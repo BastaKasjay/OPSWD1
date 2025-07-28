@@ -21,23 +21,20 @@ class DisbursementController extends Controller
     {
         $validated = $request->validate([
             'claim_id'  => 'required|exists:claims,id',
-            'client_id' => 'required|exists:clients,id',
             'amount'    => 'required|numeric|min:0',
             'check_no'  => 'nullable|string',
         ]);
 
-        // Fetch the form_of_payment from the related claim
         $claim = Claim::findOrFail($validated['claim_id']);
 
         Disbursement::create([
-            'claim_id'         => $validated['claim_id'],
-            'client_id'        => $validated['client_id'],
-            'form_of_payment'  => $claim->form_of_payment, // This is now from the claim
-            'amount'           => $validated['amount'],
-            'check_no'         => $validated['check_no'],
-            'claim_status'     => 'unclaimed',
+            'claim_id'        => $claim->id,
+            'client_id'       => $claim->client_id, // ✅ Always correct
+            'form_of_payment' => $claim->form_of_payment,
+            'amount'          => $validated['amount'],
+            'check_no'        => $validated['check_no'],
+            'claim_status'    => 'unclaimed',
         ]);
-
         return back()->with('success', 'Disbursement created.');
     }
 

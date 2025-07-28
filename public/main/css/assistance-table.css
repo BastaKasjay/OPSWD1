@@ -96,3 +96,23 @@ html {
   scrollbar-width: none;     /* Firefox */
 }
 
+
+#requirements_section ol {
+    list-style-type: decimal-leading-zero; /* ✅ Add this for 01, 02, 03 */
+    list-style-position: inside; 
+    padding-left: 1.5rem;
+    margin: 0;
+}
+
+#requirements_section li {
+    display: flex;
+    display: list-item !important;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+#requirements_section .form-check {
+    margin: 0;
+}
+
+

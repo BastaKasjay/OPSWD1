@@ -57,16 +57,27 @@ class ClientAssistanceController extends Controller
         }
 
             // Create client assistance
-            $assistance = ClientAssistance::create([
-                'client_id' => $request->client_id,
-                'assistance_type_id' => $request->assistance_type_id,
-                'assistance_category_id' => $request->assistance_category_id,
-                'date_received_request' => $request->date_received_request,
-                'medical_case' => $request->medical_case === 'Others' && $request->filled('other_case') 
-                    ? $request->other_case 
-                    : $request->medical_case,
-                'payee_id' => $payee->id,
-            ]);
+            // ✅ Get the "Others" category ID for the selected assistance type
+$othersCategory = DB::table('assistance_categories')
+    ->where('assistance_type_id', $request->assistance_type_id)
+    ->whereRaw('LOWER(category_name) = "others"')
+    ->first();
+
+$assistance = ClientAssistance::create([
+    'client_id' => $request->client_id,
+    'assistance_type_id' => $request->assistance_type_id,
+    'assistance_category_id' => $request->assistance_category_id,
+    'other_category_name' => $request->filled('other_category') 
+    ? $request->other_category 
+    : null,
+
+    'date_received_request' => $request->date_received_request,
+    'medical_case' => $request->medical_case === 'Others' && $request->filled('other_case')
+        ? $request->other_case
+        : $request->medical_case,
+    'payee_id' => $payee->id,
+]);
+
 
             // Create claim record (status = pending by default)
             \App\Models\Claim::firstOrCreate([

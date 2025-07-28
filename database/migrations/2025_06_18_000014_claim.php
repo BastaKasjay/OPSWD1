@@ -14,9 +14,8 @@ return new class extends Migration {
             $table->decimal('amount_approved', 12, 2)->nullable();
             $table->date('date_cafoa_prepared')->nullable();
             $table->date('date_pgo_received')->nullable();
-            $table->date('date_pto_received')->nullable();
             $table->enum('form_of_payment', ['cheque', 'cash'])->nullable();
-            $table->date('confirmation')->nullable();
+            $table->date('payout_date')->nullable();
             $table->timestamps();
 
             // Foreign keys (assume clients and client_assistances tables exist)

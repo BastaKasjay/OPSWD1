@@ -35,7 +35,7 @@ class DisbursementFactory extends Factory
             'check_payment_id' => $checkPayment?->id,
             'form_of_payment' => $formOfPayment, 
             'amount' => $this->faker->randomFloat(2, 1000, 10000),
-            'confirmation_date' => $this->faker->optional()->date(),
+            'payout_date' => $this->faker->optional()->date(),
             'date_received_claimed' => $this->faker->optional()->date(),
             'date_released' => $this->faker->optional()->date(),
             'total_amount_claimed' => $this->faker->randomFloat(2, 1000, 10000),

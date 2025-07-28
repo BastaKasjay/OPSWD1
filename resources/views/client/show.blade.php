@@ -232,19 +232,19 @@
         
             <!-- Update Claim Modal -->
 <div class="modal fade" id="editClaimModal" tabindex="-1" aria-labelledby="editClaimModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content"> <!-- ✅ REQUIRED wrapper -->
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow-sm rounded p-4" style="background: #fff;">
             <form action="{{ $claim ? route('claims.update', $claim->id) : '#' }}" method="POST">
                 @csrf
                 @method('PUT')
                 <input type="hidden" name="client_assistance_id" value="{{ $assistance->id ?? '' }}">
 
-                <div class="modal-header">
-                    <h5 class="modal-title text-success" id="editClaimModalLabel">Update Claim Information</h5>
+                <div class="modal-header border-0 pb-0" style="background: none;">
+                    <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" id="editClaimModalLabel" style="font-size: 1.5rem;">Update Claim Information</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
-                <div class="modal-body">
+                <div class="modal-body row g-4 pt-3">
                     <div id="reason-container" style="display: {{ $claim && $claim->status === 'disapproved' ? 'block' : 'none' }};">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Reason of Disapproval:</label>
@@ -252,27 +252,22 @@
                         </div>
                     </div> 
 
-                    <div class="mb-3">
+                    <div class="col-md-6">
                         <label class="form-label">CAFOA Prepared Date</label>
                         <input type="date" class="form-control" name="date_cafoa_prepared" value="{{ $claim->date_cafoa_prepared }}">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="col-md-6">
                         <label class="form-label">PGO Received Date</label>
                         <input type="date" class="form-control" name="date_pgo_received" value="{{ $claim->date_pgo_received }}">
                     </div>
 
-                    <div class="mb-3">
+                    <div class="col-md-6">
                         <label class="form-label">Amount</label>
                         <input type="number" class="form-control" name="amount_approved" value="{{ $claim->amount_approved }}">
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">PTO Received Date</label>
-                        <input type="date" class="form-control" name="date_pto_received" value="{{ $claim->date_pto_received }}">
-                    </div>
-
-                    <div class="mb-3">
+                    <div class="col-md-6">
                         <label class="form-label">Preferred Payment Method</label>
                         <select name="form_of_payment" class="form-select">
                             <option value="">Select</option>
@@ -281,24 +276,24 @@
                         </select>
                     </div>
 
-                    <div id="check-no-field" class="mb-3" style="display: none;">
+                    <div id="check-no-field" class="col-md-6" style="display: none;">
                         <label for="check_no" class="form-label">Check Number</label>
                         <input type="text" name="check_no" id="check_no" class="form-control" value="{{ old('check_no', $claim->checkPayment->check_no ?? '') }}">
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Confirmation</label>
-                        <input type="date" class="form-control" name="confirmation" value="{{ $claim->confirmation }}">
+                    <div class="col-md-6">
+                        <label class="form-label">Payout Date</label>
+                        <input type="date" class="form-control" name="payout_date" value="{{ $claim->payout_date }}">
                     </div>
                 </div>
 
-                <div class="modal-footer">
-                    <button type="submit" class="btn btn-success text-white border-0">Save Changes</button>
-                    <button type="button" class="btn btn-secondary border-0" data-bs-dismiss="modal">Cancel</button>
+                <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2" style="background: none;">
+                    <button type="submit" class="btn btn-success custom-green-btn rounded-pill px-4">Save Changes</button>
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
                 </div>
             </form>
-        </div> <!-- end modal-content -->
-    </div> <!-- end modal-dialog -->
+        </div>
+    </div>
 </div>
 
 
@@ -319,9 +314,8 @@
             <div class="col-md-4"><span class="fw-semibold">CAFOA Prepared Date:</span> {{ optional($claim)->date_cafoa_prepared ?? '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">PGO Received Date:</span> {{ optional($claim)->date_pgo_received ?? '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">Amount:</span> {{ optional($claim)->amount_approved ?? '-' }}</div>
-            <div class="col-md-4"><span class="fw-semibold">PTO Received Date:</span> {{ optional($claim)->date_pto_received ?? '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">Preferred Payment Method:</span> {{ optional($claim)->form_of_payment ? ucfirst($claim->form_of_payment) : '-' }}</div>
-            <div class="col-md-4"><span class="fw-semibold">Confirmation of Payee:</span> {{ optional($claim)->confirmation ?? '-' }}</div>
+            <div class="col-md-4"><span class="fw-semibold">Payout Date:</span> {{ optional($claim)->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</div>
         </div>
     </div>
 

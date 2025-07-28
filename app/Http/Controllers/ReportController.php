@@ -62,7 +62,8 @@ class ReportController extends Controller
             DB::raw("SUM(CASE WHEN assistance_types.type_name = 'Burial' AND assistance_categories.category_name = 'Senior Citizen' THEN 1 ELSE 0 END) as SeniorBurial"),
             DB::raw("SUM(CASE WHEN assistance_types.type_name = 'ESA' AND assistance_categories.category_name = 'PDRRM' THEN 1 ELSE 0 END) as PDRRMESA"),
 
-            DB::raw("SUM(disbursements.amount) as TotalAmountPaid")
+            DB::raw("SUM(DISTINCT disbursements.total_amount_claimed) as TotalAmountPaid")
+
         )
         ->where('disbursements.claim_status', '=', 'claimed')
         ->whereNotNull('disbursements.date_received_claimed')
@@ -76,13 +77,7 @@ class ReportController extends Controller
         ->join('clients', 'claims.client_id', '=', 'clients.id')
         ->join('municipalities', 'clients.municipality_id', '=', 'municipalities.id')
         ->where('claims.status', 'disapproved')
-        ->where(function ($query) use ($from, $to) {
-            $query->whereBetween('claims.updated_at', [$from, $to])
-                ->orWhere(function ($q) use ($from, $to) {
-                    $q->whereNull('claims.updated_at')
-                        ->whereBetween('claims.created_at', [$from, $to]);
-                });
-        })
+        ->whereBetween(DB::raw('DATE(claims.updated_at)'), [$from, $to]) // use created_at
         ->groupBy('municipalities.name')
         ->select(
             'municipalities.name as municipality',
@@ -92,15 +87,36 @@ class ReportController extends Controller
         ->keyBy('municipality');
 
 
+        // ✅ Combine all municipalities (those with claimed OR unserved)
+        $allMunicipalities = collect($reportData->pluck('municipality'))
+            ->merge($unserved->keys())
+            ->unique();
 
+        // ✅ Build a new dataset including municipalities that only have unserved clients
+        $reportData = $allMunicipalities->map(function ($municipality) use ($reportData, $unserved) {
+            $row = $reportData->firstWhere('municipality', $municipality);
 
-        // Merge unserved clients to reportData
-        $reportData->transform(function ($item) use ($unserved) {
-            $item->unserved_clients = $unserved[$item->municipality]->unserved_clients ?? 0;
-            return $item;
+            return (object) [
+                'municipality' => $municipality,
+                'male' => $row->male ?? 0,
+                'female' => $row->female ?? 0,
+                'CKD' => $row->CKD ?? 0,
+                'Cancer' => $row->Cancer ?? 0,
+                'HeartIllness' => $row->HeartIllness ?? 0,
+                'DiabetesHypertension' => $row->DiabetesHypertension ?? 0,
+                'OtherMedical' => $row->OtherMedical ?? 0,
+                'RegularMedical' => $row->RegularMedical ?? 0,
+                'RegularBurial' => $row->RegularBurial ?? 0,
+                'RegularESA' => $row->RegularESA ?? 0,
+                'SeniorMedical' => $row->SeniorMedical ?? 0,
+                'SeniorBurial' => $row->SeniorBurial ?? 0,
+                'PDRRMESA' => $row->PDRRMESA ?? 0,
+                'TotalAmountPaid' => $row->TotalAmountPaid ?? 0,
+                'unserved_clients' => $unserved[$municipality]->unserved_clients ?? 0,
+            ];
         });
 
-        // Totals calculation
+        // ✅ Now compute totals AFTER merging
         $totals = [
             'male' => $reportData->sum('male'),
             'female' => $reportData->sum('female'),
@@ -118,6 +134,7 @@ class ReportController extends Controller
             'amount_total' => $reportData->sum('TotalAmountPaid'),
             'unreserved' => $reportData->sum('unserved_clients'),
         ];
+
 
         // dd($from, $to);
 
