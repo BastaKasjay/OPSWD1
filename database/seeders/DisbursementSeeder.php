@@ -9,6 +9,6 @@ class DisbursementSeeder extends Seeder
 {
     public function run(): void
     {
-        Disbursement::factory()->count(10)->create();
+        // Disbursement::factory()->count(10)->create();
     }
 }

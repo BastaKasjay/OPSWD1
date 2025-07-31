@@ -17,8 +17,8 @@
                 <input type="hidden" name="municipality_id" value="{{ request('municipality_id') }}">
             @endif
 
-            <input type="text" name="search" class="form-control me-2" value="{{ request('search') }}" placeholder="Search by name" oninput="if (this.value === '') this.form.submit()">
-            <button type="submit" class="btn btn-success custom-green-btn rounded px-4 py-2 fw-semibold shadow-sm" style="border-radius: 0.7rem; font-size: 1rem; background-color: #198754; border: none;">Search</button>
+            <input type="text" name="search" class="form-control me-2" value="{{ request('search') }}" placeholder="Search by name" autocomplete="off" oninput="if (this.value === '') this.form.submit()">
+            <button type="submit" class="btn btn-success custom-green-btn rounded px-4 py-2 fw-semibold shadow-sm" style="border-radius: 0.7rem; font-size: 1rem; background-color: #198754; border: none;" >Search</button>
         </form>
     </div>
 

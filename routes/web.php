@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Client;
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisbursementController;
 use App\Http\Controllers\ClaimController;
 use App\Http\Controllers\ReportController;
@@ -32,13 +33,22 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+//dashboard budget route
+Route::post('/budgets', [DashboardController::class, 'storeBudget'])->name('budgets.store');
+
+
 // claims
 Route::get('/claims/grouped', [ClaimController::class, 'groupedClaims'])->name('claims.grouped');
-Route::post('/claims/update-status/{clientId}', [ClaimController::class, 'updateStatus'])->name('claims.updateStatus');
+// Route::post('/claims/update-status/{clientId}', [ClaimController::class, 'updateStatus'])->name('claims.updateStatus');
+Route::patch('/claims/{id}/update-status', [ClaimController::class, 'updateStatus'])->name('claims.update-status');
+
 
 
 // assistance
-Route::get('/clients/assistance', [ClientController::class, 'assistancesView'])->name('clients.assistance');
+Route::get('/clients/assistance', [ClientAssistanceController::class, 'assistance'])
+    ->name('clients.assistance');
+
+
 
 // Route::patch('/claims/{id}/update-status', function() { dd('teee')})->name('claims.update-status');
 Route::patch('/claims/{id}/update-status', [ClaimController::class, 'updateStatus'])->name('claims.update-status');
@@ -73,6 +83,11 @@ Route::resource('client-assistances', ClientAssistanceController::class);
 Route::resource('assistance-types', AssistanceController::class);
 Route::resource('employees', EmployeeController::class);
 Route::resource('roles', RoleController::class);
+
+// Home page/Dashboard route
+Route::get('/home', [DashboardController::class, 'index'])->name('home');
+
+
 
 // User Management Routes (now public)
 Route::resource('users', UserController::class);

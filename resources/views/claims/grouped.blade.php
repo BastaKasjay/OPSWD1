@@ -115,36 +115,36 @@
                         <form action="{{ route('disbursements.updateClaimStatus', $claim->disbursement->id) }}" method="POST">
                             @csrf
                             @method('PATCH')
-                            <div class="modal-content">
-                                <div class="modal-header bg-success text-white">
-                                    <h5 class="modal-title" id="editDisbursementModalLabel{{ $claim->id }}">Update Disbursement Info</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                            <div class="modal-content border-0 shadow-sm rounded p-4" style="background: #fff;">
+                                <div class="modal-header border-0 pb-0" style="background: none;">
+                                    <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" style="font-size: 1.5rem;">Update Disbursement Info</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                 </div>
-                                <div class="modal-body">
-                                    <div class="mb-3">
-                                        <label for="date_received_{{ $claim->id }}" class="form-label">Date Received (Claimed)</label>
-                                        <input type="date" id="date_received_{{ $claim->id }}" class="form-control" name="date_received_claimed" value="{{ $claim->disbursement->date_received_claimed }}">
+                                <div class="modal-body row g-4 pt-3">
+                                    <div class="col-md-6">
+                                        <label for="date_received_{{ $claim->id }}" class="form-label fw-semibold">Date Received (Claimed)</label>
+                                        <input type="date" id="date_received_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_received_claimed" value="{{ $claim->disbursement->date_received_claimed }}" style="box-shadow: none;">
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="date_released_{{ $claim->id }}" class="form-label">Date Released</label>
-                                        <input type="date" id="date_released_{{ $claim->id }}" class="form-control" name="date_released" value="{{ $claim->disbursement->date_released }}">
+                                    <div class="col-md-6">
+                                        <label for="date_released_{{ $claim->id }}" class="form-label fw-semibold">Date Released</label>
+                                        <input type="date" id="date_released_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_released" value="{{ $claim->disbursement->date_released }}" style="box-shadow: none;">
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="amount_claimed_{{ $claim->id }}" class="form-label">Total Amount Claimed</label>
-                                        <input type="number" step="0.01" id="amount_claimed_{{ $claim->id }}" class="form-control" name="total_amount_claimed" value="{{ $claim->disbursement->total_amount_claimed }}">
+                                    <div class="col-md-6">
+                                        <label for="amount_claimed_{{ $claim->id }}" class="form-label fw-semibold">Total Amount Claimed</label>
+                                        <input type="number" step="0.01" id="amount_claimed_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="total_amount_claimed" value="{{ $claim->disbursement->total_amount_claimed }}" style="box-shadow: none;">
                                     </div>
-                                    <div class="mb-3">
-                                        <label for="claim_status_{{ $claim->id }}" class="form-label">Claim Status</label>
-                                        <select id="claim_status_{{ $claim->id }}" name="claim_status" class="form-select">
+                                    <div class="col-md-6">
+                                        <label for="claim_status_{{ $claim->id }}" class="form-label fw-semibold">Claim Status</label>
+                                        <select id="claim_status_{{ $claim->id }}" name="claim_status" class="form-select rounded border border-success bg-light" style="box-shadow: none;">
                                             <option value="pending" {{ $claim->disbursement->claim_status === 'pending' ? 'selected' : '' }}>Pending</option>
                                             <option value="claimed" {{ $claim->disbursement->claim_status === 'claimed' ? 'selected' : '' }}>Claimed</option>
                                             <option value="unclaimed" {{ $claim->disbursement->claim_status === 'unclaimed' ? 'selected' : '' }}>Unclaimed</option>
                                         </select>
                                     </div>
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="submit" class="btn btn-success">Save Changes</button>
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2" style="background: none;">
+                                    <button type="submit" class="btn btn-success custom-green-btn rounded-pill px-4">Save Changes</button>
+                                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
                                 </div>
                             </div>
                         </form>

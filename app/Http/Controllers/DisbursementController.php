@@ -25,11 +25,12 @@ class DisbursementController extends Controller
             'check_no'  => 'nullable|string',
         ]);
 
-        $claim = Claim::findOrFail($validated['claim_id']);
+        $claim = Claim::with('clientAssistance')->findOrFail($validated['claim_id']);
 
         Disbursement::create([
             'claim_id'        => $claim->id,
-            'client_id'       => $claim->client_id, // ✅ Always correct
+            'client_id'       => $claim->client_id, 
+            'client_assistance_id' => $claim->client_assistance_id,
             'form_of_payment' => $claim->form_of_payment,
             'amount'          => $validated['amount'],
             'check_no'        => $validated['check_no'],
@@ -59,7 +60,7 @@ class DisbursementController extends Controller
             'total_amount_claimed' => $validated['total_amount_claimed'],
         ]);
 
-        // Send back modal ID to show again (if needed)
+        
         return back()->with('success', 'Disbursement updated successfully.');
     }
 

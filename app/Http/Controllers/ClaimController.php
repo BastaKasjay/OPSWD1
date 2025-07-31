@@ -9,108 +9,126 @@ use App\Models\ClientAssistance;
 
 class ClaimController extends Controller
 {
-    public function updateStatus(Request $request, $clientId)
-    {
-        $status = $request->input('status');
+    public function updateStatus(Request $request, $id)
+{
+    $status = $request->input('status');
 
-        try {
-            // Get the client_assistance record
-            $clientAssistance = ClientAssistance::where('client_id', $clientId)->first();
+    try {
+        $claim = Claim::findOrFail($id);
 
-            if (!$clientAssistance) {
-                return redirect()->back()->with('error', 'No assistance record found for this client.');
-            }
+        // Change status
+        $claim->status = (string) $status;
 
-            // Find or create the claim record
-            $claim = Claim::firstOrCreate(
-                ['client_assistance_id' => $clientAssistance->id],
-                ['client_id' => $clientId]
-            );
-
-            // dd($claim); // Debug the claim object
-
-            // Update the status
-            $claim->status = (string) $status;
-            $claim->save();
-
-            return redirect()->back()->with('success', 'Status updated to ' . ucfirst($status) . '.');
-
-        } catch (\Exception $e) {
-            return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
-
+        // Clear or set reason
+        if ($status === 'disapproved') {
+            $claim->reason_of_disapprovement = $request->input('reason_of_disapprovement');
+        } else {
+            $claim->reason_of_disapprovement = null; // clear if approved or pending
         }
+
+        $claim->save();
+
+        return redirect()->back()->with('success', 'Status updated to ' . ucfirst($status) . '.');
+
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
     }
+}
+
+
 
 
     public function update(Request $request, $id)
 {
+    // Validation (nullable so you can update fields one by one)
     $request->validate([
-        'form_of_payment' => 'required|in:cash,cheque', // ✅ Must be required
-        'check_no' => 'required_if:form_of_payment,cheque',
-        'payout_date' => 'required|date', // ✅ Must be required
+        'form_of_payment' => 'nullable|in:cash,cheque',
+        'check_no' => 'nullable|required_if:form_of_payment,cheque',
+        'payout_date' => 'nullable|date',
+        'source_of_fund' => 'nullable|in:Regular,Senior,PDRRM',
     ]);
 
-    $claim = Claim::with('client', 'disbursement')->findOrFail($id);
+    // Fetch claim with related client and disbursement
+    $claim = Claim::with(['client', 'disbursement', 'clientAssistance.assistanceType'])
+              ->findOrFail($id);
 
-    // ✅ Update claim details
-    $claim->date_cafoa_prepared = $request->input('date_cafoa_prepared');
-    $claim->date_pgo_received = $request->input('date_pgo_received');
-    $claim->amount_approved = $request->input('amount_approved');
-    $claim->form_of_payment = $request->input('form_of_payment');
-    $claim->payout_date = $request->input('payout_date');
-    $claim->reason_of_disapprovement = $request->input('reason_of_disapprovement');
+
+    // Only update fields that were actually filled
+    $claim->date_cafoa_prepared = $request->filled('date_cafoa_prepared') ? $request->input('date_cafoa_prepared') : $claim->date_cafoa_prepared;
+    $claim->date_pgo_received   = $request->filled('date_pgo_received')   ? $request->input('date_pgo_received')   : $claim->date_pgo_received;
+    $claim->amount_approved     = $request->filled('amount_approved')     ? $request->input('amount_approved')     : $claim->amount_approved;
+    $claim->form_of_payment     = $request->filled('form_of_payment')     ? $request->input('form_of_payment')     : $claim->form_of_payment;
+    $claim->payout_date         = $request->filled('payout_date')         ? $request->input('payout_date')         : $claim->payout_date;
+    $claim->source_of_fund = $request->input('source_of_fund', $claim->source_of_fund);
+
+    // Clear reason if not disapproved
+    if ($claim->status === 'disapproved') {
+        $claim->reason_of_disapprovement = $request->input('reason_of_disapprovement', $claim->reason_of_disapprovement);
+    } else {
+        $claim->reason_of_disapprovement = null; // Clear reason if approved or pending
+    }
+
     $claim->save();
 
+    // Prepare variables for payment IDs
     $cashPaymentId = null;
     $checkPaymentId = null;
 
-    // ✅ Create/update CashPayment or CheckPayment
-    if ($claim->form_of_payment === 'cash') {
-        $cashPayment = \App\Models\CashPayment::updateOrCreate(
-            ['claim_id' => $claim->id],
-            [
-                'client_id' => $claim->client_id,
-                'date_prepared' => now(),
-                'confirmed_people' => [$claim->client?->payee?->full_name ?? $claim->client?->full_name],
-                'amount_confirmed' => $claim->amount_approved,
-                'total_amount_withdrawn' => $claim->amount_approved,
-                'date_of_payout' => $claim->payout_date,
-            ]
-        );
-        $cashPaymentId = $cashPayment->id;
-        \App\Models\CheckPayment::where('claim_id', $claim->id)->delete();
+    $requiresAmount = optional($claim->clientAssistance->assistanceType)->type_name !== 'Transportation Assistance';
 
-    } elseif ($claim->form_of_payment === 'cheque') {
-        $checkPayment = \App\Models\CheckPayment::updateOrCreate(
+        // Allow disbursement even without amount if type is Transportation
+        if ($claim->form_of_payment && $claim->payout_date && (!$requiresAmount || $claim->amount_approved)) {
+
+        // Cash Payment
+        if ($claim->form_of_payment === 'cash') {
+            $cashPayment = \App\Models\CashPayment::updateOrCreate(
+                ['claim_id' => $claim->id],
+                [
+                    'client_id' => $claim->client_id,
+                    'date_prepared' => now(),
+                    'confirmed_people' => [$claim->client?->payee?->full_name ?? $claim->client?->full_name],
+                    'amount_confirmed' => $claim->amount_approved,
+                    'total_amount_withdrawn' => $claim->amount_approved,
+                    'date_of_payout' => $claim->payout_date,
+                ]
+            );
+            $cashPaymentId = $cashPayment->id;
+            \App\Models\CheckPayment::where('claim_id', $claim->id)->delete();
+        }
+
+        // Check Payment
+        elseif ($claim->form_of_payment === 'cheque') {
+            $checkPayment = \App\Models\CheckPayment::updateOrCreate(
+                ['claim_id' => $claim->id],
+                [
+                    'client_id' => $claim->client_id,
+                    'date_prepared' => now(),
+                    'amount' => $claim->amount_approved,
+                    'check_no' => $request->input('check_no'),
+                    'date_of_payout' => $claim->payout_date,
+                ]
+            );
+            $checkPaymentId = $checkPayment->id;
+            \App\Models\CashPayment::where('claim_id', $claim->id)->delete();
+        }
+
+        // Disbursement Record
+        \App\Models\Disbursement::updateOrCreate(
             ['claim_id' => $claim->id],
             [
                 'client_id' => $claim->client_id,
-                'date_prepared' => now(),
-                'amount' => $claim->amount_approved,
-                'check_no' => $request->input('check_no'),
-                'date_of_payout' => $claim->payout_date,
+                'cash_payment_id' => $cashPaymentId,
+                'check_payment_id' => $checkPaymentId,
+                'form_of_payment' => $claim->form_of_payment,
+                'payout_date' => $claim->payout_date,
+                'amount' => $requiresAmount ? $claim->amount_approved : 0, 
+                'claim_status' => optional($claim->disbursement)->claim_status ?? 'pending',
+                'date_received_claimed' => optional($claim->disbursement)->date_received_claimed,
+                'date_released' => optional($claim->disbursement)->date_released,
+                'total_amount_claimed' => optional($claim->disbursement)->total_amount_claimed,
             ]
         );
-        $checkPaymentId = $checkPayment->id;
-        \App\Models\CashPayment::where('claim_id', $claim->id)->delete();
     }
-
-    // ✅ Always create/update disbursement (payout_date & form_of_payment now always exist)
-    \App\Models\Disbursement::updateOrCreate(
-        ['claim_id' => $claim->id],
-        [
-            'client_id' => $claim->client_id,
-            'cash_payment_id' => $cashPaymentId,
-            'check_payment_id' => $checkPaymentId,
-            'form_of_payment' => $claim->form_of_payment,
-            'payout_date' => $claim->payout_date,
-            'amount' => $claim->amount_approved,
-            'claim_status' => $claim->disbursement->claim_status ?? 'pending',
-            'date_received_claimed' => $claim->disbursement->date_received_claimed ?? null,
-            'date_released' => $claim->disbursement->date_released ?? null,
-            'total_amount_claimed' => $claim->disbursement->total_amount_claimed ?? null,
-        ]
-    );
 
     return redirect()->back()->with('success', 'Claim information updated successfully.');
 }

@@ -11,7 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MunicipalitySeeder::class,
             VulnerabilitySectorSeeder::class,
-            AssistanceSeeder::class, // ✅ Add this line
+            AssistanceSeeder::class, 
             CheckPaymentSeeder::class,
             // ClientSeeder::class, // Removed to stop seeding default clients
             UnclaimedCheckSeeder::class,

@@ -24,15 +24,18 @@ class AssistanceController extends Controller
     }
 
     public function assistance()
-    {
-        $assistances = \App\Models\ClientAssistance::with([
-            'client.municipality',
-            'assistanceType',
-            'assistanceCategory'
-        ])->paginate(10); // Use paginate only if you want pagination
+{
+    $assistances = \App\Models\ClientAssistance::with([
+        'client.municipality',
+        'assistanceType',
+        'assistanceCategory'
+    ])->paginate(10);
 
-        return view('client.assistance', compact('assistances')); // Points to resources/views/client/assistance.blade.php
-    }
+    $assistanceTypes = \App\Models\AssistanceType::all();
+
+    return view('client.assistance', compact('assistances', 'assistanceTypes'));
+}
+
 
 
     public function edit($id)

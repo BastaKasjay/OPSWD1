@@ -13,11 +13,12 @@ class Disbursement extends Model
     protected $fillable = [
         'claim_id',
         'client_id',
+        'client_assistance_id',
         'cash_payment_id',
         'check_payment_id',
         'form_of_payment',
         'amount',
-        'payment_date',
+        'payout_date',
         'date_received_claimed',
         'date_released',
         'total_amount_claimed',
@@ -34,5 +35,14 @@ class Disbursement extends Model
     {
         return $this->belongsTo(\App\Models\Client::class);
     }
+    public function municipality()
+    {
+        return $this->belongsTo(\App\Models\Municipality::class, 'municipality_id');
+    }
+    public function clientAssistance()
+    {
+        return $this->belongsTo(\App\Models\ClientAssistance::class, 'client_assistance_id');
+    }
+
 
 }

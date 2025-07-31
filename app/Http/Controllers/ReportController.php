@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Pagination\LengthAwarePaginator;
+
 
 class ReportController extends Controller
 {
@@ -37,32 +39,59 @@ class ReportController extends Controller
                 break;
         }
 
+
+
+        
+
         $reportData = DB::table('clients')
         ->join('claims', 'clients.id', '=', 'claims.client_id')
         ->join('disbursements', 'claims.id', '=', 'disbursements.claim_id')
         ->join('municipalities', 'clients.municipality_id', '=', 'municipalities.id')
-        ->join('client_assistance', 'clients.id', '=', 'client_assistance.client_id')
+        ->join('client_assistance', 'claims.client_assistance_id', '=', 'client_assistance.id')
         ->join('assistance_types', 'client_assistance.assistance_type_id', '=', 'assistance_types.id')
-        ->join('assistance_categories', 'assistance_types.id', '=', 'assistance_categories.assistance_type_id')
+
         ->select(
             'municipalities.name as municipality',
             DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN clients.id ELSE NULL END) as male"),
             DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN clients.id ELSE NULL END) as female"),
-            DB::raw("SUM(CASE WHEN client_assistance.medical_case = 'CKD' THEN 1 ELSE 0 END) as CKD"),
-            DB::raw("SUM(CASE WHEN client_assistance.medical_case = 'Cancer' THEN 1 ELSE 0 END) as Cancer"),
-            DB::raw("SUM(CASE WHEN client_assistance.medical_case = 'Heart Illness' THEN 1 ELSE 0 END) as HeartIllness"),
-            DB::raw("SUM(CASE WHEN client_assistance.medical_case = 'Diabetes & Hypertension' THEN 1 ELSE 0 END) as DiabetesHypertension"),
-            DB::raw("SUM(CASE WHEN client_assistance.medical_case = 'Other' THEN 1 ELSE 0 END) as OtherMedical"),
+            DB::raw("COUNT(DISTINCT CASE 
+                WHEN client_assistance.medical_case = 'CKD' 
+                THEN clients.id END) as CKD"),
 
-            // Replace 'clients.category' with 'assistance_categories.category_name'
-            DB::raw("SUM(CASE WHEN assistance_types.type_name = 'Medical' AND assistance_categories.category_name = 'Regular' THEN 1 ELSE 0 END) as RegularMedical"),
-            DB::raw("SUM(CASE WHEN assistance_types.type_name = 'Burial' AND assistance_categories.category_name = 'Regular' THEN 1 ELSE 0 END) as RegularBurial"),
-            DB::raw("SUM(CASE WHEN assistance_types.type_name = 'ESA' AND assistance_categories.category_name = 'Regular' THEN 1 ELSE 0 END) as RegularESA"),
-            DB::raw("SUM(CASE WHEN assistance_types.type_name = 'Medical' AND assistance_categories.category_name = 'Senior Citizen' THEN 1 ELSE 0 END) as SeniorMedical"),
-            DB::raw("SUM(CASE WHEN assistance_types.type_name = 'Burial' AND assistance_categories.category_name = 'Senior Citizen' THEN 1 ELSE 0 END) as SeniorBurial"),
-            DB::raw("SUM(CASE WHEN assistance_types.type_name = 'ESA' AND assistance_categories.category_name = 'PDRRM' THEN 1 ELSE 0 END) as PDRRMESA"),
+            DB::raw("COUNT(DISTINCT CASE 
+                WHEN client_assistance.medical_case = 'Cancer' 
+                THEN clients.id END) as Cancer"),
 
-            DB::raw("SUM(DISTINCT disbursements.total_amount_claimed) as TotalAmountPaid")
+            DB::raw("COUNT(DISTINCT CASE 
+                WHEN client_assistance.medical_case = 'Heart Illness' 
+                THEN clients.id END) as HeartIllness"),
+
+            DB::raw("COUNT(DISTINCT CASE 
+                WHEN client_assistance.medical_case LIKE '%Diabetes%' 
+                    OR client_assistance.medical_case LIKE '%Hypertension%' 
+                THEN clients.id END) as DiabetesHypertension"),
+
+            DB::raw("COUNT(DISTINCT CASE 
+                WHEN client_assistance.medical_case NOT IN ('CKD','Cancer','Heart Illness')
+                    AND client_assistance.medical_case NOT LIKE '%Diabetes%' 
+                    AND client_assistance.medical_case NOT LIKE '%Hypertension%' 
+                THEN clients.id END) as OtherMedical"),
+
+
+
+
+            // Count by claim's source_of_fund instead of category_name
+            DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Medical%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularMedical"),
+            DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Burial%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularBurial"),
+            DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%ESA%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularESA"),
+
+            DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Medical%' AND claims.source_of_fund = 'Senior' THEN 1 ELSE 0 END) as SeniorMedical"),
+            DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Burial%' AND claims.source_of_fund = 'Senior' THEN 1 ELSE 0 END) as SeniorBurial"),
+
+            DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%ESA%' AND claims.source_of_fund = 'PDRRM' THEN 1 ELSE 0 END) as PDRRMESA"),
+
+
+            DB::raw("SUM(disbursements.total_amount_claimed) as TotalAmountPaid")
 
         )
         ->where('disbursements.claim_status', '=', 'claimed')
@@ -77,7 +106,7 @@ class ReportController extends Controller
         ->join('clients', 'claims.client_id', '=', 'clients.id')
         ->join('municipalities', 'clients.municipality_id', '=', 'municipalities.id')
         ->where('claims.status', 'disapproved')
-        ->whereBetween(DB::raw('DATE(claims.updated_at)'), [$from, $to]) // use created_at
+        ->whereBetween('claims.updated_at', [$from, $to])
         ->groupBy('municipalities.name')
         ->select(
             'municipalities.name as municipality',
@@ -87,12 +116,12 @@ class ReportController extends Controller
         ->keyBy('municipality');
 
 
-        // ✅ Combine all municipalities (those with claimed OR unserved)
+        //Combine all municipalities (those with claimed OR unserved)
         $allMunicipalities = collect($reportData->pluck('municipality'))
             ->merge($unserved->keys())
             ->unique();
 
-        // ✅ Build a new dataset including municipalities that only have unserved clients
+        //Build a new dataset including municipalities that only have unserved clients
         $reportData = $allMunicipalities->map(function ($municipality) use ($reportData, $unserved) {
             $row = $reportData->firstWhere('municipality', $municipality);
 
@@ -115,8 +144,9 @@ class ReportController extends Controller
                 'unserved_clients' => $unserved[$municipality]->unserved_clients ?? 0,
             ];
         });
+        
 
-        // ✅ Now compute totals AFTER merging
+        //Now compute totals AFTER merging
         $totals = [
             'male' => $reportData->sum('male'),
             'female' => $reportData->sum('female'),
@@ -136,13 +166,23 @@ class ReportController extends Controller
         ];
 
 
-        // dd($from, $to);
-
-        // dd($totals);
-
-        // dd($reportData->first());
+  
 
 
-        return view('reports.index', compact('reportData', 'totals'));
+        // Manual Pagination
+        $page = $request->get('page', 1);
+        $perPage = 10;
+        $paginated = new LengthAwarePaginator(
+            $reportData->forPage($page, $perPage),
+            $reportData->count(),
+            $perPage,
+            $page,
+            ['path' => $request->url(), 'query' => $request->query()]
+        );
+
+        return view('reports.index', [
+            'reportData' => $paginated,
+            'totals' => $totals
+        ]);
     }
 }

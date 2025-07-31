@@ -15,12 +15,13 @@ class ClientAssistance extends Model
         'client_id',
         'assistance_type_id',
         'assistance_category_id',
+        'other_category_name',
         'medical_case',
         'payee_id',
         'date_received_request',
     ];
 
-    // Relationships
+    
     public function client()
     {
         return $this->belongsTo(Client::class);
@@ -45,6 +46,7 @@ class ClientAssistance extends Model
     {
         return $this->belongsTo(\App\Models\AssistanceCategory::class);
     }
+
     
 
 

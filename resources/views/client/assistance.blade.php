@@ -11,10 +11,12 @@
                 <i class="fas fa-plus me-2"></i> Add Assistance
             </button>
         </div>
-        <form method="GET" action="{{ route('clients.assistance') }}" class="d-flex align-items-center" style="max-width: 350px;">
-            <input type="text" name="search" class="form-control me-2" value="{{ request('search') }}" placeholder="Search by name" style="width: 180px; border-radius: 0.5rem; border: 1px solid #ccc;">
-            <button type="submit" class="btn btn-success custom-green-btn rounded px-4 py-2 fw-semibold shadow-sm" style="border-radius: 0.7rem; font-size: 1rem; background-color: #198754; border: none;">Search</button>
+        <form id="searchForm" method="GET" action="{{ route('clients.assistance') }}" class="d-flex">
+            <input type="text" name="search" id="searchInput" class="form-control me-2" autocomplete="off"
+                value="{{ request('search') }}" placeholder="Search by name">
+            <button type="submit" class="btn btn-success">Search</button>
         </form>
+
     </div>
 
     <div class="table-responsive bg-white p-3 rounded shadow-sm">
@@ -36,9 +38,9 @@
     </tr>
     </thead>
             <tbody>
-                @forelse($clients as $client)
+                @forelse($assistances as $assistance)
                     @php
-                        $assistance = $client->assistances->first();
+                        $client = $assistance->client;
                         $claim = $assistance ? \App\Models\Claim::where('client_assistance_id', $assistance->id)->first() : null;
                         $status = $claim->status ?? 'pending';
                     @endphp
@@ -52,9 +54,15 @@
                         <td class="assistance-td">{{ $client->municipality->name ?? '-' }}</td>
                         <td class="assistance-td">{{ $assistance->medical_case ?? '-' }}</td>
                         <td class="assistance-td">{{ $assistance->assistanceType->type_name ?? '-' }}</td>
-                        <td>
-                            {{ $assistance->other_category_name ?? $assistance->assistanceCategory->category_name }}
+                        <td class="assistance-td" style="text-decoration: none;">
+                            @if($assistance->assistanceCategory->category_name === 'Others' && $assistance->other_category_name)
+                                {{ $assistance->other_category_name }}
+                            @else
+                                {{ $assistance->assistanceCategory->category_name }}
+                            @endif
                         </td>
+
+
 
                         <td class="assistance-td">
                             <span class="fw-semibold {{ $status === 'approved' ? 'text-success' : ($status === 'disapproved' ? 'text-danger' : 'text-warning') }}">
@@ -64,45 +72,61 @@
                         <td class="text-center assistance-td" style="width: 70px;">
                             <div class="d-flex justify-content-center gap-1 assistance-actions" style="border: none;">
                                 <div class="dropdown">
-                                    <a href="#" role="button" id="dropdownMenu{{ $client->id }}" data-bs-toggle="dropdown" aria-expanded="false" class="btn p-1" style="border: none; background: none; color: #76AE91;" title="Actions">
+                                    <a href="#" role="button" id="dropdownMenu{{ $client->id }}" data-bs-toggle="dropdown" aria-expanded="false" class="btn p-1" style="border: none; background: none; color: #76AE91;" title="Status">
                                         <i class="fas fa-ellipsis-v"></i>
                                     </a>
+
                                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenu{{ $client->id }}" style="background-color: var(--mint-green-500); border-radius: 0.5rem;">
-                                        <li>
-                                            <form action="{{ route('claims.update-status', $client->id) }}" method="POST" style="border: none;">
-                                                @csrf @method('PATCH')
-                                                <input type="hidden" name="status" value="approved">
-                                                <button type="submit" class="dropdown-item" style="color: #76AE91; font-weight: 500; border: none;">
-                                                    <i class="fas fa-check me-2"></i> Approve
-                                                </button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <form action="{{ route('claims.update-status', $client->id) }}" method="POST" style="border: none;">
-                                                @csrf @method('PATCH')
-                                                <input type="hidden" name="status" value="disapproved">
-                                                <button type="submit" class="dropdown-item" style="color: #e74c3c; font-weight: 500; border: none;">
-                                                    <i class="fas fa-times me-2"></i> Disapprove
-                                                </button>
-                                            </form>
-                                        </li>
-                                        <li>
-                                            <form action="{{ route('claims.update-status', $client->id) }}" method="POST" style="border: none;">
-                                                @csrf @method('PATCH')
-                                                <input type="hidden" name="status" value="pending">
-                                                <button type="submit" class="dropdown-item" style="color: #ffc107; font-weight: 500; border: none;">
-                                                    <i class="fas fa-clock me-2"></i> Pending
-                                                </button>
-                                            </form>
-                                        </li>
+
+                                        @php
+                                            $claim = \App\Models\Claim::where('client_assistance_id', $assistance->id)->first();
+                                        @endphp
+
+                                        @if($claim)
+                                            <li>
+                                                <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
+                                                    @csrf @method('PATCH')
+                                                    <input type="hidden" name="status" value="approved">
+                                                    <button type="submit" class="dropdown-item" style="color: #76AE91; font-weight: 500; border: none;">
+                                                        <i class="fas fa-check me-2"></i> Approve
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
+                                                    @csrf @method('PATCH')
+                                                    <input type="hidden" name="status" value="disapproved">
+                                                    <button type="submit" class="dropdown-item" style="color: #e74c3c; font-weight: 500; border: none;">
+                                                        <i class="fas fa-times me-2"></i> Disapprove
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
+                                                    @csrf @method('PATCH')
+                                                    <input type="hidden" name="status" value="pending">
+                                                    <button type="submit" class="dropdown-item" style="color: #ffc107; font-weight: 500; border: none;">
+                                                        <i class="fas fa-clock me-2"></i> Pending
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        @endif
                                     </ul>
                                 </div>
-                                <a href="{{ route('clients.show', $client->id) }}" class="btn p-1" style="border: none; background: none; color: #76AE91;" title="View Client">
+
+                                <!-- History icon -->
+                                <button type="button" class="btn p-1 ms-2" data-bs-toggle="modal" data-bs-target="#historyModal_{{ $client->id }}" style="border: none; background: none; color: #4A7C65;" title="View History">
+                                    <i class="fa-solid fa-clock-rotate-left"></i>
+                                </button>
+
+                                <!-- View Client Information & Claim Information icon -->
+                                <a href="{{ route('clients.show', $client->id) }}" class="btn p-1" style="border: none; background: none; color: 	#5B7B8A;" title="View Client">
                                     <i class="fas fa-eye"></i>
                                 </a>
                             </div>
                         </td>
                     </tr>
+
                 @empty
                     <tr>
                         <td colspan="12" class="text-muted assistance-td" style="font-family: 'Inter', sans-serif;">No clients found.</td>
@@ -111,9 +135,58 @@
                 </tbody>
             </table>
             </div>
-        </div>
-        </main>
-    </div>
+
+            {{-- History Modal--}}
+            @foreach($assistances as $assistance)
+                @php $client = $assistance->client; @endphp
+                <div class="modal fade" id="historyModal_{{ $client->id }}" tabindex="-1" aria-hidden="true">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+
+                            <div class="modal-header">
+                                <h5 class="modal-title">History - {{ $client->first_name }} {{ $client->last_name }}</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                            </div>
+
+                            <div class="modal-body">
+                                @php
+                                    $disbursements = \App\Models\Disbursement::where('client_id', $client->id)->latest()->get();
+                                @endphp
+                                <table class="table table-sm table-bordered">
+                                    <thead>
+                                        <tr><th>Assistance Type</th><th>Amount</th><th>Status</th><th>Date</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($disbursements as $d)
+                                            <tr>
+                                                <td>
+                                                    {{ 
+                                                        $d->clientAssistance?->assistanceType?->type_name 
+                                                        ?? $d->claim?->clientAssistance?->assistanceType?->type_name 
+                                                        ?? 'N/A' 
+                                                    }}
+                                                </td>
+                                                <td>₱{{ number_format($d->amount, 2) }}</td>
+                                                <td>{{ ucfirst($d->claim_status ?? 'N/A') }}</td>
+                                                <td>{{ $d->created_at->format('M d, Y') }}</td>
+                                            </tr>
+                                        @empty
+                                            <tr><td colspan="3" class="text-center text-muted">No transactions yet.</td></tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+</main>
+
+    
+
+
+    
 
                 
                 <!-- Add Assistance Modal -->
@@ -292,6 +365,11 @@ document.addEventListener('DOMContentLoaded', function () {
 document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('addAssistanceBtn')?.addEventListener('click', function () {
         document.getElementById('addAssistanceModal').classList.remove('d-none');
+    });
+
+    // Auto-submit on typing
+    document.getElementById('searchInput').addEventListener('input', function() {
+        document.getElementById('searchForm').submit(); // Auto-submit on typing
     });
     toggleRepresentativeFields();
     document.getElementById('has_representative')?.addEventListener('change', toggleRepresentativeFields);

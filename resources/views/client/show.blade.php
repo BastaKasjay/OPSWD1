@@ -262,10 +262,21 @@
                         <input type="date" class="form-control" name="date_pgo_received" value="{{ $claim->date_pgo_received }}">
                     </div>
 
-                    <div class="col-md-6">
+                    <div class="col-md-6" id="amount-container">
                         <label class="form-label">Amount</label>
                         <input type="number" class="form-control" name="amount_approved" value="{{ $claim->amount_approved }}">
                     </div>
+
+                    <div class="col-md-6" id="source-of-fund-container">
+                        <label for="source_of_fund" class="form-label">Source of Funds</label>
+                        <select name="source_of_fund" id="source_of_fund" class="form-select">
+                            <option value="">Select Source of Fund</option>
+                            <option value="Regular" {{ isset($claim) && $claim->source_of_fund === 'Regular' ? 'selected' : '' }}>Regular</option>
+                            <option value="Senior" {{ isset($claim) && $claim->source_of_fund === 'Senior' ? 'selected' : '' }}>Senior Citizen</option>
+                            <option value="PDRRM" {{ isset($claim) && $claim->source_of_fund === 'PDRRM' ? 'selected' : '' }}>PDRRM</option>
+                        </select>
+                    </div>
+
 
                     <div class="col-md-6">
                         <label class="form-label">Preferred Payment Method</label>
@@ -291,6 +302,9 @@
                     <button type="submit" class="btn btn-success custom-green-btn rounded-pill px-4">Save Changes</button>
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
                 </div>
+
+
+
             </form>
         </div>
     </div>
@@ -301,7 +315,17 @@
         <div class="row g-3 mb-2">
             <div class="col-md-6 d-flex align-items-center">
                 <span class="fw-semibold">Status:</span>
-                <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 ms-2">{{ ucfirst(optional($claim)->status ?? 'Pending') }}</span>
+                @php
+    $status = optional($claim)->status ?? 'Pending';
+    $badgeClass = $status === 'approved'
+        ? 'bg-success bg-opacity-10 text-success'
+        : ($status === 'disapproved'
+            ? 'bg-danger bg-opacity-10 text-danger'
+            : 'bg-warning bg-opacity-10 text-warning');
+@endphp
+                <span class="badge {{ $badgeClass }} px-3 py-2 ms-2">
+                    {{ ucfirst($status) }}
+                </span>
             </div>
             @if ($claim && $claim->status === 'disapproved')
                 <div class="col-md-6 d-flex align-items-center">
@@ -313,7 +337,8 @@
         <div class="row g-3">
             <div class="col-md-4"><span class="fw-semibold">CAFOA Prepared Date:</span> {{ optional($claim)->date_cafoa_prepared ?? '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">PGO Received Date:</span> {{ optional($claim)->date_pgo_received ?? '-' }}</div>
-            <div class="col-md-4"><span class="fw-semibold">Amount:</span> {{ optional($claim)->amount_approved ?? '-' }}</div>
+            <div class="col-md-4" id="source-of-fund-display"><span class="fw-semibold">Source of Funds:</span> {{ optional($claim)->source_of_fund ?? '-' }}</div>
+            <div class="col-md-4" id="amount-display"><span class="fw-semibold">Amount:</span> {{ optional($claim)->amount_approved ?? '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">Preferred Payment Method:</span> {{ optional($claim)->form_of_payment ? ucfirst($claim->form_of_payment) : '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">Payout Date:</span> {{ optional($claim)->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</div>
         </div>
@@ -323,6 +348,7 @@
 
 @section('scripts')
 <script>
+    // PERSONAL INFO MODAL (open/close)
     function openEditModal(clientId) {
         document.getElementById(`editModal_${clientId}`).classList.remove('d-none');
     }
@@ -331,40 +357,75 @@
         document.getElementById(`editModal_${clientId}`).classList.add('d-none');
     }
 
+    // Representative Toggle (for personal info modal)
     function toggleRepresentativeFields() {
         const checkbox = document.getElementById('has_representative');
         const repFields = document.getElementById('representativeFields');
-        repFields.style.display = checkbox.checked ? 'block' : 'none';
+        if (repFields) {
+            repFields.style.display = checkbox && checkbox.checked ? 'block' : 'none';
+        }
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         toggleRepresentativeFields();
         document.getElementById('has_representative')?.addEventListener('change', toggleRepresentativeFields);
     });
-    
 
-    document.addEventListener('DOMContentLoaded', function () {
-        const modal = document.querySelector('#editClaimModal');
+    //amount and source of fund visibility based on assistance type
+    document.addEventListener("DOMContentLoaded", function () {
+        const assistanceType = "{{ $assistance->assistanceType->type_name ?? '' }}";
 
-        if (modal) {
-            const paymentSelect = modal.querySelector('select[name="form_of_payment"]');
-            const checkNoField = modal.querySelector('#check-no-field');
+        if (assistanceType.toLowerCase().includes("transportation")) {
+            document.getElementById("amount-container").style.display = "none";
+            document.getElementById("source-of-fund-container").style.display = "none";
+        }
 
-            function toggleCheckNoField() {
-                if (paymentSelect && checkNoField) {
-                    if (paymentSelect.value === 'cheque') {
-                        checkNoField.style.display = 'block';
-                    } else {
-                        checkNoField.style.display = 'none';
-                    }
-                }
-            }
+    });
 
-            toggleCheckNoField(); // Run when modal loads
-            paymentSelect.addEventListener('change', toggleCheckNoField); // Trigger when changed
+    document.addEventListener("DOMContentLoaded", function () {
+        const assistanceType = "{{ $claim->clientAssistance->assistanceType->type_name ?? '' }}";
+
+        if (assistanceType.toLowerCase().includes("transportation")) {
+            document.getElementById("source-of-fund-display").style.display = "none";
+            document.getElementById("amount-display").style.display = "none";
         }
     });
 
+
+    // CLAIM MODAL (Update Claim Info)
+    document.addEventListener("DOMContentLoaded", function () {
+        const claimModal = document.querySelector("#editClaimModal");
+        if (!claimModal) return;
+
+        const paymentSelect = claimModal.querySelector('select[name="form_of_payment"]');
+        const checkNoField = claimModal.querySelector("#check-no-field");
+        const assistanceTypeSelect = claimModal.querySelector("#source_of_fund");
+        const reasonContainer = claimModal.querySelector("#reason-container");
+        const statusInput = claimModal.querySelector('select[name="status"]');
+
+        // Toggle Check Number Field
+        function toggleCheckNoField() {
+            if (paymentSelect?.value === "cheque") {
+                checkNoField.style.display = "block";
+            } else {
+                checkNoField.style.display = "none";
+            }
+        }
+        paymentSelect?.addEventListener("change", toggleCheckNoField);
+        toggleCheckNoField();
+
+        // Toggle Reason of Disapproval
+        if (statusInput && reasonContainer) {
+            function toggleReasonField() {
+                reasonContainer.style.display =
+                    statusInput.value === "disapproved" ? "block" : "none";
+            }
+            statusInput.addEventListener("change", toggleReasonField);
+            toggleReasonField();
+        }
+    });
+
+    // ASSISTANCE CATEGORIES & REQUIREMENTS (Personal Info Modal)
     document.addEventListener('DOMContentLoaded', function () {
         const assistanceTypeSelect = document.getElementById('edit_assistance_type');
         const medicalCaseSection = document.getElementById('medical_case_section');
@@ -372,44 +433,42 @@
         const requirementsSection = document.getElementById('requirements_section');
 
         function toggleMedicalSection() {
-            const selectedText = assistanceTypeSelect.options[assistanceTypeSelect.selectedIndex].text.toLowerCase();
-            if (selectedText.includes('medical')) {
-                medicalCaseSection.style.display = 'block';
-            } else {
-                medicalCaseSection.style.display = 'none';
-            }
+            if (!assistanceTypeSelect) return;
+            const selectedText = assistanceTypeSelect.options[assistanceTypeSelect.selectedIndex]?.text.toLowerCase() || '';
+            medicalCaseSection.style.display = selectedText.includes('medical') ? 'block' : 'none';
         }
 
         function loadCategoriesAndRequirements(typeId) {
-            // Categories
+            if (!typeId) return;
+
+            // Load Categories
             fetch(`/get-categories/${typeId}`)
                 .then(res => res.json())
                 .then(data => {
                     let html = data.length ? '' : '<p class="text-muted">No categories found.</p>';
-                    // Get the current selected category from the server-rendered value
-                    let selectedCategory = null;
-                    try {
-                        selectedCategory = document.querySelector('input[name="assistance_category_id"]:checked')?.value || "{{ $assistance->assistance_category_id ?? '' }}";
-                    } catch(e) { selectedCategory = "{{ $assistance->assistance_category_id ?? '' }}"; }
+                    let selectedCategory = document.querySelector('input[name="assistance_category_id"]:checked')?.value || "{{ $assistance->assistance_category_id ?? '' }}";
                     data.forEach(c => {
                         const checked = selectedCategory == c.id ? 'checked' : '';
-                        html += `<div class="form-check">
-                                    <input type="radio" name="assistance_category_id" value="${c.id}" class="form-check-input category-radio" id="edit-category-${c.id}" ${checked}>
-                                    <label class="form-check-label" for="edit-category-${c.id}">${c.category_name}</label>
-                                </div>`;
+                        html += `
+                            <div class="form-check">
+                                <input type="radio" name="assistance_category_id" value="${c.id}" class="form-check-input category-radio" id="edit-category-${c.id}" ${checked}>
+                                <label class="form-check-label" for="edit-category-${c.id}">${c.category_name}</label>
+                            </div>`;
                     });
                     categoriesSection.innerHTML = html;
                 });
-            // Requirements
+
+            // Load Requirements
             fetch(`/get-requirements/${typeId}`)
                 .then(res => res.json())
                 .then(data => {
                     let html = data.length ? '' : '<p class="text-muted">No requirements found.</p>';
                     data.forEach(r => {
-                        html += `<div class="form-check">
-                                    <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input requirement-checkbox">
-                                    <label class="form-check-label">${r.requirement_name}</label>
-                                </div>`;
+                        html += `
+                            <div class="form-check">
+                                <input type="checkbox" name="requirements[]" value="${r.id}" class="form-check-input requirement-checkbox">
+                                <label class="form-check-label">${r.requirement_name}</label>
+                            </div>`;
                     });
                     requirementsSection.innerHTML = html;
                 });
@@ -420,15 +479,15 @@
                 toggleMedicalSection();
                 loadCategoriesAndRequirements(this.value);
             });
-            // Initial load if pre-selected
+
             toggleMedicalSection();
             if (assistanceTypeSelect.value) {
                 loadCategoriesAndRequirements(assistanceTypeSelect.value);
             }
         }
     });
-    
-
 </script>
+
+
 @endsection
 

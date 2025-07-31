@@ -11,6 +11,8 @@ return new class extends Migration {
             $table->unsignedBigInteger('claim_id');
             $table->unsignedBigInteger('client_id');
 
+            $table->unsignedBigInteger('client_assistance_id')->nullable();
+
             $table->unsignedBigInteger('cash_payment_id')->nullable(); // optional
             $table->unsignedBigInteger('check_payment_id')->nullable(); // new column
 
@@ -26,6 +28,7 @@ return new class extends Migration {
 
             $table->foreign('claim_id')->references('id')->on('claims')->onDelete('cascade');
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->foreign('client_assistance_id')->references('id')->on('client_assistance')->onDelete('cascade');
             $table->foreign('cash_payment_id')->references('id')->on('cash_payments')->onDelete('set null');
             $table->foreign('check_payment_id')->references('id')->on('check_payments')->onDelete('set null');
         });

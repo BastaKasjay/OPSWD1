@@ -45,7 +45,7 @@
             <form method="GET" action="{{ route('reports.index') }}" class="row g-2 align-items-end mb-4">
                 <div class="col-md-3">
                     <label for="quarter" class="form-label">Quarter</label>
-                    <select class="form-select" name="quarter" id="quarter">
+                    <select class="form-select" name="quarter" id="quarter" onchange="this.form.submit()">
                         <option value="">All Quarters</option>
                         <option value="Q1" {{ request('quarter') == 'Q1' ? 'selected' : '' }}>Q1</option>
                         <option value="Q2" {{ request('quarter') == 'Q2' ? 'selected' : '' }}>Q2</option>
@@ -53,24 +53,18 @@
                         <option value="Q4" {{ request('quarter') == 'Q4' ? 'selected' : '' }}>Q4</option>
                     </select>
                 </div>
+
                 <div class="col-md-2">
                     <label for="year" class="form-label">Year</label>
-                    <select class="form-select" name="year" id="year">
-                        @for($year = date('Y'); $year >= 2022; $year--)
-                            <option value="{{ $year }}" {{ request('year', date('Y')) == $year ? 'selected' : '' }}>{{ $year }}</option>
+                    <select class="form-select" name="year" id="year" onchange="this.form.submit()">
+                        @for($y = date('Y'); $y >= 2022; $y--)
+                            <option value="{{ $y }}" {{ request('year', date('Y')) == $y ? 'selected' : '' }}>
+                                {{ $y }}
+                            </option>
                         @endfor
                     </select>
                 </div>
-                <div class="col-md-3">
-                    <label for="from" class="form-label">From (Date)</label>
-                    <input type="date" name="from" id="from" class="form-control" value="{{ request('from') }}">
-                </div>
-                <div class="col-md-3">
-                    <label for="to" class="form-label">To (Date)</label>
-                    <input type="date" name="to" id="to" class="form-control" value="{{ request('to') }}">
-                </div>
             </form>
-
         </div>
 
         <!-- Table -->

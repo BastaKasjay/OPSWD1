@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Dashboard')
+@section('title', 'Home')
 
 @section('content')
 
@@ -7,42 +7,91 @@
         <!-- Header -->
         <header class="header">
             <h1>Dashboard</h1>
-            <div class="dropdown">
-                <button class="btn btn-light dropdown-toggle rounded-pill" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                    <i class="fas fa-globe"></i> ALL
+            <div class="ms-auto">
+                <button class="btn btn-success rounded-pill" data-bs-toggle="modal" data-bs-target="#budgetModal">
+                    <i class="fas fa-coins"></i> Manage Budget
                 </button>
-                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuButton1">
-                    <li><a class="dropdown-item" href="#">Option 1</a></li>
-                    <li><a class="dropdown-item" href="#">Option 2</a></li>
-                    <li><a class="dropdown-item" href="#">Option 3</a></li>
-                </ul>
             </div>
+
+            <div class="modal fade" id="budgetModal" tabindex="-1">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Add Annual Budget</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <form action="{{ route('budgets.store') }}" method="POST">
+                            @csrf
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Year</label>
+                                <input type="number" name="year" class="form-control" value="{{ date('Y') }}" required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Fund Type</label>
+                                <select name="type" class="form-select" required>
+                                <option value="">-- Select --</option>
+                                <option value="Regular">Regular</option>
+                                <option value="Senior">Senior Citizen</option>
+                                <option value="PDRRM">PDRRM</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Allocated Amount</label>
+                                <input type="number" step="0.01" name="allocated_amount" class="form-control" required>
+                            </div>
+                        </div>
+                            <div class="modal-footer">
+                                <button type="submit" class="btn btn-success w-100">Save Budget</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
         </header>
 
         <!-- Dashboard Cards -->
         <div class="row">
+            
             <div class="col-md-3">
                 <div class="dashboard-card card-purple">
                     <div class="card-title">Payouts</div>
-                    <div class="card-value">6</div>
+                    <div class="card-value">{{ $totalPayouts }}</div>
+
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="dashboard-card card-orange">
                     <div class="card-title">Total Clients</div>
-                    <div class="card-value">1,207</div>
+                    <div class="card-value">{{ $totalClients }}</div>
                 </div>
             </div>
             <div class="col-md-3">
                 <div class="dashboard-card card-green">
                     <div class="card-title">Disbursed Amount</div>
-                    <div class="card-value">₱84,000</div>
+                    <div class="card-value">
+                        <ul class="list-unstyled m-0" style="font-size: 14px; line-height: 1.5;">
+                            @foreach (['Regular', 'Senior', 'PDRRM'] as $type)
+                                @php
+                                    $budget = $budgets->firstWhere('type', $type)?->allocated_amount ?? 0;
+                                    $disbursed = $disbursedPerType[$type] ?? 0;
+                                @endphp
+                                <li>
+                                    <strong>{{ $type === 'Senior' ? 'Senior Citizen' : $type }}:</strong>
+                                    ₱{{ number_format($disbursed, 2) }} / ₱{{ number_format($budget, 2) }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 </div>
             </div>
+
             <div class="col-md-3">
                 <div class="dashboard-card card-red">
-                    <div class="card-title">Total Accomplishment Rate</div>
-                    <div class="card-value">3.64 %</div>
+                    <div class="card-title">Unserved Clients</div>
+                   <div class="card-value">{{ $unservedPercentage }} %</div>
+
                 </div>
             </div>
         </div>
@@ -53,26 +102,22 @@
                 <div class="card served-clients-card">
                     <div class="card-body">
                         <h5 class="card-title">SERVED CLIENTS</h5>
+                        <div class="mb-3">
+                            <label for="filterCriteria" class="form-label">Filter By:</label>
+                            <select id="filterCriteria" class="form-select">
+                                <option value="vulnerability">Vulnerability</option>
+                                <option value="age_group">Age Group</option>
+                                <option value="cases">Case(s)</option>
+                            </select>
+                        </div>
                         <div class="served-clients-chart-wrapper">
                             <div class="chart-circle-outer">
                                 <div class="chart-circle-inner">
-                                    <div class="chart-center-value">43</div>
+                                <!-- Make served clients dynamic -->
+                                    <div class="chart-center-value" id="chartCenterValue">{{ $servedClients }}</div>
                                 </div>
                             </div>
-                            <div class="legend-list">
-                                <div class="legend-item">
-                                    <span class="legend-color-box legend-orange"></span> Medical Assistance
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box legend-red"></span> Funeral
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box legend-blue"></span> Educational Assistance
-                                </div>
-                                <div class="legend-item">
-                                    <span class="legend-color-box legend-green"></span> Transportation
-                                </div>
-                            </div>
+                            <div class="legend-list" id="chartLegendList"></div>
                         </div>
                     </div>
                 </div>
@@ -86,36 +131,19 @@
                                 <thead>
                                     <tr>
                                         <th>Schedule</th>
-                                        <th>Payout Code</th>
+                                        <th>Municipality</th>
                                         <th>Payout Name</th>
                                     </tr>
                                 </thead>
                                 <tbody>
+                                    
+                                    @foreach ($upcomingPayouts as $payout)
                                     <tr>
-                                        <td>Dec. 24, 2024 - Dec. 25, 2024</td>
-                                        <td>AKAP-12325324</td>
-                                        <td>CONGOS AMBELARGOI, PAYOUT</td>
+                                        <td>{{ \Carbon\Carbon::parse($payout->payout_date)->format('M d, Y') }}</td>
+                                        <td>{{ $payout->client->municipality->name ?? '-' }}</td>
+                                        <td>{{ $payout->client->full_name ?? $payout->client->payee->full_name ?? '-' }}</td>
                                     </tr>
-                                    <tr>
-                                        <td>Dec. 24, 2024 - Dec. 26, 2024</td>
-                                        <td>SAMP</td>
-                                        <td>STEPH SAMPLE</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Dec. 16, 2024 - Dec. 18, 2024</td>
-                                        <td>MIKETTETINGPAYOUT</td>
-                                        <td>MIKE TESTING PAYOUT</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Dec. 16, 2024 - Dec. 19, 2024</td>
-                                        <td>AKAP-CL (ITOGON-FA)</td>
-                                        <td>ITOGON PAY-OUT</td>
-                                    </tr>
-                                    <tr>
-                                        <td>Dec. 24, 2024 - Dec. 26, 2024</td>
-                                        <td>KAPANGAN</td>
-                                        <td>KAPANGAN PAYOUT</td>
-                                    </tr>
+                                    @endforeach
                                 </tbody>
                             </table>
                         </div>
@@ -124,4 +152,77 @@
             </div>
         </div>
     </div>
+@endsection
+
+@section('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const filterCriteria = document.getElementById("filterCriteria");
+        const chartCenterValue = document.getElementById("chartCenterValue");
+        const chartLegendList = document.getElementById("chartLegendList");
+
+        //  Pass Laravel data to JS
+        const data = {
+            vulnerability: @json($vulnerabilityData),
+            age_group: @json($ageGroupData),
+            cases: @json($caseData)
+        };
+
+        // Function to update the chart
+        function updateChart(category) {
+            const categoryData = data[category];
+            const total = Object.values(categoryData).reduce((sum, value) => sum + value, 0);
+
+            // Update center value
+            chartCenterValue.textContent = total;
+
+            // Update legend
+            chartLegendList.innerHTML = "";
+            for (const [key, value] of Object.entries(categoryData)) {
+                const legendItem = document.createElement("div");
+                legendItem.classList.add("legend-item");
+                legendItem.innerHTML = `
+                    <span class="legend-color-box" style="background-color: ${getColorForKey(key)};"></span>
+                    ${capitalizeFirstLetter(key)} (${value})
+                `;
+                chartLegendList.appendChild(legendItem);
+            }
+        }
+
+        // Helper function to get color for a key
+        function getColorForKey(key) {
+            const colors = {
+                senior_citizen: "#FFA500",
+                pwd: "#FF4500",
+                solo_parent: "#1E90FF",
+                four_ps: "#32CD32",
+                others: "#808080",
+                "0-18": "#FFA500",
+                "19-35": "#FF4500",
+                "36-60": "#1E90FF",
+                "60+": "#32CD32",
+                ckd: "#FFA500",
+                cancer: "#FF4500",
+                heart_illness: "#1E90FF",
+                diabetes: "#32CD32",
+                hypertension: "#808080",
+                others: "#808080"
+            };
+            return colors[key] || "#000000";
+        }
+
+        // Helper function to capitalize the first letter
+        function capitalizeFirstLetter(string) {
+            return string.charAt(0).toUpperCase() + string.slice(1).replace(/_/g, " ");
+        }
+
+        // Initial chart update
+        updateChart("vulnerability");
+
+        // Update chart on filter change
+        filterCriteria.addEventListener("change", function () {
+            updateChart(this.value);
+        });
+    });
+</script>
 @endsection

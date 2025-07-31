@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use App\Models\ClientAssistance;
 use Illuminate\Http\Request;
+use App\Models\AssistanceType;
 
 class ClientAssistanceController extends Controller
 {
@@ -56,27 +57,34 @@ class ClientAssistanceController extends Controller
             ]);
         }
 
-            // Create client assistance
-            // ✅ Get the "Others" category ID for the selected assistance type
-$othersCategory = DB::table('assistance_categories')
-    ->where('assistance_type_id', $request->assistance_type_id)
-    ->whereRaw('LOWER(category_name) = "others"')
-    ->first();
+            
+            $othersCategory = DB::table('assistance_categories')
+                ->where('assistance_type_id', $request->assistance_type_id)
+                ->whereRaw('LOWER(category_name) = "others"')
+                ->first();
 
-$assistance = ClientAssistance::create([
-    'client_id' => $request->client_id,
-    'assistance_type_id' => $request->assistance_type_id,
-    'assistance_category_id' => $request->assistance_category_id,
-    'other_category_name' => $request->filled('other_category') 
-    ? $request->other_category 
-    : null,
+            $assistance = ClientAssistance::create([
+                'client_id' => $request->client_id,
+                'assistance_type_id' => $request->assistance_type_id,
+                // If user typed in custom category, force category to "Others"
+                'assistance_category_id' => $request->filled('other_category_name') 
+                    ? ($othersCategory ? $othersCategory->id : $request->assistance_category_id)
+                    : $request->assistance_category_id,
 
-    'date_received_request' => $request->date_received_request,
-    'medical_case' => $request->medical_case === 'Others' && $request->filled('other_case')
-        ? $request->other_case
-        : $request->medical_case,
-    'payee_id' => $payee->id,
-]);
+                // Only save the custom text, never an ID
+                'other_category_name' => $request->filled('other_category_name') 
+                    ? $request->other_category_name 
+                    : null,
+
+                'date_received_request' => $request->date_received_request,
+                'medical_case' => $request->medical_case === 'Others' && $request->filled('other_case')
+                    ? $request->other_case
+                    : $request->medical_case,
+                'payee_id' => $payee->id,
+            ]);
+
+// dd($request->all());
+
 
 
             // Create claim record (status = pending by default)
@@ -97,6 +105,7 @@ $assistance = ClientAssistance::create([
         }
 
     }
+    
 
 
 
@@ -134,16 +143,37 @@ $assistance = ClientAssistance::create([
     }
 
     public function updateStatus(Request $request, $id)
+    {
+        $request->validate([
+            'status' => 'required|in:pending,approved,disapproved'
+        ]);
+
+        $assistance = ClientAssistance::findOrFail($id);
+        $assistance->status = $request->status;
+        $assistance->save();
+
+        return back()->with('success', 'Status updated successfully!');
+    }
+
+    public function assistance(Request $request)
 {
-    $request->validate([
-        'status' => 'required|in:pending,approved,disapproved'
-    ]);
+    $query = ClientAssistance::with(['client', 'assistanceType', 'payee']);
 
-    $assistance = ClientAssistance::findOrFail($id);
-    $assistance->status = $request->status;
-    $assistance->save();
+    // ✅ Search by client name
+    if ($request->has('search') && !empty($request->search)) {
+        $search = $request->search;
 
-    return back()->with('success', 'Status updated successfully!');
+        $query->whereHas('client', function ($q) use ($search) {
+            $q->where('first_name', 'like', "%$search%")
+              ->orWhere('middle_name', 'like', "%$search%")
+              ->orWhere('last_name', 'like', "%$search%");
+        });
+    }
+
+    $assistances = $query->paginate(10);
+    $assistanceTypes = AssistanceType::all(); // Needed for the modal
+
+    return view('client.assistance', compact('assistances', 'assistanceTypes'));
 }
 
 
