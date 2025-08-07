@@ -91,7 +91,8 @@ class ReportController extends Controller
             DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%ESA%' AND claims.source_of_fund = 'PDRRM' THEN 1 ELSE 0 END) as PDRRMESA"),
 
 
-            DB::raw("SUM(disbursements.total_amount_claimed) as TotalAmountPaid")
+            DB::raw("SUM(disbursements.amount) as TotalAmountPaid")
+
 
         )
         ->where('disbursements.claim_status', '=', 'claimed')

@@ -23,6 +23,7 @@
             <div class="col-md-4"><span class="fw-semibold">Age:</span> {{ $client->age }}</div>
             <div class="col-md-4"><span class="fw-semibold">Birth Date:</span> {{ $client->birthday ? \Carbon\Carbon::parse($client->birthday)->format('F d, Y') : '-' }}</div>
             <div class="col-md-4"><span class="fw-semibold">Contact:</span> {{ $client->contact_number ?? '-' }}</div>
+            <div class="col-md-4"><span class="fw-semibold">Valid ID Presented?</span> {{ $client->valid_id ? 'Yes' : 'No' }}</div>
             <div class="col-md-4"><span class="fw-semibold">Vulnerability Sectors:</span> {{ $client->vulnerabilitySectors->isNotEmpty() ? $client->vulnerabilitySectors->pluck('name')->join(', ') : 'None' }}</div>
         </div>
         <h5 class="fw-bold text-success text-center mb-3 bg-success bg-opacity-10 rounded py-2">Representative</h5>
@@ -34,18 +35,21 @@
             <div class="col-md-4"><span class="fw-semibold">Relationship:</span> {{ $client->payee->relationship ?? '-' }}</div>
         </div>
         <h4 class="fw-bold text-success text-center mb-3 bg-success bg-opacity-10 rounded py-2">Assistance</h4>
-        @if ($client->assistances && $client->assistances->isNotEmpty())
-            @foreach ($client->assistances as $assistance)
-                <div class="row g-3 mb-2">
-                    <div class="col-md-4"><span class="fw-semibold">Assistance Type:</span> {{ $assistance->assistanceType->type_name ?? '-' }}</div>
-                    <div class="col-md-4"><span class="fw-semibold">Assistance Category:</span> {{ $assistance->assistanceCategory->category_name ?? '-' }}</div>
-                    <div class="col-md-4"><span class="fw-semibold">Medical Case:</span> {{ $assistance->medical_case ?? '-' }}</div>
-                    <div class="col-md-4"><span class="fw-semibold">Date Received:</span> {{ $assistance->date_received_request ?? '-' }}</div>
-                </div>
-            @endforeach
-        @else
-            <p class="text-muted text-center">No assistance records available.</p>
-        @endif
+        @php
+    $latestAssistance = $client->assistances()->latest()->first();
+@endphp
+
+@if ($latestAssistance)
+    <div class="row g-3 mb-2">
+        <div class="col-md-4"><span class="fw-semibold">Assistance Type:</span> {{ $latestAssistance->assistanceType->type_name ?? '-' }}</div>
+        <div class="col-md-4"><span class="fw-semibold">Assistance Category:</span> {{ $latestAssistance->assistanceCategory->category_name ?? '-' }}</div>
+        <div class="col-md-4"><span class="fw-semibold">Medical Case:</span> {{ $latestAssistance->medical_case ?? '-' }}</div>
+        <div class="col-md-4"><span class="fw-semibold">Date Received:</span> {{ $latestAssistance->date_received_request ?? '-' }}</div>
+    </div>
+@else
+    <p class="text-muted text-center">No assistance records available.</p>
+@endif
+
 
 
             <!-- edit modal -->
@@ -108,6 +112,13 @@
                                 </select>
                             </div>
 
+                            <div class="col-md-12 mt-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="valid_id" id="valid_id" value="1" {{ old('valid_id', $client->valid_id ?? false) ? 'checked' : '' }}>
+                                    <label class="form-check-label" for="valid_id">Valid ID Presented?</label>
+                                </div>
+                            </div>
+
                             <div class="col-12">
                                 <label class="form-label">Vulnerability Sectors:</label>
                                 <div class="d-flex flex-wrap gap-2">
@@ -129,7 +140,7 @@
                                         <option disabled selected>Select type</option>
                                         @foreach ($assistanceTypes as $type)
                                             <option value="{{ $type->id }}"
-                                                {{ $assistance->assistance_type_id == $type->id ? 'selected' : '' }}>
+                                                {{ $latestAssistance && $latestAssistance->assistance_type_id == $type->id ? 'selected' : '' }}>
                                                 {{ $type->type_name }}
                                             </option>
                                         @endforeach
@@ -141,9 +152,9 @@
                                         <p class="text-muted">Please select an assistance type to view categories.</p>
                                     </div>
                                 </div>
-                                <div class="mb-3" id="medical_case_section" style="display: none;">
-                                    <label class="form-label">Medical Case:</label>
-                                    <select name="medical_case" class="form-select">
+                                <div class="col-md-6" id="medical_case_section" style="display: none;">
+                                    <label class="form-label fw-semibold">Medical Case</label>
+                                    <select name="medical_case" class="form-control rounded border border-success bg-light" style="box-shadow: none;">
                                         <option value="">Select Case</option>
                                         <option value="CKD">CKD</option>
                                         <option value="Cancer">Cancer</option>
@@ -152,6 +163,10 @@
                                         <option value="Hypertension">Hypertension</option>
                                         <option value="Others">Others</option>
                                     </select>
+                                    <div id="other_medical_case_input" class="mt-2 d-none">
+                                        <label for="other_case" class="form-label">Please specify:</label>
+                                        <input type="text" name="other_case" id="other_case" class="form-control" placeholder="Enter other medical case">
+                                    </div>
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label fw-bold">Requirements:</label>
@@ -221,7 +236,7 @@
     </button>
 </div>
     @php
-        $assistance = $client->assistances->first();
+        $assistance = $client->assistances()->latest()->first();
         $claim = $assistance ? \App\Models\Claim::where('client_assistance_id', $assistance->id)->first() : null;
     @endphp
 
@@ -230,17 +245,27 @@
         <h4 class="fw-bold text-success text-center mb-4 bg-success bg-opacity-10 rounded py-2">Claim Information</h4>
         @if ($claim)
         
-            <!-- Update Claim Modal -->
+            @php
+    $latestAssistance = $client->assistances()->latest()->first();
+    $claim = $latestAssistance 
+        ? \App\Models\Claim::where('client_assistance_id', $latestAssistance->id)->first()
+        : null;
+@endphp
+
+@if($latestAssistance)
 <div class="modal fade" id="editClaimModal" tabindex="-1" aria-labelledby="editClaimModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content border-0 shadow-sm rounded p-4" style="background: #fff;">
             <form action="{{ $claim ? route('claims.update', $claim->id) : '#' }}" method="POST">
                 @csrf
                 @method('PUT')
-                <input type="hidden" name="client_assistance_id" value="{{ $assistance->id ?? '' }}">
 
-                <div class="modal-header border-0 pb-0" style="background: none;">
-                    <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" id="editClaimModalLabel" style="font-size: 1.5rem;">Update Claim Information</h5>
+                <input type="hidden" name="client_assistance_id" value="{{ $latestAssistance->id }}">
+
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" id="editClaimModalLabel" style="font-size: 1.5rem;">
+                        Update Claim Information
+                    </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
 
@@ -248,7 +273,8 @@
                     <div id="reason-container" style="display: {{ $claim && $claim->status === 'disapproved' ? 'block' : 'none' }};">
                         <div class="mb-3">
                             <label class="form-label fw-semibold">Reason of Disapproval:</label>
-                            <input type="text" name="reason_of_disapprovement" class="form-control" value="{{ old('reason_of_disapprovement', $claim->reason_of_disapprovement) }}">
+                            <input type="text" name="reason_of_disapprovement" class="form-control"
+                                value="{{ old('reason_of_disapprovement', $claim->reason_of_disapprovement) }}">
                         </div>
                     </div> 
 
@@ -271,25 +297,25 @@
                         <label for="source_of_fund" class="form-label">Source of Funds</label>
                         <select name="source_of_fund" id="source_of_fund" class="form-select">
                             <option value="">Select Source of Fund</option>
-                            <option value="Regular" {{ isset($claim) && $claim->source_of_fund === 'Regular' ? 'selected' : '' }}>Regular</option>
-                            <option value="Senior" {{ isset($claim) && $claim->source_of_fund === 'Senior' ? 'selected' : '' }}>Senior Citizen</option>
-                            <option value="PDRRM" {{ isset($claim) && $claim->source_of_fund === 'PDRRM' ? 'selected' : '' }}>PDRRM</option>
+                            <option value="Regular" {{ $claim && $claim->source_of_fund === 'Regular' ? 'selected' : '' }}>Regular</option>
+                            <option value="Senior" {{ $claim && $claim->source_of_fund === 'Senior' ? 'selected' : '' }}>Senior Citizen</option>
+                            <option value="PDRRM" {{ $claim && $claim->source_of_fund === 'PDRRM' ? 'selected' : '' }}>PDRRM</option>
                         </select>
                     </div>
-
 
                     <div class="col-md-6">
                         <label class="form-label">Preferred Payment Method</label>
                         <select name="form_of_payment" class="form-select">
                             <option value="">Select</option>
-                            <option value="cash" {{ $claim->form_of_payment === 'cash' ? 'selected' : '' }}>Cash</option>
-                            <option value="cheque" {{ $claim->form_of_payment === 'cheque' ? 'selected' : '' }}>Cheque</option>
+                            <option value="cash" {{ $claim && $claim->form_of_payment === 'cash' ? 'selected' : '' }}>Cash</option>
+                            <option value="cheque" {{ $claim && $claim->form_of_payment === 'cheque' ? 'selected' : '' }}>Cheque</option>
                         </select>
                     </div>
 
                     <div id="check-no-field" class="col-md-6" style="display: none;">
                         <label for="check_no" class="form-label">Check Number</label>
-                        <input type="text" name="check_no" id="check_no" class="form-control" value="{{ old('check_no', $claim->checkPayment->check_no ?? '') }}">
+                        <input type="text" name="check_no" id="check_no" class="form-control"
+                            value="{{ old('check_no', $claim->checkPayment->check_no ?? '') }}">
                     </div>
 
                     <div class="col-md-6">
@@ -298,17 +324,15 @@
                     </div>
                 </div>
 
-                <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2" style="background: none;">
+                <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2">
                     <button type="submit" class="btn btn-success custom-green-btn rounded-pill px-4">Save Changes</button>
                     <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
                 </div>
-
-
-
             </form>
         </div>
     </div>
 </div>
+@endif
 
 
         @endif
@@ -486,6 +510,42 @@
             }
         }
     });
+
+    document.addEventListener('DOMContentLoaded', function () {
+    const medicalCaseSelect = document.querySelector('select[name="medical_case"]');
+    const otherCaseInputDiv = document.getElementById('other_medical_case_input');
+    const otherCaseInput = document.getElementById('other_case');
+    const form = document.querySelector('#addAssistanceForm');
+
+    if (medicalCaseSelect) {
+        medicalCaseSelect.addEventListener('change', function () {
+            if (this.value === 'Others') {
+                otherCaseInputDiv.classList.remove('d-none');
+            } else {
+                otherCaseInputDiv.classList.add('d-none');
+            }
+        });
+    }
+
+    if (form) {
+        form.addEventListener('submit', function () {
+            if (medicalCaseSelect.value === 'Others' && otherCaseInput.value.trim() !== '') {
+                // Replace the select value before submit
+                const customValue = otherCaseInput.value.trim();
+
+                // Remove any old injected custom options first
+                const existingCustom = medicalCaseSelect.querySelector('option[data-custom="true"]');
+                if (existingCustom) existingCustom.remove();
+
+                // Create a new option
+                const newOption = new Option(customValue, customValue);
+                newOption.selected = true;
+                newOption.setAttribute('data-custom', 'true');
+                medicalCaseSelect.add(newOption);
+            }
+        });
+    }
+});
 </script>
 
 

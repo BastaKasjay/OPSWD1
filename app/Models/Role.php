@@ -9,10 +9,19 @@ class Role extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    // Use the actual column name in the DB
+    protected $fillable = ['rolename'];
 
+    // In Role.php
     public function users()
     {
-        return $this->belongsToMany(User::class, 'users_roles');
+        return $this->belongsToMany(User::class, 'users_roles')->withTimestamps();
+    }
+
+
+    // Optional: so you can still use $role->name in code
+    public function getNameAttribute()
+    {
+        return $this->rolename;
     }
 }

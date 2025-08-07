@@ -21,7 +21,6 @@ return new class extends Migration {
             $table->date('payout_date')->nullable();
             $table->date('date_received_claimed')->nullable();
             $table->date('date_released')->nullable();
-            $table->decimal('total_amount_claimed', 12, 2)->nullable();
             $table->enum('claim_status', ['claimed', 'unclaimed', 'pending'])->default('unclaimed');
 
             $table->timestamps();

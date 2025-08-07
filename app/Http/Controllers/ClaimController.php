@@ -41,12 +41,14 @@ class ClaimController extends Controller
     public function update(Request $request, $id)
 {
     // Validation (nullable so you can update fields one by one)
-    $request->validate([
-        'form_of_payment' => 'nullable|in:cash,cheque',
-        'check_no' => 'nullable|required_if:form_of_payment,cheque',
-        'payout_date' => 'nullable|date',
-        'source_of_fund' => 'nullable|in:Regular,Senior,PDRRM',
-    ]);
+
+    // dd($request->all());
+    // $request->validate([
+    //     'form_of_payment' => 'nullable|in:cash,cheque',
+    //     'check_no' => 'nullable|required_if:form_of_payment,cheque',
+    //     'payout_date' => 'nullable|date',
+    //     'source_of_fund' => 'nullable|in:Regular,Senior,PDRRM',
+    // ]);
 
     // Fetch claim with related client and disbursement
     $claim = Claim::with(['client', 'disbursement', 'clientAssistance.assistanceType'])
@@ -118,6 +120,7 @@ class ClaimController extends Controller
             [
                 'client_id' => $claim->client_id,
                 'cash_payment_id' => $cashPaymentId,
+                'client_assistance_id' => $claim->client_assistance_id,
                 'check_payment_id' => $checkPaymentId,
                 'form_of_payment' => $claim->form_of_payment,
                 'payout_date' => $claim->payout_date,

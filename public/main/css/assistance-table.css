@@ -23,6 +23,7 @@
     gap: 0.25rem;
 }
 
+
 /* Button styles for modal and actions (Bootstrap override, do not change design) */
 .btn-success {
     background-color: var(--mint-green-800) !important;

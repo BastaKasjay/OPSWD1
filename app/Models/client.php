@@ -20,6 +20,7 @@ class Client extends Model
         'contact_number',
         'birthday',
         'municipality_id',
+        'valid_id',
         'assistance_type_id',
         'assistance_category_id',
 

@@ -10,12 +10,25 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    public function index()
-    {
-        $users = User::with('employee', 'roles')->paginate(10);
-        $employees = Employee::all();
-        return view('user.index', compact('users', 'employees'));
+    public function index(Request $request)
+{
+    $query = User::with('employee', 'roles');
+
+    if ($request->search) {
+        $query->where('username', 'like', '%' . $request->search . '%')
+              ->orWhereHas('employee', function ($q) use ($request) {
+                  $q->where('first_name', 'like', '%' . $request->search . '%')
+                    ->orWhere('last_name', 'like', '%' . $request->search . '%');
+              });
     }
+
+    $users = $query->paginate(10);
+    $employees = Employee::all();
+    $roles = Role::all();
+
+    return view('user.index', compact('users', 'employees', 'roles'));
+}
+
 
     public function create()
     {
@@ -25,43 +38,35 @@ class UserController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $user = auth()->user();
+{
+    $validated = $request->validate([
+        'employee_id' => 'required|exists:employees,id',
+        'username' => 'required|string|unique:users,username',
+        'password' => 'required|string|min:8|confirmed',
+        'role_id' => 'required|exists:roles,id',
+    ]);
 
-        $validated = $request->validate([
-            'employee_id' => 'required|exists:employees,id',
-            'username' => 'required|string|unique:users,username',
-            'password' => 'required|string|min:8|confirmed',
-            'role_id' => 'required|exists:roles,id',
-        ]);
+    $employee = Employee::findOrFail($validated['employee_id']);
 
-        $employee = Employee::findOrFail($validated['employee_id']);
-
-        $fullName = $employee->first_name;
-        if (!empty($employee->middle_name)) {
-            $fullName .= ' ' . strtoupper(substr($employee->middle_name, 0, 1)) . '.';
-        }
-        $fullName .= ' ' . $employee->last_name;
-
-        $userData = [
-            'employee_id' => $validated['employee_id'],
-            'username' => $validated['username'],
-            'name' => $fullName,
-            'password' => Hash::make($validated['password']),
-        ];
-
-        $newUser = User::create($userData);
-
-        // Admin can assign a role, others will default to basic user role
-        if ($user && $user->roles()->where('name', 'admin')->exists()) {
-            $newUser->roles()->attach($validated['role_id']);
-        } else {
-            $defaultRole = Role::where('name', 'user')->first();
-            $newUser->roles()->attach($defaultRole->id);
-        }
-
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+    $fullName = $employee->first_name;
+    if (!empty($employee->middle_name)) {
+        $fullName .= ' ' . strtoupper(substr($employee->middle_name, 0, 1)) . '.';
     }
+    $fullName .= ' ' . $employee->last_name;
+
+    $newUser = User::create([
+        'employee_id' => $validated['employee_id'],
+        'username' => $validated['username'],
+        'name' => $fullName,
+        'password' => Hash::make($validated['password']),
+    ]);
+
+    $newUser->roles()->attach($validated['role_id']);
+
+    return redirect()->route('users.index')->with('success', 'User created successfully and can now log in.');
+}
+
+
 
     public function show(User $user)
     {
@@ -75,32 +80,39 @@ class UserController extends Controller
         return view('user.edit', compact('user', 'employees', 'roles'));
     }
 
+    
     public function update(Request $request, User $user)
     {
-        $authUser = auth()->user();
-
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
             'username' => 'required|string|unique:users,username,' . $user->id,
-            'employee_id' => 'required|exists:employees,id',
             'role_id' => 'required|exists:roles,id',
+            'password' => 'nullable|string|min:8', // No 'confirmed' rule
         ]);
 
-        if ($request->filled('password')) {
-            $validated['password'] = Hash::make($request->password);
-        } else {
-            unset($validated['password']);
+        // Log submitted vs current for debugging
+    \Log::info('Role update attempt', [
+        'user_id' => $user->id,
+        'submitted_role_id' => $validated['role_id'],
+        'current_role_ids_before' => $user->roles->pluck('id')->toArray(),
+    ]);
+
+        $updateData = [
+            'username' => $validated['username'],
+        ];
+
+        if (!empty($validated['password'])) {
+            $updateData['password'] = $validated['password']; // Will be auto-hashed via mutator
         }
 
-        $user->update($validated);
+        $user->update($updateData);
 
-        // Only admin can change roles
-        if ($authUser && $authUser->roles()->where('name', 'admin')->exists()) {
-            $user->roles()->sync([$validated['role_id']]);
-        }
+        $user->roles()->sync([$validated['role_id']]);
 
         return redirect()->route('users.index')->with('success', 'User updated successfully.');
     }
+
+
+
 
 
     public function destroy(User $user)

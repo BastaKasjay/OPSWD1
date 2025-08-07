@@ -123,7 +123,6 @@
                                         </select>
                                     </div>
 
-
                                     <div class="col-12">
                                         <label class="form-label">Vulnerability Sectors:</label>
                                         <div class="d-flex flex-wrap gap-2">
@@ -151,11 +150,47 @@
                 @endforeach
             </tbody>
         </table>
+        @if ($clients->hasPages())
+            <div class="d-flex justify-content-between align-items-center mt-4">
+                <p class="mb-0 text-muted">
+                    Showing {{ $clients->firstItem() }} to {{ $clients->lastItem() }} of {{ $clients->total() }} results
+                </p>
+                <nav>
+                    <ul class="pagination mb-0">
+                        {{-- Previous Page Link --}}
+                        @if ($clients->onFirstPage())
+                            <li class="page-item disabled"><span class="page-link">Prev</span></li>
+                        @else
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $clients->previousPageUrl() }}" rel="prev">Prev</a>
+                            </li>
+                        @endif
+
+                        {{-- Page Number Links --}}
+                        @for ($i = 1; $i <= $clients->lastPage(); $i++)
+                            <li class="page-item {{ $clients->currentPage() == $i ? 'active' : '' }}">
+                                <a class="page-link" href="{{ $clients->url($i) }}">{{ $i }}</a>
+                            </li>
+                        @endfor
+
+                        {{-- Next Page Link --}}
+                        @if ($clients->hasMorePages())
+                            <li class="page-item">
+                                <a class="page-link" href="{{ $clients->nextPageUrl() }}" rel="next">Next</a>
+                            </li>
+                        @else
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        @endif
+                    </ul>
+                </nav>
+            </div>
+        @endif
+
     </div>
 </div>
 
 
-<!-- Modal for Creating Client -->
+<!-- Modal for Adding Client -->
 <div id="createModal" class="modal d-none slide-in-modal position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center modal-overlay" style="z-index: 1050;">
     <div class="modal-dialog modal-lg" style="max-width: 800px;">
         <form action="{{ route('clients.store') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
@@ -210,6 +245,12 @@
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Birthday</label>
                         <input type="date" name="birthday" class="form-control rounded border border-success bg-light" min="1900-01-01" max="{{ now()->format('Y-m-d') }}" style="box-shadow: none;">
+                    </div>
+                    <div class="col-md-12 mt-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="valid_id" id="valid_id" value="1" {{ old('valid_id', $client->valid_id ?? false) ? 'checked' : '' }}>
+                            <label class="form-check-label" for="valid_id">Valid ID Presented?</label>
+                        </div>
                     </div>
                     <div class="col-md-12">
                         <label class="form-label fw-semibold">Vulnerability Sectors</label>
@@ -292,6 +333,7 @@
             }
         }
     }
+    
 
     function closeEditModal(id) {
         const modal = document.getElementById('editModal_' + id);

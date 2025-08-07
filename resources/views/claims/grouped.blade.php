@@ -21,7 +21,6 @@
     @endphp
 
     @if ($allClaims->isNotEmpty())
-        
         <div class="row mb-3">
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Filter by Payment Method:</label>
@@ -41,12 +40,27 @@
                     @endforeach
                 </select>
             </div>
+
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Filter by Status:</label>
+                <select id="statusFilter" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="unclaimed">Unclaimed</option>
+                    <option value="claimed">Claimed</option>
+                </select>
+            </div>
         </div>
 
-        <div class="table-responsive bg-white p-4 rounded-lg shadow-md">
+        <div class="table-responsive bg-white p-1 rounded-lg shadow-md">
+            <button id="openBatchEditModalBtn" class="btn btn-success mb-2"  data-bs-toggle="modal" data-bs-target="#batchEditModal" >
+                Edit Selected Claims
+            </button>
+
             <table class="table table-hover" id="claimsTable" style="width:100%; background: transparent; border: none;">
                 <thead class="bg-success bg-opacity-10" style="border: none;">
                     <tr style="border: none;">
+                         <th><input type="checkbox" id="select-all"></th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Client Name</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Representative</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Contact</th>
@@ -61,12 +75,16 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($allClaims->sortBy(fn($c) => $c->client->municipality->name ?? '') as $claim)
+                    @foreach($allClaims as $claim)
                         <tr 
                             data-method="{{ $claim->form_of_payment }}" 
                             data-date="{{ $claim->payout_date }}"
+                            data-status="{{ $claim->disbursement?->claim_status ?? 'pending' }}"
                             style="border: none;"
                         >
+                            <td>
+                    <input type="checkbox" class="claim-checkbox" name="selected_claims[]" value="{{ $claim->id }}">
+                </td>
                             <td style="border: none;">{{ $claim->client->full_name ?? '-' }}</td>
                             <td style="border: none;">{{ $claim->client->payee->full_name ?? '-' }}</td>
                             <td style="border: none;">
@@ -105,16 +123,24 @@
                     @endforeach
                 </tbody>
             </table>
+
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <p class="mb-0 text-muted small">
+                    Showing {{ $allClaims->count() }} results
+                </p>
+
+            </div>
+            </div>
         </div>
 
-        {{-- MODALS --}}
+        {{-- edit MODAL --}}
         @foreach($allClaims as $claim)
             @if ($claim->disbursement)
                 <div class="modal fade" id="editDisbursementModal{{ $claim->id }}" tabindex="-1" aria-labelledby="editDisbursementModalLabel{{ $claim->id }}" aria-hidden="true">
                     <div class="modal-dialog">
                         <form action="{{ route('disbursements.updateClaimStatus', $claim->disbursement->id) }}" method="POST">
                             @csrf
-                            @method('PATCH')
+                            @method('PUT')
                             <div class="modal-content border-0 shadow-sm rounded p-4" style="background: #fff;">
                                 <div class="modal-header border-0 pb-0" style="background: none;">
                                     <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" style="font-size: 1.5rem;">Update Disbursement Info</h5>
@@ -130,9 +156,12 @@
                                         <input type="date" id="date_released_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_released" value="{{ $claim->disbursement->date_released }}" style="box-shadow: none;">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="amount_claimed_{{ $claim->id }}" class="form-label fw-semibold">Total Amount Claimed</label>
-                                        <input type="number" step="0.01" id="amount_claimed_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="total_amount_claimed" value="{{ $claim->disbursement->total_amount_claimed }}" style="box-shadow: none;">
+                                        <label class="form-label fw-semibold">Total Amount Claimed</label>
+                                        <p class="form-control rounded border border-success bg-light" style="box-shadow: none;">
+                                            ₱{{ number_format($claim->amount_approved ?? 0, 2) }}
+                                        </p>
                                     </div>
+
                                     <div class="col-md-6">
                                         <label for="claim_status_{{ $claim->id }}" class="form-label fw-semibold">Claim Status</label>
                                         <select id="claim_status_{{ $claim->id }}" name="claim_status" class="form-select rounded border border-success bg-light" style="box-shadow: none;">
@@ -153,6 +182,47 @@
             @endif
         @endforeach
 
+        <!-- Batch Edit Modal -->
+        <div class="modal fade" id="batchEditModal" tabindex="-1" aria-labelledby="batchEditModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <form method="POST" action="{{ route('disbursements.batchUpdate') }}">
+                    @csrf
+                    <input type="hidden" name="selected_ids" id="selectedIdsInput">
+
+                    <div class="modal-content border-0 shadow-sm rounded p-4" style="background: #fff;">
+                        <div class="modal-header border-0 pb-0">
+                            <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" id="batchEditModalLabel">
+                                Batch Edit Disbursements
+                            </h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body row g-4 pt-3">
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Date Received (Claimed)</label>
+                                <input type="date" name="date_received_claimed" class="form-control rounded border border-success bg-light">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Date Released</label>
+                                <input type="date" name="date_released" class="form-control rounded border border-success bg-light">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label fw-semibold">Claim Status</label>
+                                <select name="claim_status" id="batchStatusSelect" class="form-select rounded border border-success bg-light">
+                                    <option value="">Do not change</option>
+                                    <option value="claimed">Claimed</option>
+                                    <option value="unclaimed">Unclaimed</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2">
+                            <button type="submit" class="btn btn-success rounded-pill px-4">Update Selected</button>
+                            <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
     @else
         <div class="alert border-0" style="background: #e9f7f1; color: #374151; font-weight: 500; border-radius: 0.7rem;">
             No approved claims found.
@@ -163,6 +233,52 @@
 
 @section('scripts')
 <script>
+    document.getElementById('openBatchEditModalBtn').addEventListener('click', function () {
+        const selectedIds = document.getElementById('selectedIdsInput').value.split(',');
+        
+        let firstClaimRow = document.querySelector(`.claim-checkbox[value="${selectedIds[0]}"]`).closest('tr');
+        let currentStatus = firstClaimRow.getAttribute('data-status');
+        
+        const statusSelect = document.getElementById('batchStatusSelect'); // your modal's select element
+        if (statusSelect) {
+            statusSelect.value = currentStatus;
+        }
+    });
+
+
+    document.addEventListener("DOMContentLoaded", function () {
+        const selectAllCheckbox = document.getElementById('select-all');
+        const checkboxes = document.querySelectorAll('.claim-checkbox');
+        const batchEditBtn = document.getElementById('openBatchEditModalBtn');
+        const selectedIdsInput = document.getElementById('selectedIdsInput');
+
+        function updateSelectedIds() {
+            const selectedIds = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
+            selectedIdsInput.value = selectedIds.join(',');
+            batchEditBtn.disabled = selectedIds.length === 0;
+        }
+
+        // Handle individual checkbox change
+        checkboxes.forEach(cb => {
+            cb.addEventListener('change', updateSelectedIds);
+        });
+
+        // Handle "select all" checkbox
+        selectAllCheckbox.addEventListener('change', function () {
+            checkboxes.forEach(cb => cb.checked = this.checked);
+            updateSelectedIds();
+        });
+
+        // Filter logic already exists; no need to change
+    });
+
+    document.getElementById('select-all').addEventListener('change', function () {
+        let checkboxes = document.querySelectorAll('.claim-checkbox');
+        checkboxes.forEach(cb => cb.checked = this.checked);
+    });
+
     document.addEventListener("DOMContentLoaded", function () {
         @if (session('modal'))
             const modalId = "{{ session('modal') }}";
@@ -179,23 +295,31 @@
         // Filtering logic
         const methodFilter = document.getElementById('methodFilter');
         const dateFilter = document.getElementById('dateFilter');
+        const statusFilter = document.getElementById('statusFilter');
+
         const tableRows = document.querySelectorAll('#claimsTable tbody tr');
 
         function filterRows() {
             const method = methodFilter.value;
             const date = dateFilter.value;
+            const status = statusFilter.value;
+
             tableRows.forEach(row => {
                 const rowMethod = row.getAttribute('data-method') || '';
                 const rowDate = row.getAttribute('data-date') || '';
+                const rowStatus = row.getAttribute('data-status') || '';
+
                 let show = true;
                 if (method && rowMethod !== method) show = false;
                 if (date && rowDate !== date) show = false;
+                 if (status && rowStatus !== status) show = false;
                 row.style.display = show ? '' : 'none';
             });
         }
 
         methodFilter?.addEventListener('change', filterRows);
         dateFilter?.addEventListener('change', filterRows);
+        statusFilter?.addEventListener('change', filterRows);
     });
 </script>
 @endsection

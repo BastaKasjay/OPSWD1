@@ -9,12 +9,14 @@ use App\Models\Claim;
 use App\Models\Disbursement;
 use App\Models\ClientAssistance;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 
 class DashboardController extends Controller
 {
     public function index()
     {
+        
         $totalClients = Client::count();
 
         
@@ -53,6 +55,21 @@ class DashboardController extends Controller
         ->take(5)
         ->get();
 
+        
+        $previousPayouts = Disbursement::with(['client.municipality', 'client.payee'])
+            ->whereNotNull('payout_date')
+            ->whereDate('payout_date', '<', Carbon::today())
+            ->orderBy('payout_date', 'desc')
+            ->take(5) // adjust as needed
+            ->get();
+
+        $scheduledPayouts = Disbursement::with(['client.municipality', 'client.payee'])
+        ->whereNotNull('payout_date')
+        ->whereDate('payout_date', '>=', now())
+        ->orderBy('payout_date', 'asc')
+        ->get();
+   
+
 
 
     // dd(Disbursement::select('id', 'payout_date', 'claim_status', 'date_received_claimed')->get());
@@ -85,15 +102,15 @@ class DashboardController extends Controller
                 ->pluck('total', 'age_group');
 
             $caseData = DB::table('clients')
-    ->join('disbursements', 'clients.id', '=', 'disbursements.client_id')
-    ->join('client_assistance', 'clients.id', '=', 'client_assistance.client_id')
-    ->join('assistance_types', 'client_assistance.assistance_type_id', '=', 'assistance_types.id')
-    ->where('disbursements.claim_status', 'claimed')
-    ->where('assistance_types.type_name', 'Medical Assistance')
-    ->whereNotNull('client_assistance.medical_case') // ✅ ensure only rows with a medical case
-    ->select('client_assistance.medical_case as case', DB::raw('COUNT(*) as total'))
-    ->groupBy('client_assistance.medical_case')
-    ->pluck('total', 'case');
+            ->join('disbursements', 'clients.id', '=', 'disbursements.client_id')
+            ->join('client_assistance', 'clients.id', '=', 'client_assistance.client_id')
+            ->join('assistance_types', 'client_assistance.assistance_type_id', '=', 'assistance_types.id')
+            ->where('disbursements.claim_status', 'claimed')
+            ->where('assistance_types.type_name', 'Medical Assistance')
+            ->whereNotNull('client_assistance.medical_case') // ✅ ensure only rows with a medical case
+            ->select('client_assistance.medical_case as case', DB::raw('COUNT(*) as total'))
+            ->groupBy('client_assistance.medical_case')
+            ->pluck('total', 'case');
 
 
 
@@ -118,7 +135,9 @@ class DashboardController extends Controller
             'ageGroupData',
             'caseData',
             'budgets',
-            'disbursedPerType'
+            'disbursedPerType',
+            'previousPayouts',
+            'scheduledPayouts'
         ));
 
         

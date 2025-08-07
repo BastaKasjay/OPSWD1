@@ -56,6 +56,17 @@ class Claim extends Model
         return $this->hasOne(\App\Models\Disbursement::class);
     }
 
+    public function cashDisbursement()
+    {
+        return $this->hasOne(\App\Models\Disbursement::class)->where('form_of_payment', 'cash');
+    }
+
+    public function checkDisbursement()
+    {
+        return $this->hasOne(\App\Models\Disbursement::class)->where('form_of_payment', 'cheque');
+    }
+
+
 
 
 }

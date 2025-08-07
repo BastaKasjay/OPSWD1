@@ -21,7 +21,6 @@ class Disbursement extends Model
         'payout_date',
         'date_received_claimed',
         'date_released',
-        'total_amount_claimed',
         'claim_status',
     ];
 

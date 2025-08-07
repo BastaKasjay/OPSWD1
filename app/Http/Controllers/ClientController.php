@@ -24,33 +24,69 @@ class ClientController extends Controller
         if ($request->search) {
             $query->where(function ($q) use ($request) {
                 $q->where('first_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('middle_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->search . '%');
+                ->orWhere('middle_name', 'like', '%' . $request->search . '%')
+                ->orWhere('last_name', 'like', '%' . $request->search . '%');
             });
         }
 
-        $clients = $query->get();
+        $clients = $query->paginate(15);
         $municipalities = Municipality::all();
-        $clientIds = $clients->pluck('id')->toArray();
         $vulnerabilitySectors = VulnerabilitySector::all();
         $assistanceTypes = AssistanceType::all();
         $assistanceCategories = AssistanceCategory::all();
 
-
-        // Vulnerability sectors count per sector
-        $vulnerabilityCounts = VulnerabilitySector::withCount([
-            'clients as clients_count' => function ($q) use ($clientIds) {
-                $q->whereIn('client_id', $clientIds);
-            }
-        ])->get();
-
-        // Total count for 'All'
-        $totalVulnerable = DB::table('client_vulnerability_sector')
-            ->whereIn('client_id', $clientIds)
-            ->count();
-
-        return view('client.index', compact('clients', 'municipalities', 'assistanceTypes', 'assistanceCategories', 'vulnerabilitySectors', 'vulnerabilityCounts', 'totalVulnerable'));
+        return view('client.index', compact(
+            'clients',
+            'municipalities',
+            'assistanceTypes',
+            'assistanceCategories',
+            'vulnerabilitySectors'
+        ));
     }
+
+    public function assistancesIndex(Request $request)
+{
+    $query = \App\Models\ClientAssistance::with([
+        'client.municipality',
+        'client.vulnerabilitySectors',
+        'assistanceType',
+        'assistanceCategory',
+        'payee'
+    ]);
+
+    if ($request->municipality_id) {
+        $query->whereHas('client', function ($q) use ($request) {
+            $q->where('municipality_id', $request->municipality_id);
+        });
+    }
+
+    if ($request->search) {
+        $query->whereHas('client', function ($q) use ($request) {
+            $q->where('first_name', 'like', "%{$request->search}%")
+              ->orWhere('middle_name', 'like', "%{$request->search}%")
+              ->orWhere('last_name', 'like', "%{$request->search}%");
+        });
+    }
+
+    // ✅ Show newest assistance first
+    $assistances = $query->latest()->paginate(10);
+
+    $municipalities = Municipality::all();
+    $vulnerabilitySectors = VulnerabilitySector::all();
+    $assistanceTypes = AssistanceType::all();
+    $assistanceCategories = AssistanceCategory::all();
+
+    return view('client.assistance', compact(
+        'assistances',
+        'municipalities',
+        'assistanceTypes',
+        'assistanceCategories',
+        'vulnerabilitySectors'
+    ));
+}
+
+
+
 
     public function show($id)
     {
@@ -58,9 +94,18 @@ class ClientController extends Controller
             'municipality',
             'vulnerabilitySectors',
             'payee',
-            'assistances.assistanceType',
-            'assistances.assistanceCategory',
         ])->findOrFail($id);
+
+        // ✅ Get latest assistance based on date_received_request
+        $latestAssistance = $client->assistances()
+            ->with(['assistanceType', 'assistanceCategory'])
+            ->latest('date_received_request')
+            ->first();
+
+        // ✅ Get claim for that latest assistance
+        $claim = $latestAssistance
+            ? \App\Models\Claim::where('client_assistance_id', $latestAssistance->id)->first()
+            : null;
 
         $municipalities = Municipality::all();
         $vulnerabilitySectors = VulnerabilitySector::all();
@@ -72,9 +117,14 @@ class ClientController extends Controller
             'municipalities',
             'vulnerabilitySectors',
             'assistanceTypes',
-            'assistanceCategories'
+            'assistanceCategories',
+            'latestAssistance',
+            'claim'
         ));
     }
+
+
+
 
 
     public function create()
@@ -98,8 +148,11 @@ class ClientController extends Controller
             'contact_number' => 'nullable|string',
             'birthday' => 'nullable|date',
             'municipality_id' => 'required|exists:municipalities,id',
+            'valid_id' => 'boolean',
             'vulnerability_sectors' => 'array|nullable'
         ]);
+
+        $validated['valid_id'] = $request->has('valid_id');
 
         DB::beginTransaction();
 
@@ -164,6 +217,7 @@ class ClientController extends Controller
             'contact_number' => 'nullable|string',
             'birthday' => 'nullable|date',
             'municipality_id' => 'required|exists:municipalities,id',
+            'valid_id' => 'boolean',
             'representative_first_name' => 'nullable|string',
             'representative_middle_name' => 'nullable|string',
             'representative_last_name' => 'nullable|string',
@@ -175,11 +229,13 @@ class ClientController extends Controller
             'assistanceCategories' => 'array|nullable'
         ]);
 
+
         $clientData = $request->only([
             'first_name', 'middle_name', 'last_name',
             'sex', 'age', 'address', 'contact_number',
             'birthday', 'municipality_id'
         ]);
+        $clientData['valid_id'] = $request->has('valid_id');
         $client->update($clientData);
 
         // Sync vulnerability sectors
@@ -213,7 +269,9 @@ class ClientController extends Controller
             $assistance->update([
                 'assistance_type_id' => $request->input('assistance_type_id'),
                 'assistance_category_id' => $request->input('assistance_category_id'),
-                'medical_case' => $request->input('medical_case'),
+                'medical_case' => $request->input('medical_case') === 'Others'
+                ? $request->input('other_case')
+                : $request->input('medical_case'),
             ]);
         }
 
@@ -223,33 +281,29 @@ class ClientController extends Controller
 
 
     public function assistancesView(Request $request)
-    {
-        $query = Client::whereHas('assistances')
-        ->with([
-            'municipality',
-            'vulnerabilitySectors',
-            'assistances.assistanceType',
-            'assistances.assistanceCategory',
-            'assistances.payee'
-        ]);
+{
+    $query = ClientAssistance::with([
+        'client.municipality',
+        'client.vulnerabilitySectors',
+        'assistanceType',
+        'assistanceCategory',
+        'payee'
+    ])->latest(); 
 
-
-        if ($request->search) {
-            $query->where(function ($q) use ($request) {
-                $q->where('first_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('middle_name', 'like', '%' . $request->search . '%')
-                    ->orWhere('last_name', 'like', '%' . $request->search . '%');
-            });
-        } else {
-
-            $query->whereHas('assistances');
-        }
-
-        $clients = $query->get();
-        $assistanceTypes = AssistanceType::all(); 
-
-        return view('client.assistance', compact('clients', 'assistanceTypes')); 
+    if ($request->search) {
+        $query->whereHas('client', function ($q) use ($request) {
+            $q->where('first_name', 'like', '%' . $request->search . '%')
+              ->orWhere('middle_name', 'like', '%' . $request->search . '%')
+              ->orWhere('last_name', 'like', '%' . $request->search . '%');
+        });
     }
+
+    $assistances = $query->latest()->paginate(10);
+    $assistanceTypes = AssistanceType::all();
+
+    return view('client.assistance', compact('assistances', 'assistanceTypes'));
+}
+
 
     public function searchClients(Request $request)
     {

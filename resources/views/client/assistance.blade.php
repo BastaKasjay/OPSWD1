@@ -19,7 +19,7 @@
 
     </div>
 
-    <div class="table-responsive bg-white p-3 rounded shadow-sm">
+    <div class="table-responsive bg-white p-3 pb-1 rounded shadow-sm">
         <table class="table table-hover" style="width:100%; background: transparent; border: none; font-family: 'Inter', sans-serif;">
             <thead class="bg-white" style="border: none;">
     <tr style="border: none;">
@@ -134,53 +134,117 @@
                 @endforelse
                 </tbody>
             </table>
-            </div>
+            {{-- Pagination Links --}}
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <p class="mb-0 text-muted small">
+                        Showing {{ $assistances->firstItem() }} to {{ $assistances->lastItem() }} of {{ $assistances->total() }} results
+                    </p>
 
-            {{-- History Modal--}}
-            @foreach($assistances as $assistance)
-                @php $client = $assistance->client; @endphp
-                <div class="modal fade" id="historyModal_{{ $client->id }}" tabindex="-1" aria-hidden="true">
-                    <div class="modal-dialog modal-dialog-centered">
-                        <div class="modal-content">
+                    <ul class="pagination pagination-sm mb-0">
+                        
+                        @if ($assistances->onFirstPage())
+                            <li class="page-item disabled"><span class="page-link">Prev</span></li>
+                        @else
+                            <li class="page-item"><a href="{{ $assistances->previousPageUrl() }}" class="page-link">Prev</a></li>
+                        @endif
 
-                            <div class="modal-header">
-                                <h5 class="modal-title">History - {{ $client->first_name }} {{ $client->last_name }}</h5>
-                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                            </div>
+                        
+                        @for ($i = 1; $i <= $assistances->lastPage(); $i++)
+                            <li class="page-item {{ $assistances->currentPage() == $i ? 'active' : '' }}">
+                                <a href="{{ $assistances->url($i) }}" class="page-link">{{ $i }}</a>
+                            </li>
+                        @endfor
 
-                            <div class="modal-body">
-                                @php
-                                    $disbursements = \App\Models\Disbursement::where('client_id', $client->id)->latest()->get();
-                                @endphp
-                                <table class="table table-sm table-bordered">
-                                    <thead>
-                                        <tr><th>Assistance Type</th><th>Amount</th><th>Status</th><th>Date</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        @forelse($disbursements as $d)
-                                            <tr>
-                                                <td>
-                                                    {{ 
-                                                        $d->clientAssistance?->assistanceType?->type_name 
-                                                        ?? $d->claim?->clientAssistance?->assistanceType?->type_name 
-                                                        ?? 'N/A' 
-                                                    }}
-                                                </td>
-                                                <td>₱{{ number_format($d->amount, 2) }}</td>
-                                                <td>{{ ucfirst($d->claim_status ?? 'N/A') }}</td>
-                                                <td>{{ $d->created_at->format('M d, Y') }}</td>
-                                            </tr>
-                                        @empty
-                                            <tr><td colspan="3" class="text-center text-muted">No transactions yet.</td></tr>
-                                        @endforelse
-                                    </tbody>
-                                </table>
-                            </div>
-
-                        </div>
-                    </div>
+                        
+                        @if ($assistances->hasMorePages())
+                            <li class="page-item"><a href="{{ $assistances->nextPageUrl() }}" class="page-link">Next</a></li>
+                        @else
+                            <li class="page-item disabled"><span class="page-link">Next</span></li>
+                        @endif
+                    </ul>
                 </div>
-            @endforeach
+
+
+
+            @foreach($assistances as $assistance)
+    @php $client = $assistance->client; @endphp
+    <div class="modal fade" id="historyModal_{{ $client->id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">History - {{ $client->first_name }} {{ $client->last_name }}</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+                    @php
+                        // ✅ Get all claims for this client
+                        $claims = \App\Models\Claim::where('client_id', $client->id)
+                            ->with(['clientAssistance.assistanceType', 'disbursement'])
+                            ->orderBy('created_at', 'desc')
+                            ->get();
+
+                        // ✅ Separate: 
+                        // 1️⃣ Claims WITH disbursement
+                        $claimsWithDisbursement = $claims->filter(fn($c) => $c->disbursement);
+
+                        // 2️⃣ Claims WITHOUT disbursement BUT disapproved
+                        $disapprovedWithoutDisbursement = $claims->filter(fn($c) => !$c->disbursement && $c->status === 'disapproved');
+                    @endphp
+
+                    <table class="table table-sm table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Assistance Type</th>
+                                <th>Amount</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{-- Show all claims WITH disbursement --}}
+                            @foreach($claimsWithDisbursement as $claim)
+                                <tr>
+                                    <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
+                                    <td>₱{{ number_format($claim->disbursement->amount ?? 0, 2) }}</td>
+                                    <td>
+                                        @if($claim->disbursement?->claim_status === 'claimed')
+                                            <span class="badge bg-success">Claimed</span>
+                                        @else
+                                            {{ ucfirst($claim->disbursement->claim_status ?? $claim->status) }}
+                                        @endif
+                                    </td>
+                                    <td>{{ $claim->disbursement->created_at?->format('M d, Y') }}</td>
+                                </tr>
+                            @endforeach
+
+
+                            {{-- Show only disapproved claims WITHOUT disbursement --}}
+                            @foreach($disapprovedWithoutDisbursement as $claim)
+                                <tr>
+                                    <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
+                                    <td>-</td>
+                                    <td class="text-danger fw-bold">Disapproved</td>
+                                    <td>{{ $claim->created_at->format('M d, Y') }}</td>
+                                </tr>
+                            @endforeach
+
+                            {{-- Show empty row if nothing --}}
+                            @if($claimsWithDisbursement->isEmpty() && $disapprovedWithoutDisbursement->isEmpty())
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No history yet.</td>
+                                </tr>
+                            @endif
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+@endforeach
+
 </main>
 
     
@@ -329,7 +393,7 @@ function toggleRepresentativeFields() {
 document.addEventListener('DOMContentLoaded', function () {
     const medicalCaseSelect = document.querySelector('select[name="medical_case"]');
     const otherCaseInputDiv = document.getElementById('other_medical_case_input');
-    const otherCaseInput = document.getElementById('other_case'); // ✅ You missed this line
+    const otherCaseInput = document.getElementById('other_case');
     const form = document.querySelector('#addAssistanceForm');
 
     if (medicalCaseSelect) {

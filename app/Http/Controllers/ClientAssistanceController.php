@@ -170,7 +170,7 @@ class ClientAssistanceController extends Controller
         });
     }
 
-    $assistances = $query->paginate(10);
+    $assistances = $query->latest()->paginate(10);
     $assistanceTypes = AssistanceType::all(); // Needed for the modal
 
     return view('client.assistance', compact('assistances', 'assistanceTypes'));

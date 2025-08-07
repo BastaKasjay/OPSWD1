@@ -3,7 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use Illuminate\Http\Request;
 use App\Models\Client;
+use Illuminate\Support\Facades\Auth;
 
+use App\Models\Claim;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisbursementController;
 use App\Http\Controllers\ClaimController;
@@ -19,62 +21,57 @@ use App\Http\Controllers\AssistanceCategoryController;
 use App\Http\Controllers\VulnerabilitySectorController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\RoleController;
-use Illuminate\Support\Facades\Auth;
 
-// Home page (login protected)
-Route::get('/home', function () {
-    return view('HomePage.home');
-})->name('home');
-
-
-
-// Redirect root URL to home page
 Route::get('/', function () {
-    return redirect()->route('login');
+    return redirect('/login');
 });
 
-//dashboard budget route
+
+
+Route::get('/login', fn() => view('auth.login'))->name('login');
+
+
+Route::post('/login', function (Request $request) {
+    $credentials = $request->validate([
+        'username' => 'required',
+        'password' => 'required',
+    ]);
+
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
+        return redirect()->route('home');
+    }
+
+    return back()->withErrors(['username' => 'Invalid username or password.']);
+})->name('login.post');
+
+
+Route::post('/logout', function (Request $request) {
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+    return redirect()->route('login');
+})->name('logout');
+
+// Protected routes
+
+    Route::get('/home', [DashboardController::class, 'index'])->name('home');
 Route::post('/budgets', [DashboardController::class, 'storeBudget'])->name('budgets.store');
 
-
-// claims
 Route::get('/claims/grouped', [ClaimController::class, 'groupedClaims'])->name('claims.grouped');
-// Route::post('/claims/update-status/{clientId}', [ClaimController::class, 'updateStatus'])->name('claims.updateStatus');
 Route::patch('/claims/{id}/update-status', [ClaimController::class, 'updateStatus'])->name('claims.update-status');
-
-
-
-// assistance
-Route::get('/clients/assistance', [ClientAssistanceController::class, 'assistance'])
-    ->name('clients.assistance');
-
-
-
-// Route::patch('/claims/{id}/update-status', function() { dd('teee')})->name('claims.update-status');
-Route::patch('/claims/{id}/update-status', [ClaimController::class, 'updateStatus'])->name('claims.update-status');
-// Route for updating claim record directly
 Route::put('/claims/{id}', [ClaimController::class, 'update'])->name('claims.update');
 
-// Client routes
+Route::get('/clients/assistance', [ClientAssistanceController::class, 'assistance'])->name('clients.assistance');
 Route::resource('clients', ClientController::class);
+Route::match(['put', 'patch'], 'disbursements/{id}/update-claim-status', [DisbursementController::class, 'updateClaimStatus'])->name('disbursements.updateClaimStatus');
+Route::get('/disbursements', [DisbursementController::class, 'index'])->name('disbursements.index');
 
-
-// Disbursement routes
-Route::patch('/disbursements/{id}/update-claim-status', [DisbursementController::class, 'updateClaimStatus'])->name('disbursements.updateClaimStatus');
-
-
-
-// Municipality routes
 Route::resource('municipalities', MunicipalityController::class)->only(['index', 'edit', 'update']);
-
-// Dynamic dropdowns
 Route::get('/get-requirements/{id}', [AssistanceController::class, 'getRequirements']);
 Route::get('/get-categories/{id}', [AssistanceController::class, 'getCategories']);
-
-//Reports rooutes
 Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
 
-// Other resource routes
 Route::resource('payees', PayeeController::class);
 Route::resource('requirements', RequirementController::class);
 Route::resource('assistance-categories', AssistanceCategoryController::class);
@@ -83,64 +80,19 @@ Route::resource('client-assistances', ClientAssistanceController::class);
 Route::resource('assistance-types', AssistanceController::class);
 Route::resource('employees', EmployeeController::class);
 Route::resource('roles', RoleController::class);
-
-// Home page/Dashboard route
-Route::get('/home', [DashboardController::class, 'index'])->name('home');
-
-
-
-// User Management Routes (now public)
 Route::resource('users', UserController::class);
 
-// Employee Management Routes
-Route::resource('employees', EmployeeController::class);
+Route::post('/disbursements/batch-update', [DisbursementController::class, 'batchUpdate'])->name('disbursements.batchUpdate');
 
 
-
-// Custom Login submit
-Route::post('/login', function (Request $request) {
-    $username = $request->input('username');
-    $password = $request->input('password');
-
-    if ($username === 'admin' && $password === 'admin123') {
-        $request->session()->put('is_admin', true);
-        return redirect()->route('home');
-    }
-
-    return back()->withErrors([
-        'login' => 'Invalid username or password.',
-    ]);
-})->name('login.submit');
-
-
-
-
-// Logout
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect('/login');
-})->middleware('auth')->name('logout');
-
-
-// add assistance search bar
 Route::get('/api/search-clients', function (Request $request) {
     $query = $request->get('q');
-
     $clients = Client::where('first_name', 'LIKE', "%{$query}%")
         ->orWhere('middle_name', 'LIKE', "%{$query}%")
         ->orWhere('last_name', 'LIKE', "%{$query}%")
         ->limit(10)
-        ->get()
-        ->map(function ($client) {
-            return [
-                'id' => $client->id,
-                'first_name' => $client->first_name,
-                'middle_name' => $client->middle_name,
-                'last_name' => $client->last_name,
-            ];
-        });
+        ->get(['id', 'first_name', 'middle_name', 'last_name']);
 
     return response()->json($clients);
 });
+

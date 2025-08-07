@@ -38,7 +38,6 @@ class DisbursementFactory extends Factory
             'payout_date' => $this->faker->optional()->date(),
             'date_received_claimed' => $this->faker->optional()->date(),
             'date_released' => $this->faker->optional()->date(),
-            'total_amount_claimed' => $this->faker->randomFloat(2, 1000, 10000),
         ];
     }
 }
