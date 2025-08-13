@@ -6,10 +6,13 @@
         <a href="{{ route('clients.assistance') }}" class="text-secondary me-2">
             <i class="fas fa-arrow-left"></i>
         </a>
-        <button onclick="openEditModal({{ $client->id }})" class="btn btn-success custom-green-btn rounded-pill px-3 d-flex align-items-center gap-1 shadow-sm" title="Edit Client">
+        <button 
+            onclick="openEditModal({{ $client->id }})" 
+            class="btn btn-success custom-green-btn rounded-circle p-2 shadow-sm" 
+            title="Edit Client">
             <i class="fas fa-edit"></i>
-            <span class="d-none d-md-inline">Edit</span>
         </button>
+
     </div>
 
     <div class="card border-0 shadow-sm p-4 mb-4">
@@ -59,80 +62,10 @@
             <h2 class="h5 fw-bold text-success mb-0 bg-success bg-opacity-10 rounded py-2 px-3 w-100 text-center">Edit Information</h2>
             <button type="button" class="btn-close ms-2" onclick="closeEditModal({{ $client->id }})"></button>
         </div>
-        <form action="{{ route('clients.update', $client->id) }}" method="POST">
+        <form action="{{ route('clients.updateAssistance', $client->id) }}" method="POST">
             @csrf
             @method('PUT')
             <div class="row g-3">
-                <!-- Personal Details -->
-                            <div class="col-md-6">
-                                <label class="form-label">First Name:</label>
-                                <input type="text" name="first_name" class="form-control rounded border border-success" value="{{ $client->first_name }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Middle Name:</label>
-                                <input type="text" name="middle_name" class="form-control rounded border border-success" value="{{ $client->middle_name }}">
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Last Name:</label>
-                                <input type="text" name="last_name" class="form-control rounded border border-success" value="{{ $client->last_name }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Sex:</label>
-                                <select name="sex" class="form-select rounded border border-success" required>
-                                    <option value="Male" {{ $client->sex == 'Male' ? 'selected' : '' }}>Male</option>
-                                    <option value="Female" {{ $client->sex == 'Female' ? 'selected' : '' }}>Female</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Age:</label>
-                                <input type="number" name="age" class="form-control rounded border border-success" value="{{ $client->age }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Address:</label>
-                                <input type="text" name="address" class="form-control rounded border border-success" value="{{ $client->address }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Contact Number:</label>
-                                <input type="text" name="contact_number" class="form-control rounded border border-success" value="{{ $client->contact_number }}" required>
-                            </div>
-                            <div class="col-md-6">
-                                <label class="form-label">Birthday:</label>
-                                <input type="date" name="birthday" class="form-control rounded border border-success" value="{{ $client->birthday }}">
-                            </div>
-
-                            <div class="col-md-6">
-                                <label class="form-label">Municipality:</label>
-                                <select name="municipality_id" class="form-select rounded border border-success" required>
-                                    <option value="">Select Municipality</option>
-                                    @foreach($municipalities as $municipality)
-                                        <option value="{{ $municipality->id }}" {{ $client->municipality_id == $municipality->id ? 'selected' : '' }}>
-                                            {{ $municipality->name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div class="col-md-12 mt-3">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="valid_id" id="valid_id" value="1" {{ old('valid_id', $client->valid_id ?? false) ? 'checked' : '' }}>
-                                    <label class="form-check-label" for="valid_id">Valid ID Presented?</label>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <label class="form-label">Vulnerability Sectors:</label>
-                                <div class="d-flex flex-wrap gap-2">
-                                    @foreach($vulnerabilitySectors as $sector)
-                                        <div class="form-check">
-                                            <input type="checkbox" name="vulnerability_sectors[]" value="{{ $sector->id }}" 
-                                                class="form-check-input" id="sector_{{ $client->id }}_{{ $sector->id }}"
-                                                {{ $client->vulnerabilitySectors->contains($sector->id) ? 'checked' : '' }}>
-                                            <label class="form-check-label" for="sector_{{ $client->id }}_{{ $sector->id }}">{{ $sector->name }}</label>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-
                             <!-- Assistance Type -->
                                 <div class="mb-3">
                                     <label class="form-label">Assistance Type:</label>
@@ -155,25 +88,21 @@
                                 <div class="col-md-6" id="medical_case_section" style="display: none;">
                                     <label class="form-label fw-semibold">Medical Case</label>
                                     <select name="medical_case" class="form-control rounded border border-success bg-light" style="box-shadow: none;">
-                                        <option value="">Select Case</option>
-                                        <option value="CKD">CKD</option>
-                                        <option value="Cancer">Cancer</option>
-                                        <option value="Heart Illness">Heart Illness</option>
-                                        <option value="Diabetes">Diabetes</option>
-                                        <option value="Hypertension">Hypertension</option>
-                                        <option value="Others">Others</option>
+                                        <option value="" {{ empty($latestAssistance->medical_case) ? 'selected' : '' }}>Select Case</option>
+                                        <option value="CKD" {{ (isset($latestAssistance->medical_case) && $latestAssistance->medical_case == 'CKD') ? 'selected' : '' }}>CKD</option>
+                                        <option value="Cancer" {{ (isset($latestAssistance->medical_case) && $latestAssistance->medical_case == 'Cancer') ? 'selected' : '' }}>Cancer</option>
+                                        <option value="Heart Illness" {{ (isset($latestAssistance->medical_case) && $latestAssistance->medical_case == 'Heart Illness') ? 'selected' : '' }}>Heart Illness</option>
+                                        <option value="Diabetes" {{ (isset($latestAssistance->medical_case) && $latestAssistance->medical_case == 'Diabetes') ? 'selected' : '' }}>Diabetes</option>
+                                        <option value="Hypertension" {{ (isset($latestAssistance->medical_case) && $latestAssistance->medical_case == 'Hypertension') ? 'selected' : '' }}>Hypertension</option>
+                                        <option value="Others" {{ (isset($latestAssistance->medical_case) && $latestAssistance->medical_case == 'Others') ? 'selected' : '' }}>Others</option>
                                     </select>
+
                                     <div id="other_medical_case_input" class="mt-2 d-none">
                                         <label for="other_case" class="form-label">Please specify:</label>
-                                        <input type="text" name="other_case" id="other_case" class="form-control" placeholder="Enter other medical case">
+                                        <input type="text" name="other_case" id="other_case" class="form-control" placeholder="Enter other medical case" >
                                     </div>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="form-label fw-bold">Requirements:</label>
-                                    <div id="requirements_section" class="ps-3">
-                                        <p class="text-muted">Please select an assistance type to view requirements.</p>
-                                    </div>
-                                </div>
+                                
 
                             <!-- Representative Toggle -->
                             <div class="form-check mb-3">
@@ -227,7 +156,7 @@
 
 
 {{-- Claim Info Card --}}
-
+@if ($claim && $claim->status === 'approved')
 <div class="d-flex justify-content-end mb-3">
     <button class="btn btn-success custom-green-btn rounded-pill px-3 d-flex align-items-center gap-1 shadow-sm"
         data-bs-toggle="modal" data-bs-target="#editClaimModal">
@@ -235,6 +164,8 @@
         <span class="d-none d-md-inline">Update</span>
     </button>
 </div>
+@endif
+
     @php
         $assistance = $client->assistances()->latest()->first();
         $claim = $assistance ? \App\Models\Claim::where('client_assistance_id', $assistance->id)->first() : null;
@@ -252,6 +183,7 @@
         : null;
 @endphp
 
+{{-- Update Claim Modal --}}
 @if($latestAssistance)
 <div class="modal fade" id="editClaimModal" tabindex="-1" aria-labelledby="editClaimModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
@@ -313,7 +245,7 @@
                     </div>
 
                     <div id="check-no-field" class="col-md-6" style="display: none;">
-                        <label for="check_no" class="form-label">Check Number</label>
+                        <label for="check_no" class="form-label">Check No.</label>
                         <input type="text" name="check_no" id="check_no" class="form-control"
                             value="{{ old('check_no', $claim->checkPayment->check_no ?? '') }}">
                     </div>
@@ -334,19 +266,26 @@
 </div>
 @endif
 
+        
+        @if ($claim && in_array($claim->status, ['approved', 'disapproved']))
+            <div class="col-md-4">
+                <span class="fw-semibold">Date Approved:</span> 
+                {{ $claim->date_status_updated ? \Carbon\Carbon::parse($claim->date_status_updated)->format('F d, Y') : '-' }}
+            </div>
+        @endif
 
         @endif
         <div class="row g-3 mb-2">
             <div class="col-md-6 d-flex align-items-center">
                 <span class="fw-semibold">Status:</span>
                 @php
-    $status = optional($claim)->status ?? 'Pending';
-    $badgeClass = $status === 'approved'
-        ? 'bg-success bg-opacity-10 text-success'
-        : ($status === 'disapproved'
-            ? 'bg-danger bg-opacity-10 text-danger'
-            : 'bg-warning bg-opacity-10 text-warning');
-@endphp
+            $status = optional($claim)->status ?? 'Pending';
+            $badgeClass = $status === 'approved'
+                ? 'bg-success bg-opacity-10 text-success'
+                : ($status === 'disapproved'
+                    ? 'bg-danger bg-opacity-10 text-danger'
+                    : 'bg-warning bg-opacity-10 text-warning');
+        @endphp
                 <span class="badge {{ $badgeClass }} px-3 py-2 ms-2">
                     {{ ucfirst($status) }}
                 </span>
@@ -455,6 +394,8 @@
         const medicalCaseSection = document.getElementById('medical_case_section');
         const categoriesSection = document.getElementById('categories_section');
         const requirementsSection = document.getElementById('requirements_section');
+
+        
 
         function toggleMedicalSection() {
             if (!assistanceTypeSelect) return;

@@ -52,15 +52,14 @@ class DashboardController extends Controller
             ->orWhere('claim_status', '!=', 'claimed');
         })
         ->orderBy('payout_date', 'asc')
-        ->take(5)
+        ->take(10)
         ->get();
 
         
         $previousPayouts = Disbursement::with(['client.municipality', 'client.payee'])
-            ->whereNotNull('payout_date')
-            ->whereDate('payout_date', '<', Carbon::today())
+            ->where('claim_status', 'claimed')
             ->orderBy('payout_date', 'desc')
-            ->take(5) // adjust as needed
+            ->take(10) 
             ->get();
 
         $scheduledPayouts = Disbursement::with(['client.municipality', 'client.payee'])
@@ -72,7 +71,8 @@ class DashboardController extends Controller
 
 
 
-    // dd(Disbursement::select('id', 'payout_date', 'claim_status', 'date_received_claimed')->get());
+    // dd(Disbursement::where('claim_status', 'claimed')->whereNotNull('payout_date')->get());
+
     // dd($upcomingPayouts->toArray());
 
         //  Served Clients Grouped by Vulnerability

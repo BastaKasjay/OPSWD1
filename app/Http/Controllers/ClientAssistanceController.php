@@ -109,9 +109,6 @@ class ClientAssistanceController extends Controller
 
 
 
-
-
-
     public function show(ClientAssistance $clientAssistance)
     {
         return view('client_assistance.show', compact('clientAssistance'));
@@ -137,10 +134,15 @@ class ClientAssistanceController extends Controller
     }
 
     public function destroy(ClientAssistance $clientAssistance)
-    {
+{
+    try {
         $clientAssistance->delete();
-        return redirect()->route('client-assistance.index')->with('success', 'Client assistance deleted.');
+        return redirect()->back()->with('success', 'Assistance deleted successfully.');
+    } catch (\Exception $e) {
+        return redirect()->back()->with('error', 'Failed to delete assistance: ' . $e->getMessage());
     }
+}
+
 
     public function updateStatus(Request $request, $id)
     {

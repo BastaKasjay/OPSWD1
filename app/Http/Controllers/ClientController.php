@@ -218,17 +218,7 @@ class ClientController extends Controller
             'birthday' => 'nullable|date',
             'municipality_id' => 'required|exists:municipalities,id',
             'valid_id' => 'boolean',
-            'representative_first_name' => 'nullable|string',
-            'representative_middle_name' => 'nullable|string',
-            'representative_last_name' => 'nullable|string',
-            'representative_contact_number' => 'nullable|string',
-            'relationship' => 'nullable|string',
-            'proof_of_relationship' => 'nullable|boolean',
-            'vulnerability_sectors' => 'array|nullable',
-            'assistanceTypes' => 'array|nullable',
-            'assistanceCategories' => 'array|nullable'
         ]);
-
 
         $clientData = $request->only([
             'first_name', 'middle_name', 'last_name',
@@ -236,48 +226,65 @@ class ClientController extends Controller
             'birthday', 'municipality_id'
         ]);
         $clientData['valid_id'] = $request->has('valid_id');
+
         $client->update($clientData);
 
         // Sync vulnerability sectors
         $client->vulnerabilitySectors()->sync($request->vulnerability_sectors ?? []);
 
-        // Handle payee
-        $hasRepresentative = $request->has('has_representative');
+        return redirect()->route('clients.index', $client->id)
+            ->with('success', 'Client updated successfully');
+    }
 
-        $payeeData = [
-            'client_id' => $client->id,
-            'first_name' => $hasRepresentative ? $request->representative_first_name : null,
-            'middle_name' => $hasRepresentative ? $request->representative_middle_name : null,
-            'last_name' => $hasRepresentative ? $request->representative_last_name : null,
-            'full_name' => $hasRepresentative
-                ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
-                : null,
-            'relationship' => $hasRepresentative && $request->filled('relationship') ? $request->relationship : null,
-            'contact_number' => $hasRepresentative ? $request->representative_contact_number : null,
-            'proof_of_relationship' => $hasRepresentative && $request->has('proof_of_relationship') ? 1 : 0,
-            'is_self_payee' => $hasRepresentative ? 0 : 1,
-        ];
+    public function updateAssistance(Request $request, $id)
+    {
+        $client = Client::findOrFail($id);
+        $assistance = $client->assistances()->firstOrFail(); // Adjust if multiple assistance records are possible
+
+        $request->validate([
+            'assistance_type_id' => 'required|exists:assistance_types,id',
+            'assistance_category_id' => 'required|exists:assistance_categories,id',
+            'medical_case' => 'nullable|string',
+            'other_case' => 'nullable|string',
+            'representative_first_name' => 'nullable|string',
+            'representative_middle_name' => 'nullable|string',
+            'representative_last_name' => 'nullable|string',
+            'representative_contact_number' => 'nullable|string',
+            'relationship' => 'nullable|string',
+            'proof_of_relationship' => 'nullable|boolean',
+        ]);
+
+        $assistance->update([
+            'assistance_type_id' => $request->assistance_type_id,
+            'assistance_category_id' => $request->assistance_category_id,
+            'medical_case' => $request->medical_case === 'Others'
+                ? $request->other_case
+                : $request->medical_case,
+            'assessed_by' => $request->assessed_by
+        ]);
+            // Update Payee (Representative)
+        $hasRepresentative = $request->has('has_representative');
 
         \App\Models\Payee::updateOrCreate(
             ['client_id' => $client->id],
-            $payeeData
+            [
+                'first_name' => $hasRepresentative ? $request->representative_first_name : null,
+                'middle_name' => $hasRepresentative ? $request->representative_middle_name : null,
+                'last_name' => $hasRepresentative ? $request->representative_last_name : null,
+                'full_name' => $hasRepresentative
+                    ? trim($request->representative_first_name . ' ' . $request->representative_middle_name . ' ' . $request->representative_last_name)
+                    : null,
+                'relationship' => $hasRepresentative && $request->filled('relationship') ? $request->relationship : null,
+                'contact_number' => $hasRepresentative ? $request->representative_contact_number : null,
+                'proof_of_relationship' => $hasRepresentative && $request->has('proof_of_relationship') ? 1 : 0,
+                'is_self_payee' => $hasRepresentative ? 0 : 1,
+            ]
         );
 
-        // Update assistance type/category/medical_case for the first assistance record
-        if ($client->assistances()->exists()) {
-            $assistance = $client->assistances()->first();
-            $assistance->update([
-                'assistance_type_id' => $request->input('assistance_type_id'),
-                'assistance_category_id' => $request->input('assistance_category_id'),
-                'medical_case' => $request->input('medical_case') === 'Others'
-                ? $request->input('other_case')
-                : $request->input('medical_case'),
-            ]);
-        }
-
-        return redirect()->route('clients.show', $client->id)
-            ->with('success', 'Client updated successfully');
+        return redirect()->route('clients.show', $client->id)->with('success', 'Assistance info updated.');
     }
+
+
 
 
     public function assistancesView(Request $request)
@@ -327,7 +334,6 @@ class ClientController extends Controller
 
         return response()->json($clients);
     }
-
 
 
 

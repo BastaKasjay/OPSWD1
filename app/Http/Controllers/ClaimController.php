@@ -10,30 +10,33 @@ use App\Models\ClientAssistance;
 class ClaimController extends Controller
 {
     public function updateStatus(Request $request, $id)
-{
-    $status = $request->input('status');
+    {
+        $status = $request->input('status');
 
-    try {
-        $claim = Claim::findOrFail($id);
+        try {
+            $claim = Claim::findOrFail($id);
 
-        // Change status
-        $claim->status = (string) $status;
+            // Only update if status has changed
+            if ($claim->status !== $status) {
+                $claim->status = (string) $status;
+                $claim->date_status_updated = now(); // <-- log the date of status change
+            }
 
-        // Clear or set reason
-        if ($status === 'disapproved') {
-            $claim->reason_of_disapprovement = $request->input('reason_of_disapprovement');
-        } else {
-            $claim->reason_of_disapprovement = null; // clear if approved or pending
+            // Clear or set reason
+            if ($status === 'disapproved') {
+                $claim->reason_of_disapprovement = $request->input('reason_of_disapprovement');
+            } else {
+                $claim->reason_of_disapprovement = null;
+            }
+
+            $claim->save();
+
+            return redirect()->back()->with('success', 'Status updated to ' . ucfirst($status) . '.');
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
-
-        $claim->save();
-
-        return redirect()->back()->with('success', 'Status updated to ' . ucfirst($status) . '.');
-
-    } catch (\Exception $e) {
-        return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
     }
-}
 
 
 
@@ -45,7 +48,7 @@ class ClaimController extends Controller
     // dd($request->all());
     // $request->validate([
     //     'form_of_payment' => 'nullable|in:cash,cheque',
-    //     'check_no' => 'nullable|required_if:form_of_payment,cheque',
+    //     'check_no' => 'nullable|required_if:form_of_payment,cheque',a
     //     'payout_date' => 'nullable|date',
     //     'source_of_fund' => 'nullable|in:Regular,Senior,PDRRM',
     // ]);
@@ -54,6 +57,10 @@ class ClaimController extends Controller
     $claim = Claim::with(['client', 'disbursement', 'clientAssistance.assistanceType'])
               ->findOrFail($id);
 
+     // Prevent update if not approved
+    if ($claim->status !== 'approved') {
+        return redirect()->back()->with('error', 'Claim information can only be updated when the status is approved.');
+    }
 
     // Only update fields that were actually filled
     $claim->date_cafoa_prepared = $request->filled('date_cafoa_prepared') ? $request->input('date_cafoa_prepared') : $claim->date_cafoa_prepared;

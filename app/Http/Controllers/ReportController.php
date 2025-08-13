@@ -52,30 +52,30 @@ class ReportController extends Controller
 
         ->select(
             'municipalities.name as municipality',
-            DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN clients.id ELSE NULL END) as male"),
-            DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN clients.id ELSE NULL END) as female"),
+            DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN claims.id ELSE NULL END) as male"),
+            DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN claims.id ELSE NULL END) as female"),
             DB::raw("COUNT(DISTINCT CASE 
                 WHEN client_assistance.medical_case = 'CKD' 
-                THEN clients.id END) as CKD"),
+                THEN claims.id END) as CKD"),
 
             DB::raw("COUNT(DISTINCT CASE 
                 WHEN client_assistance.medical_case = 'Cancer' 
-                THEN clients.id END) as Cancer"),
+                THEN claims.id END) as Cancer"),
 
             DB::raw("COUNT(DISTINCT CASE 
                 WHEN client_assistance.medical_case = 'Heart Illness' 
-                THEN clients.id END) as HeartIllness"),
+                THEN claims.id END) as HeartIllness"),
 
             DB::raw("COUNT(DISTINCT CASE 
                 WHEN client_assistance.medical_case LIKE '%Diabetes%' 
                     OR client_assistance.medical_case LIKE '%Hypertension%' 
-                THEN clients.id END) as DiabetesHypertension"),
+                THEN claims.id END) as DiabetesHypertension"),
 
             DB::raw("COUNT(DISTINCT CASE 
                 WHEN client_assistance.medical_case NOT IN ('CKD','Cancer','Heart Illness')
                     AND client_assistance.medical_case NOT LIKE '%Diabetes%' 
                     AND client_assistance.medical_case NOT LIKE '%Hypertension%' 
-                THEN clients.id END) as OtherMedical"),
+                THEN claims.id END) as OtherMedical"),
 
 
 
@@ -173,17 +173,24 @@ class ReportController extends Controller
         // Manual Pagination
         $page = $request->get('page', 1);
         $perPage = 10;
+        $paginatedItems = $reportData->forPage($page, $perPage)->map(function ($item) {
+            return json_decode(json_encode($item)); // Recursively cast to object
+        });
+
         $paginated = new LengthAwarePaginator(
-            $reportData->forPage($page, $perPage),
+            $paginatedItems,
             $reportData->count(),
             $perPage,
             $page,
             ['path' => $request->url(), 'query' => $request->query()]
         );
 
+        // ✅ Return the view inside the function
         return view('reports.index', [
             'reportData' => $paginated,
             'totals' => $totals
         ]);
+
     }
+
 }

@@ -13,6 +13,7 @@
                 </button>
             </div>
 
+            <!-- Budget Modal -->
             <div class="modal fade" id="budgetModal" tabindex="-1">
                 <div class="modal-dialog modal-dialog-centered">
                     <div class="modal-content">

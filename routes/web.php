@@ -5,6 +5,7 @@ use Illuminate\Http\Request;
 use App\Models\Client;
 use Illuminate\Support\Facades\Auth;
 
+use App\Http\Controllers\ExportController;
 use App\Models\Claim;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DisbursementController;
@@ -64,6 +65,9 @@ Route::put('/claims/{id}', [ClaimController::class, 'update'])->name('claims.upd
 
 Route::get('/clients/assistance', [ClientAssistanceController::class, 'assistance'])->name('clients.assistance');
 Route::resource('clients', ClientController::class);
+Route::put('/clients/{id}/assistance', [ClientController::class, 'updateAssistance'])
+    ->name('clients.updateAssistance');
+
 Route::match(['put', 'patch'], 'disbursements/{id}/update-claim-status', [DisbursementController::class, 'updateClaimStatus'])->name('disbursements.updateClaimStatus');
 Route::get('/disbursements', [DisbursementController::class, 'index'])->name('disbursements.index');
 
@@ -95,4 +99,16 @@ Route::get('/api/search-clients', function (Request $request) {
 
     return response()->json($clients);
 });
+
+// Excel & PDF download routes for Grouped.blade
+Route::get('/grouped-payouts/download/excel', [ExportController::class, 'downloadExcel'])->name('grouped-payouts.download.excel');
+Route::get('/grouped-payouts/download/pdf', [ExportController::class, 'downloadPdf'])->name('grouped-payouts.download.pdf');
+
+// Excel & PDF download routes for Reports
+Route::get('/reports/download/excel', [ExportController::class, 'downloadReport'])->name('reports.download.excel');
+Route::get('/reports/download/pdf', [ExportController::class, 'downloadReportPdf'])->name('reports.download.pdf');
+
+
+
+
 

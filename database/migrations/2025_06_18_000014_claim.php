@@ -10,6 +10,7 @@ return new class extends Migration {
             $table->unsignedBigInteger('client_id');
             $table->unsignedBigInteger('client_assistance_id');
             $table->enum('status', ['approved', 'disapproved', 'pending'])->default('pending');
+            $table->timestamp('date_status_updated')->nullable();
             $table->string('reason_of_disapprovement')->nullable();
             $table->decimal('amount_approved', 12, 2)->nullable();
             $table->date('date_cafoa_prepared')->nullable();

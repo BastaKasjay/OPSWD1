@@ -123,6 +123,13 @@
                                 <a href="{{ route('clients.show', $client->id) }}" class="btn p-1" style="border: none; background: none; color: 	#5B7B8A;" title="View Client">
                                     <i class="fas fa-eye"></i>
                                 </a>
+
+                                <!-- Delete button triggers modal -->
+                                <button type="button" class="btn p-1 ms-2 text-danger" style="border: none; background: none;" title="Delete Assistance"
+    data-bs-toggle="modal" data-bs-target="#deleteModal" data-assistance-id="{{ $assistance->id }}">
+    <i class="fas fa-trash"></i>
+</button>
+
                             </div>
                         </td>
                     </tr>
@@ -247,14 +254,35 @@
 
 </main>
 
-    
+    <!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method="POST" id="deleteAssistanceForm">
+      @csrf
+      @method('DELETE')
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          Are you sure you want to delete this assistance?
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger">Yes, Delete</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+
 
 
     
 
                 
                 <!-- Add Assistance Modal -->
-
     <div id="addAssistanceModal" class="modal d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center modal-overlay" tabindex="-1" aria-labelledby="addAssistanceModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-scrollable modal-lg">
             <form id="assistanceForm" method="POST" action="{{ route('client-assistances.store') }}" autocomplete="off">
@@ -370,6 +398,24 @@
 </script>
 @section('scripts')
 <script>
+    // Delete modal setup
+    document.addEventListener('DOMContentLoaded', function () {
+
+    const deleteModal = document.getElementById('deleteModal');
+    if (deleteModal) {
+        deleteModal.addEventListener('show.bs.modal', function (event) {
+            const button = event.relatedTarget;
+            const assistanceId = button.getAttribute('data-assistance-id');
+
+            // Find the delete form inside modal
+            const form = deleteModal.querySelector('form#deleteAssistanceForm');
+            if (form) {
+                form.action = `/client-assistances/${assistanceId}`;
+            }
+        });
+    }
+});
+
 function openAssistanceModalFromSearch() {
     const modal = new bootstrap.Modal(document.getElementById('addAssistanceModal'));
     document.getElementById('search_client_input').value = '';

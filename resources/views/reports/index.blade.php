@@ -39,7 +39,19 @@
 <div class="main-container bg-light w-100">
     <main class="p-3 content-wrapper">
         <div class="mb-4 mt-3">
-            <h1 class="h2 fw-bold text-dark mb-3">AICS Quarterly Reports</h1>
+            <h1 class="h2 fw-bold text-dark text-center mb-3">AICS Quarterly Reports</h1>
+            @if (!isset($pdf))
+                <a href="{{ route('reports.download.excel', request()->only('quarter', 'year')) }}" class="btn btn-success">
+                    <i class="fas fa-file-excel"></i> Excel
+                </a>
+                <a href="{{ route('reports.download.pdf', request()->only('quarter', 'year')) }}" class="btn btn-danger">
+                    <i class="fas fa-file-pdf"></i> PDF
+                </a>
+            @endif
+
+
+
+
 
             <!-- Filter Section -->
             <form method="GET" action="{{ route('reports.index') }}" class="row g-2 align-items-end mb-4">
@@ -52,7 +64,7 @@
                         <option value="Q3" {{ request('quarter') == 'Q3' ? 'selected' : '' }}>Q3</option>
                         <option value="Q4" {{ request('quarter') == 'Q4' ? 'selected' : '' }}>Q4</option>
                     </select>
-                </div>
+                </div>  
 
                 <div class="col-md-2">
                     <label for="year" class="form-label">Year</label>
@@ -176,3 +188,27 @@
     </main>
 </div>
 @endsection
+
+@if (!isset($pdf))
+    @section('scripts')
+    <script>
+        // excelDownloadBtn
+        document.addEventListener('DOMContentLoaded', function () {
+            document.getElementById('downloadExcelBtn').addEventListener('click', function (e) {
+                e.preventDefault();
+
+                const quarter = document.getElementById('quarter')?.value || '';
+                const year = document.getElementById('year')?.value || '';
+
+                const query = new URLSearchParams({
+                    quarter: quarter,
+                    year: year
+                });
+
+                // Make sure this matches your route name
+                window.location.href = "{{ route('reports.download.excel') }}?" + query.toString();
+            });
+        });
+    </script>
+    @endsection
+@endif

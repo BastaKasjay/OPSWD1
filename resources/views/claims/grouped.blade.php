@@ -8,6 +8,13 @@
         </a>
     </div>
     <h1 class="fs-3 fw-bold mb-4 text-dark">Grouped Payouts</h1>
+    <a id="downloadExcelBtn" href="#" class="btn btn-success btn-sm">
+        <i class="fas fa-file-excel"></i> Download Excel
+    </a>
+    <a id="downloadPDFBtn" href="#" class="btn btn-danger btn-sm">
+        <i class="fas fa-file-pdf"></i> Download PDF
+    </a>
+
 
     @php
         $allClaims = collect($grouped)->flatten(2);
@@ -83,8 +90,10 @@
                             style="border: none;"
                         >
                             <td>
-                    <input type="checkbox" class="claim-checkbox" name="selected_claims[]" value="{{ $claim->id }}">
-                </td>
+                                 @if ($claim->disbursement?->claim_status !== 'claimed')
+                                    <input type="checkbox" class="claim-checkbox" name="selected_claims[]" value="{{ $claim->id }}">
+                                @endif
+                            </td>
                             <td style="border: none;">{{ $claim->client->full_name ?? '-' }}</td>
                             <td style="border: none;">{{ $claim->client->payee->full_name ?? '-' }}</td>
                             <td style="border: none;">
@@ -148,11 +157,11 @@
                                 </div>
                                 <div class="modal-body row g-4 pt-3">
                                     <div class="col-md-6">
-                                        <label for="date_received_{{ $claim->id }}" class="form-label fw-semibold">Date Received (Claimed)</label>
+                                        <label for="date_received_{{ $claim->id }}" class="form-label fw-semibold">Date Received</label>
                                         <input type="date" id="date_received_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_received_claimed" value="{{ $claim->disbursement->date_received_claimed }}" style="box-shadow: none;">
                                     </div>
                                     <div class="col-md-6">
-                                        <label for="date_released_{{ $claim->id }}" class="form-label fw-semibold">Date Released</label>
+                                        <label for="date_released_{{ $claim->id }}" class="form-label fw-semibold">Date Released (Claimed)</label>
                                         <input type="date" id="date_released_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_released" value="{{ $claim->disbursement->date_released }}" style="box-shadow: none;">
                                     </div>
                                     <div class="col-md-6">
@@ -320,6 +329,41 @@
         methodFilter?.addEventListener('change', filterRows);
         dateFilter?.addEventListener('change', filterRows);
         statusFilter?.addEventListener('change', filterRows);
+    });
+
+    // excelDownloadBtn
+    document.getElementById('downloadExcelBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const method = document.getElementById('methodFilter').value;
+        const date = document.getElementById('dateFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        const query = new URLSearchParams({
+            method: method,
+            date: date,
+            status: status
+        });
+
+        // Redirect to the route with query string
+        window.location.href = "{{ route('grouped-payouts.download.excel') }}?" + query.toString();
+    });
+    // PDFDownloadBtn
+    document.getElementById('downloadPDFBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+
+        const method = document.getElementById('methodFilter').value;
+        const date = document.getElementById('dateFilter').value;
+        const status = document.getElementById('statusFilter').value;
+
+        const query = new URLSearchParams({
+            method: method,
+            date: date,
+            status: status
+        });
+
+        // Redirect to the route with query string
+        window.location.href = "{{ route('grouped-payouts.download.pdf') }}?" + query.toString();
     });
 </script>
 @endsection

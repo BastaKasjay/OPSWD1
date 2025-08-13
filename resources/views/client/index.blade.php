@@ -36,6 +36,7 @@
                         <th class="px-4 py-2 assistance-th bg-success bg-opacity-10 text-nowrap" style="color: #374151; font-size: 1rem; font-weight: 600;">Valid ID</th>
                         <th class="px-4 py-2 assistance-th bg-success bg-opacity-10 text-nowrap" style="color: #374151; font-size: 1rem; font-weight: 600;">Municipality</th>
                         <th class="px-4 py-2 assistance-th bg-success bg-opacity-10 text-nowrap" style="color: #374151; font-size: 1rem; font-weight: 600;">Vulnerability Sectors</th>
+                        <th class="px-4 py-2 assistance-th bg-success bg-opacity-10 text-nowrap" style="color: #374151; font-size: 1rem; font-weight: 600;">Action</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,92 +61,148 @@
                                     None
                                 @endif
                             </td>
-                        
+                            <td>
+                                <div class="d-flex align-items-center gap-1">
+                                    <!-- View icon -->
+                                    <a href="{{ route('clients.show', $client->id) }}" class="btn p-1" style="border: none; background: none; color: #5B7B8A;" title="View Client">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+
+                                    <!-- Edit icon -->
+                                    <button 
+                                        class="btn btn-sm btn-outline-success" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editClientModal{{ $client->id }}"
+                                        title="Edit Client">
+                                        <i class="fas fa-user-edit"></i>
+                                    </button>
+
+                                    <!-- Delete icon -->
+                                    <form action="{{ route('clients.destroy', $client->id) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button class="btn p-1 text-danger" style="border: none; background: none;" onclick="return confirm('Are you sure?')" title="Delete">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
                         </tr>
 
-                    <!-- edit modal -->
-                    <div id="editModal_{{ $client->id }}" class="d-none position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="z-index: 1050; background: rgba(0,0,0,0.5);">
-                        <div class="bg-white" style="max-width: 800px; width: 100%; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); padding: 2rem; max-height: 90vh; overflow-y: auto;">
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <h2 class="h5 fw-bold text-success mb-0 bg-success bg-opacity-10 rounded py-2 px-3 w-100 text-center">Edit Info</h2>
-                                <button type="button" class="btn-close ms-2" onclick="closeEditModal({{ $client->id }})"></button>
+                    <!-- Edit Client Modal -->
+                    <div class="modal fade" id="editClientModal{{ $client->id }}" tabindex="-1" aria-labelledby="editClientModalLabel" aria-hidden="true">
+                    <div class="modal-dialog modal-lg modal-dialog-centered">
+                        <div class="modal-content rounded-4 shadow-sm">
+                        <div class="modal-header" style="background-color: #e6f4ed;">
+                            <h5 class="modal-title fw-bold" id="editClientModalLabel">Edit Client: {{ $client->full_name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form action="{{ route('clients.update', $client->id) }}" method="POST">
+                            @csrf
+                            @method('PUT')
+                            <div class="modal-body">
+                            <div class="row g-3">
+                                <!-- First Name -->
+                                <div class="col-md-4">
+                                <label for="first_name{{ $client->id }}" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="first_name{{ $client->id }}" name="first_name" value="{{ $client->first_name }}" required>
+                                </div>
+
+                                <!-- Middle Name -->
+                                <div class="col-md-4">
+                                <label for="middle_name{{ $client->id }}" class="form-label">Middle Name</label>
+                                <input type="text" class="form-control" id="middle_name{{ $client->id }}" name="middle_name" value="{{ $client->middle_name }}">
+                                </div>
+
+                                <!-- Last Name -->
+                                <div class="col-md-4">
+                                <label for="last_name{{ $client->id }}" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="last_name{{ $client->id }}" name="last_name" value="{{ $client->last_name }}" required>
+                                </div>
+
+                                <!-- Birthday -->
+                                <div class="col-md-3">
+                                <label for="birthday{{ $client->id }}" class="form-label">Birthday</label>
+                                <input type="date" class="form-control" id="birthday{{ $client->id }}" name="birthday" value="{{ $client->birthday }}">
+                                </div>
+
+                                <!-- Age -->
+                                <div class="col-md-2">
+                                <label for="age{{ $client->id }}" class="form-label">Age</label>
+                                <input type="number" class="form-control" id="age{{ $client->id }}" name="age" value="{{ $client->age }}" readonly>
+                                </div>
+
+                                <!-- sex -->
+                                <div class="col-md-4">
+                                <label for="sex{{ $client->id }}" class="form-label">Sex</label>
+                                <select class="form-select" id="sex{{ $client->id }}" name="sex" required>
+                                    <option value="Male" {{ $client->sex === 'Male' ? 'selected' : '' }}>Male</option>
+                                    <option value="Female" {{ $client->sex === 'Female' ? 'selected' : '' }}>Female</option>
+                                </select>
+                                </div>
+
+                                <!-- Contact Number -->
+                                <div class="col-md-6">
+                                <label for="contact_number{{ $client->id }}" class="form-label">Contact Number</label>
+                                <input type="text" class="form-control" id="contact_number{{ $client->id }}" name="contact_number" value="{{ $client->contact_number }}" oninput="this.value = this.value.replace(/[^0-9]/g, '')" minlength="11" maxlength="11">
+                                </div>
+
+                                <!-- Address -->
+                                <div class="col-md-12">
+                                    <label for="address{{ $client->id }}" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address{{ $client->id }}" name="address" rows="2">{{ $client->address }}</textarea>
+                                </div>
+
+                                <!-- Municipality -->
+                                <div class="col-md-6">
+                                    <label for="municipality{{ $client->id }}" class="form-label">Municipality</label>
+                                    <select name="municipality_id" id="municipality{{ $client->id }}" class="form-select" required>
+                                        @foreach($municipalities as $municipality)
+                                            <option value="{{ $municipality->id }}" {{ $client->municipality_id == $municipality->id ? 'selected' : '' }}>
+                                                {{ $municipality->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <!-- Valid ID -->
+                                <div class="col-md-12 mt-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="valid_id" id="valid_id" value="1" {{ old('valid_id', $client->valid_id ?? false) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="valid_id">Valid ID Presented?</label>
+                                    </div>
+                                </div>
+                                <!-- Vulnerability Sectors -->
+                                <div class="col-md-12 mt-3">
+                                    <label class="form-label">Vulnerability Sectors</label>
+                                    <div class="row">
+                                        @foreach($vulnerabilitySectors as $sector)
+                                            <div class="form-check col-md-4">
+                                                <input type="checkbox" 
+                                                    name="vulnerability_sectors[]" 
+                                                    value="{{ $sector->id }}" 
+                                                    class="form-check-input"
+                                                    id="edit_sector_{{ $client->id }}_{{ $sector->id }}"
+                                                    {{ $client->vulnerabilitySectors->contains($sector->id) ? 'checked' : '' }}>
+                                                <label class="form-check-label" for="edit_sector_{{ $client->id }}_{{ $sector->id }}">
+                                                    {{ $sector->name }}
+                                                </label>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                                
                             </div>
-                            <form action="{{ route('clients.update', $client->id) }}" method="POST">
-                                @csrf
-                                @method('PUT')
-                                <div class="row g-3">
-                                    <!-- Personal Details -->
-                                    <div class="col-md-6">
-                                        <label class="form-label">First Name:</label>
-                                        <input type="text" name="first_name" class="form-control rounded border border-success" value="{{ $client->first_name }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Middle Name:</label>
-                                        <input type="text" name="middle_name" class="form-control rounded border border-success" value="{{ $client->middle_name }}">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Last Name:</label>
-                                        <input type="text" name="last_name" class="form-control rounded border border-success" value="{{ $client->last_name }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Sex:</label>
-                                        <select name="sex" class="form-select rounded border border-success" required>
-                                            <option value="Male" {{ $client->sex == 'Male' ? 'selected' : '' }}>Male</option>
-                                            <option value="Female" {{ $client->sex == 'Female' ? 'selected' : '' }}>Female</option>
-                                        </select>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Age:</label>
-                                        <input type="number" name="age" class="form-control rounded border border-success" value="{{ $client->age }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Address:</label>
-                                        <input type="text" name="address" class="form-control rounded border border-success" value="{{ $client->address }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Contact Number:</label>
-                                        <input type="text" name="contact_number" class="form-control rounded border border-success" value="{{ $client->contact_number }}" required>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label class="form-label">Birthday:</label>
-                                        <input type="date" name="birthday" class="form-control rounded border border-success" value="{{ $client->birthday }}">
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <label class="form-label">Municipality:</label>
-                                        <select name="municipality_id" class="form-select rounded border border-success" required>
-                                            <option value="">Select Municipality</option>
-                                            @foreach($municipalities as $municipality)
-                                                <option value="{{ $municipality->id }}" {{ $client->municipality_id == $municipality->id ? 'selected' : '' }}>
-                                                    {{ $municipality->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="col-12">
-                                        <label class="form-label">Vulnerability Sectors:</label>
-                                        <div class="d-flex flex-wrap gap-2">
-                                            @foreach($vulnerabilitySectors as $sector)
-                                                <div class="form-check">
-                                                    <input type="checkbox" name="vulnerability_sectors[]" value="{{ $sector->id }}" 
-                                                        class="form-check-input" id="sector_{{ $sector->id }}"
-                                                        {{ $client->vulnerabilitySectors->contains($sector->id) ? 'checked' : '' }}>
-                                                    <label class="form-check-label" for="sector_{{ $sector->id }}">{{ $sector->name }}</label>
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    </div>
-
-                                    
-                                </div>
-                                <div class="mt-4 d-flex justify-content-end gap-2">
-                                    <button type="submit" class="btn btn-success custom-green-btn rounded-pill px-4">Save Changes</button>
-                                    <a href="{{ route('clients.index') }}" class="btn btn-light rounded-pill px-4">Cancel</a>
-                                </div>
-                            </form>
+                            </div>
+                            <div class="modal-footer bg-light">
+                            <button type="button" class="btn btn-secondary rounded-pill" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-success rounded-pill px-4">Save Changes</button>
+                            </div>
+                        </form>
                         </div>
                     </div>
+                    </div>
+
                 
                 @endforeach
             </tbody>
@@ -191,6 +248,7 @@
 
 
 <!-- Modal for Adding Client -->
+ <div id="modalBackdrop" class="position-fixed top-0 start-0 w-100 h-100 bg-dark bg-opacity-50 d-none" style="z-index: 1040;">
 <div id="createModal" class="modal d-none slide-in-modal position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center modal-overlay" style="z-index: 1050;">
     <div class="modal-dialog modal-lg" style="max-width: 800px;">
         <form action="{{ route('clients.store') }}" method="POST" enctype="multipart/form-data" autocomplete="off">
@@ -240,7 +298,7 @@
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Contact Number</label>
-                        <input type="text" name="contact_number" class="form-control rounded border border-success bg-light" style="box-shadow: none;">
+                        <input type="text" name="contact_number" class="form-control rounded border border-success bg-light" style="box-shadow: none;" oninput="this.value = this.value.replace(/[^0-9]/g, '')" minlength="11" maxlength="11">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Birthday</label>
@@ -272,6 +330,7 @@
         </form>
     </div>
 </div>
+</div>
 
 
 @endsection
@@ -280,64 +339,24 @@
 <script>
     function openCreateModal() {
         document.getElementById('createModal').classList.remove('d-none');
+        document.getElementById('modalBackdrop').classList.remove('d-none');
+        document.body.style.overflow = 'hidden';
     }
 
     function closeCreateModal() {
         document.getElementById('createModal').classList.add('d-none');
+        document.getElementById('modalBackdrop').classList.add('d-none');
+        document.body.style.overflow = '';
     }
-
-    function toggleRepresentativeFields() {
-        const checkbox = document.getElementById('has_representative');
-        const repFields = document.getElementById('representativeFields');
-        repFields.style.display = checkbox.checked ? 'block' : 'none';
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        toggleRepresentativeFields();
-        document.getElementById('has_representative')?.addEventListener('change', toggleRepresentativeFields);
-    });
 
     // Edit Modal Scripts
-    function openEditModal(id) {
-        const modal = document.getElementById('editModal_' + id);
-        modal.classList.remove('d-none');
-
-        const typeSelect = modal.querySelector('#assistance_type');
-        const categorySelect = modal.querySelector('#assistance_category');
-        const selectedCategoryId = categorySelect.getAttribute('data-selected');
-
-        const repCheckbox = modal.querySelector('#has_representative');
-        const repFields = modal.querySelector('#representativeFields');
-        if (repCheckbox && repFields) {
-            repFields.style.display = repCheckbox.checked ? 'block' : 'none';
-
-            repCheckbox.addEventListener('change', () => {
-                repFields.style.display = repCheckbox.checked ? 'block' : 'none';
-            });
-        }
-
-        if (typeSelect && categorySelect) {
-            const typeId = typeSelect.value;
-            categorySelect.innerHTML = '<option>Loading...</option>';
-
-            if (typeId) {
-                fetch('/get-categories/' + typeId)
-                    .then(response => response.json())
-                    .then(data => {
-                        categorySelect.innerHTML = '<option value="">Select Assistance Category</option>';
-                        data.forEach(category => {
-                            const selected = category.id == selectedCategoryId ? 'selected' : '';
-                            categorySelect.innerHTML += `<option value="${category.id}" ${selected}>${category.category_name}</option>`;
-                        });
-                    });
-            }
-        }
+    function openEditModal(clientId) {
+        document.getElementById(`editModal_${clientId}`).classList.remove('d-none');
     }
-    
 
-    function closeEditModal(id) {
-        const modal = document.getElementById('editModal_' + id);
-        modal.classList.add('d-none');
+    function closeEditModal(clientId) {
+        document.getElementById(`editModal_${clientId}`).classList.add('d-none');
     }
+
 </script>
 @endsection
