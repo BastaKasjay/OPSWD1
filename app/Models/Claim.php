@@ -66,6 +66,10 @@ class Claim extends Model
         return $this->hasOne(\App\Models\Disbursement::class)->where('form_of_payment', 'cheque');
     }
 
+    public function checkPayment()
+    {
+        return $this->hasOne(\App\Models\CheckPayment::class, 'claim_id');
+    }
 
 
 

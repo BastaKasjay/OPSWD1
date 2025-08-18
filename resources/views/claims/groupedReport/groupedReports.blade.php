@@ -16,9 +16,9 @@
                         <th class="fw-semibold text-success" style="background: none; border: none;">Municipality</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Amount Approved</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Date Received</th>
-                        <th class="fw-semibold text-success" style="background: none; border: none;">Date Released</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Claim Status</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Payment Method</th>
+                        <th class="fw-semibold text-success" style="background: none; border: none;">Check No.</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Payout Date</th>
                         
                     </tr>
@@ -46,7 +46,6 @@
                             <td style="border: none;">{{ $claim->client->municipality->name ?? '-' }}</td>
                             <td style="border: none;">₱{{ number_format($claim->amount_approved ?? 0, 2) }}</td>
                             <td style="border: none;">{{ $claim->disbursement->date_received_claimed ?? '-' }}</td>
-                            <td style="border: none;">{{ $claim->disbursement->date_released ?? '-' }}</td>
                             <td class="fw-semibold text-capitalize" style="border: none;">
                                 @if($claim->disbursement?->claim_status === 'claimed')
                                     <span class="badge bg-success">Claimed</span>
@@ -56,11 +55,25 @@
                                     <span class="badge bg-secondary">Pending</span>
                                 @endif
                             </td>
+                            <td class="no-border">
+                                @if(strtolower($claim->form_of_payment) === 'cheque')
+                                    {{-- Change this line to get check number from claim instead of disbursement --}}
+                                    {{ $claim->checkPayment->check_no ?? '-' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td style="border: none;">{{ ucfirst($claim->form_of_payment ?? '-') }}</td>
                             <td style="border: none;">{{ $claim->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</td>
                             
                         </tr>
                     @endforeach
+                    {{-- Total row --}}
+        <tr style="font-weight: bold; background-color: #f8f9fa;">
+            <td colspan="4" style="text-align: right;">TOTAL:</td>
+            <td>₱{{ number_format($total_amount_approved, 2) }}</td>
+            <td colspan="5"></td>
+        </tr>
                 </tbody>
             </table>
 

@@ -927,3 +927,52 @@ h1, h4 {
             border-color: #157347 !important;
             color: #fff !important;
         }
+
+
+
+
+
+/* ///////////////////////////////////////////////////////////////////////////////////////////         */
+
+/* grouped.blade */
+.no-border {
+    border-bottom: none !important;
+}
+
+.custom-alert {
+    display: none; /* hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 2000; /* higher than Bootstrap modal (~1050) */
+    justify-content: center;
+    align-items: center;
+}
+
+.custom-alert-content {
+    background: white;
+    padding: 1.5rem 2rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.custom-alert.warning .custom-alert-content {
+    background-color: #76AE91; 
+    color: #ffffff; /* dark yellow text */
+}
+
+.custom-alert-content button {
+    margin-top: 1rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-weight: 600;
+    background-color: #639D7F; /* green button */
+    color: white;
+}
+

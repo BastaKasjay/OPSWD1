@@ -1,6 +1,8 @@
 @extends('layouts.app')
 @section('title', 'Home')
 
+
+
 @section('content')
 
     <div class="main-content">
@@ -35,6 +37,7 @@
                                 <option value="Regular">Regular</option>
                                 <option value="Senior">Senior Citizen</option>
                                 <option value="PDRRM">PDRRM</option>
+                                <option value="Supplemental">Supplemental</option>
                                 </select>
                             </div>
                             <div class="mb-3">
@@ -51,6 +54,26 @@
             </div>
 
         </header>
+
+        <form method="GET" action="{{ route('home') }}" class="mb-4 d-flex gap-2">
+            <select name="year" class="form-select" style="width: 150px;">
+                <option value="">All Years</option>
+                @foreach(range(date('Y'), date('Y') - 5) as $year)
+                    <option value="{{ $year }}" {{ request('year') == $year ? 'selected' : '' }}>{{ $year }}</option>
+                @endforeach
+            </select>
+
+            <select name="month" class="form-select" style="width: 150px;">
+                <option value="">All Months</option>
+                @foreach(range(1, 12) as $month)
+                    <option value="{{ $month }}" {{ request('month') == $month ? 'selected' : '' }}>
+                        {{ date('F', mktime(0, 0, 0, $month, 1)) }}
+                    </option>
+                @endforeach
+            </select>
+
+            <button type="submit" class="btn btn-success">Filter</button>
+        </form>
 
         <!-- Dashboard Cards -->
         <div class="row">
@@ -73,7 +96,7 @@
                     <div class="card-title">Disbursed Amount</div>
                     <div class="card-value">
                         <ul class="list-unstyled m-0" style="font-size: 14px; line-height: 1.5;">
-                            @foreach (['Regular', 'Senior', 'PDRRM'] as $type)
+                            @foreach (['Regular', 'Senior', 'PDRRM', 'Supplemental'] as $type)
                                 @php
                                     $budget = $budgets->firstWhere('type', $type)?->allocated_amount ?? 0;
                                     $disbursed = $disbursedPerType[$type] ?? 0;
@@ -158,32 +181,7 @@
 
             <!-- Right Column (Upcoming Payouts + Previous Payouts) -->
             <div class="col-lg-8">
-                <!-- Upcoming Payouts -->
-                <div class="card table-card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">UPCOMING PAYOUTS</h5>
-                        <div class="table-responsive-wrapper">
-                            <table class="upcoming-payouts-table">
-                                <thead>
-                                    <tr>
-                                        <th>Schedule</th>
-                                        <th>Municipality</th>
-                                        <th>Payout Name</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach ($upcomingPayouts as $payout)
-                                        <tr>
-                                            <td>{{ \Carbon\Carbon::parse($payout->payout_date)->format('M d, Y') }}</td>
-                                            <td>{{ $payout->client->municipality->name ?? '-' }}</td>
-                                            <td>{{ $payout->client->full_name ?? $payout->client->payee->full_name ?? '-' }}</td>
-                                        </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+                
 
                 <!-- Previous Payouts -->
                 <div class="card table-card">
@@ -194,20 +192,18 @@
                                 <thead>
                                     <tr>
                                         <th>Schedule</th>
-                                        <th>Municipality</th>
-                                        <th>Payout Name</th>
+                                        <th>No. of Claims</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($previousPayouts as $payout)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($payout->payout_date)->format('M d, Y') }}</td>
-                                            <td>{{ $payout->client->municipality->name ?? '-' }}</td>
-                                            <td>{{ $payout->client->full_name ?? $payout->client->payee->full_name ?? '-' }}</td>
+                                            <td>{{ $payout->total_claims }}</td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="3" class="text-center">No previous payouts found.</td>
+                                            <td colspan="2" class="text-center">No previous payouts found.</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -215,6 +211,7 @@
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

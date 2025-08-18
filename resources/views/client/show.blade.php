@@ -156,7 +156,7 @@
 
 
 {{-- Claim Info Card --}}
-@if ($claim && $claim->status === 'approved')
+@if ($claim && in_array($claim->status, ['approved', 'disapproved']))
 <div class="d-flex justify-content-end mb-3">
     <button class="btn btn-success custom-green-btn rounded-pill px-3 d-flex align-items-center gap-1 shadow-sm"
         data-bs-toggle="modal" data-bs-target="#editClaimModal">
@@ -194,22 +194,19 @@
 
                 <input type="hidden" name="client_assistance_id" value="{{ $latestAssistance->id }}">
 
-                <div class="modal-header border-0 pb-0">
-                    <h5 class="modal-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0" id="editClaimModalLabel" style="font-size: 1.5rem;">
-                        Update Claim Information
-                    </h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                {{-- Reason of Disapproval --}}
+                <div id="reason-container" style="display: {{ $claim && $claim->status === 'disapproved' ? 'block' : 'none' }};">
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Reason of Disapproval:</label>
+                        <textarea name="reason_of_disapprovement" class="form-control" autocomplete="off" rows="3" style="white-space: normal; word-break: break-word;">
+                            {{ old('reason_of_disapprovement', $claim->reason_of_disapprovement) }}
+                        </textarea>
+                    </div>
                 </div>
 
-                <div class="modal-body row g-4 pt-3">
-                    <div id="reason-container" style="display: {{ $claim && $claim->status === 'disapproved' ? 'block' : 'none' }};">
-                        <div class="mb-3">
-                            <label class="form-label fw-semibold">Reason of Disapproval:</label>
-                            <input type="text" name="reason_of_disapprovement" class="form-control"
-                                value="{{ old('reason_of_disapprovement', $claim->reason_of_disapprovement) }}">
-                        </div>
-                    </div> 
 
+                {{-- Other fields (hidden if disapproved) --}}
+                <div id="approved-fields-container" style="display: {{ $claim && $claim->status === 'disapproved' ? 'none' : 'flex' }}; flex-wrap: wrap; gap: 1rem;">
                     <div class="col-md-6">
                         <label class="form-label">CAFOA Prepared Date</label>
                         <input type="date" class="form-control" name="date_cafoa_prepared" value="{{ $claim->date_cafoa_prepared }}">
@@ -220,12 +217,12 @@
                         <input type="date" class="form-control" name="date_pgo_received" value="{{ $claim->date_pgo_received }}">
                     </div>
 
-                    <div class="col-md-6" id="amount-container">
+                    <div class="col-md-6">
                         <label class="form-label">Amount</label>
                         <input type="number" class="form-control" name="amount_approved" value="{{ $claim->amount_approved }}">
                     </div>
 
-                    <div class="col-md-6" id="source-of-fund-container">
+                    <div class="col-md-6">
                         <label for="source_of_fund" class="form-label">Source of Funds</label>
                         <select name="source_of_fund" id="source_of_fund" class="form-select">
                             <option value="">Select Source of Fund</option>
@@ -234,6 +231,12 @@
                             <option value="PDRRM" {{ $claim && $claim->source_of_fund === 'PDRRM' ? 'selected' : '' }}>PDRRM</option>
                         </select>
                     </div>
+
+                    <div class="col-12">
+                        <hr class="my-3" style="border-top: 4px solid red;">
+                    </div>
+
+                    <p><strong>Note:</strong> To be Updated Once the Voucher is Received at the Provincial Treasury Office:</p>
 
                     <div class="col-md-6">
                         <label class="form-label">Preferred Payment Method</label>
@@ -247,7 +250,7 @@
                     <div id="check-no-field" class="col-md-6" style="display: none;">
                         <label for="check_no" class="form-label">Check No.</label>
                         <input type="text" name="check_no" id="check_no" class="form-control"
-                            value="{{ old('check_no', $claim->checkPayment->check_no ?? '') }}">
+                            value="{{ old('check_no', $claim?->checkPayment?->check_no ?? '') }}">
                     </div>
 
                     <div class="col-md-6">
@@ -268,41 +271,69 @@
 
         
         @if ($claim && in_array($claim->status, ['approved', 'disapproved']))
-            <div class="col-md-4">
-                <span class="fw-semibold">Date Approved:</span> 
-                {{ $claim->date_status_updated ? \Carbon\Carbon::parse($claim->date_status_updated)->format('F d, Y') : '-' }}
-            </div>
-        @endif
+    <div class="col-md-4">
+        <span class="fw-semibold">
+            @if($claim->status === 'approved')
+                Date Approved:
+            @else
+                Date Disapproved:
+            @endif
+        </span> 
+        {{ $claim->date_status_updated 
+            ? \Carbon\Carbon::parse($claim->date_status_updated)->format('F d, Y') 
+            : '-' 
+        }}
+    </div>
+@endif
+
 
         @endif
         <div class="row g-3 mb-2">
             <div class="col-md-6 d-flex align-items-center">
                 <span class="fw-semibold">Status:</span>
-                @php
-            $status = optional($claim)->status ?? 'Pending';
-            $badgeClass = $status === 'approved'
-                ? 'bg-success bg-opacity-10 text-success'
-                : ($status === 'disapproved'
-                    ? 'bg-danger bg-opacity-10 text-danger'
-                    : 'bg-warning bg-opacity-10 text-warning');
-        @endphp
-                <span class="badge {{ $badgeClass }} px-3 py-2 ms-2">
-                    {{ ucfirst($status) }}
-                </span>
+                @if($claim)
+                    @php
+                        $status = $claim->status;
+                        $badgeClass = $status === 'approved'
+                            ? 'bg-success bg-opacity-10 text-success'
+                            : ($status === 'disapproved'
+                                ? 'bg-danger bg-opacity-10 text-danger'
+                                : 'bg-warning bg-opacity-10 text-warning');
+                    @endphp
+                    <span class="badge {{ $badgeClass }} px-3 py-2 ms-2">
+                        {{ ucfirst($status) }}
+                    </span>
+                @else
+                    <span class="badge bg-secondary bg-opacity-10 text-secondary px-2 py-1 ms-1">
+                        No Claim Yet
+                    </span>
+                @endif
             </div>
             @if ($claim && $claim->status === 'disapproved')
-                <div class="col-md-6 d-flex align-items-center">
-                    <span class="fw-semibold">Reason of Disapproval:</span>
-                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 ms-2">{{ $claim->reason_of_disapprovement ?? '-' }}</span>
+                <div class="col-md-6 d-flex align-items-start">
+                    <span class="fw-semibold mt-1">Reason of Disapproval:</span>
+                    <span class="badge bg-danger bg-opacity-10 text-danger px-3 py-2 ms-2" 
+                        style="white-space: normal; word-break: break-word;">
+                        {{ $claim->reason_of_disapprovement ?? '-' }}
+                    </span>
                 </div>
             @endif
+
         </div>
         <div class="row g-3">
-            <div class="col-md-4"><span class="fw-semibold">CAFOA Prepared Date:</span> {{ optional($claim)->date_cafoa_prepared ?? '-' }}</div>
-            <div class="col-md-4"><span class="fw-semibold">PGO Received Date:</span> {{ optional($claim)->date_pgo_received ?? '-' }}</div>
+            <div class="col-md-4"><span class="fw-semibold">CAFOA Prepared Date:</span> {{ optional($claim)->date_cafoa_prepared ? \Carbon\Carbon::parse($claim->date_cafoa_prepared)->format('F d, Y') : '-' }}</div>
+            <div class="col-md-4"><span class="fw-semibold">PGO Received Date:</span> {{ optional($claim)->date_pgo_received ? \Carbon\Carbon::parse($claim->date_pgo_received)->format('F d, Y') : '-' }}</div>
             <div class="col-md-4" id="source-of-fund-display"><span class="fw-semibold">Source of Funds:</span> {{ optional($claim)->source_of_fund ?? '-' }}</div>
-            <div class="col-md-4" id="amount-display"><span class="fw-semibold">Amount:</span> {{ optional($claim)->amount_approved ?? '-' }}</div>
+            <div class="col-md-4" id="amount-display">
+                <span class="fw-semibold">Amount:</span>
+                {{ isset($claim->amount_approved) ? '₱' . number_format($claim->amount_approved, 2) : '-' }}
+            </div>
+
             <div class="col-md-4"><span class="fw-semibold">Preferred Payment Method:</span> {{ optional($claim)->form_of_payment ? ucfirst($claim->form_of_payment) : '-' }}</div>
+            <div class="col-md-4">
+                <span class="fw-semibold">Check Number:</span>
+                {{ $claim?->checkPayment?->check_no ?? '-' }}
+            </div>
             <div class="col-md-4"><span class="fw-semibold">Payout Date:</span> {{ optional($claim)->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</div>
         </div>
     </div>
@@ -335,24 +366,24 @@
     });
 
     //amount and source of fund visibility based on assistance type
-    document.addEventListener("DOMContentLoaded", function () {
-        const assistanceType = "{{ $assistance->assistanceType->type_name ?? '' }}";
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     const assistanceType = "{{ $assistance->assistanceType->type_name ?? '' }}";
 
-        if (assistanceType.toLowerCase().includes("transportation")) {
-            document.getElementById("amount-container").style.display = "none";
-            document.getElementById("source-of-fund-container").style.display = "none";
-        }
+    //     if (assistanceType.toLowerCase().includes("transportation")) {
+    //         document.getElementById("amount-container").style.display = "none";
+    //         document.getElementById("source-of-fund-container").style.display = "none";
+    //     }
 
-    });
+    // });
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const assistanceType = "{{ $claim->clientAssistance->assistanceType->type_name ?? '' }}";
+    // document.addEventListener("DOMContentLoaded", function () {
+    //     const assistanceType = "{{ $claim->clientAssistance->assistanceType->type_name ?? '' }}";
 
-        if (assistanceType.toLowerCase().includes("transportation")) {
-            document.getElementById("source-of-fund-display").style.display = "none";
-            document.getElementById("amount-display").style.display = "none";
-        }
-    });
+    //     if (assistanceType.toLowerCase().includes("transportation")) {
+    //         document.getElementById("source-of-fund-display").style.display = "none";
+    //         document.getElementById("amount-display").style.display = "none";
+    //     }
+    // });
 
 
     // CLAIM MODAL (Update Claim Info)

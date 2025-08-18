@@ -13,12 +13,12 @@ return new class extends Migration
     {
         Schema::create('budgets', function (Blueprint $table) {
             $table->id();
-            $table->year('year'); // Example: 2025
-            $table->enum('type', ['Regular', 'Senior', 'PDRRM']); // The 3 types
-            $table->decimal('allocated_amount', 15, 2); // Budget amount
+            $table->year('year'); 
+            $table->enum('type', ['Regular', 'Senior', 'PDRRM', 'Supplemental']); 
+            $table->decimal('allocated_amount', 15, 2); 
             $table->timestamps();
 
-            $table->unique(['year', 'type']); // Ensure one budget per year per type
+            $table->unique(['year', 'type']); 
         });
     }
 

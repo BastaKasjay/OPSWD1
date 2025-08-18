@@ -7,6 +7,12 @@
                 </svg>
             </div>
         </div>
+
+        <!-- Show employee name -->
+        <div class="employee-name text-center mt-2 fw-semibold">
+            {{ $employee->fullname ?? 'Guest' }}
+        </div>
+
         <nav class="nav-list">
             <ul>
                 <li class="nav-item">

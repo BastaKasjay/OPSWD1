@@ -159,12 +159,10 @@ class ClientAssistanceController extends Controller
 
     public function assistance(Request $request)
 {
-    $query = ClientAssistance::with(['client', 'assistanceType', 'payee']);
+    $query = ClientAssistance::with(['client', 'assistanceType', 'payee', 'claim']);
 
-    // ✅ Search by client name
-    if ($request->has('search') && !empty($request->search)) {
+    if ($request->filled('search')) {
         $search = $request->search;
-
         $query->whereHas('client', function ($q) use ($search) {
             $q->where('first_name', 'like', "%$search%")
               ->orWhere('middle_name', 'like', "%$search%")
@@ -173,10 +171,34 @@ class ClientAssistanceController extends Controller
     }
 
     $assistances = $query->latest()->paginate(10);
-    $assistanceTypes = AssistanceType::all(); // Needed for the modal
+
+    $assistances->getCollection()->transform(function ($assistance) {
+    $claim = $assistance->claim()->latest()->first(); // get actual claim model
+
+    if (!$claim || $claim->status === 'pending') {
+        $assistance->claim_progress = 'No Claim';
+    } elseif ($claim->status === 'approved') {
+        // check if all required fields are filled
+        $infoFilled = $claim->date_cafoa_prepared !== null
+                   && $claim->date_pgo_received !== null
+                   && $claim->amount_approved !== null
+                   && $claim->form_of_payment !== null
+                   && $claim->payout_date !== null;
+
+        $assistance->claim_progress = $infoFilled ? 'Complete' : 'In Progress';
+    } else {
+        $assistance->claim_progress = 'No Claim';
+    }
+
+    return $assistance;
+});
+
+
+    $assistanceTypes = AssistanceType::all();
 
     return view('client.assistance', compact('assistances', 'assistanceTypes'));
 }
+
 
 
 }

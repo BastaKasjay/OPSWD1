@@ -51,7 +51,7 @@
             <div class="col-md-3">
                 <label class="form-label fw-semibold">Filter by Status:</label>
                 <select id="statusFilter" class="form-select">
-                    <option value="">All Statuses</option>
+                    <option value="">All Status</option>
                     <option value="pending">Pending</option>
                     <option value="unclaimed">Unclaimed</option>
                     <option value="claimed">Claimed</option>
@@ -67,16 +67,16 @@
             <table class="table table-hover" id="claimsTable" style="width:100%; background: transparent; border: none;">
                 <thead class="bg-success bg-opacity-10" style="border: none;">
                     <tr style="border: none;">
-                         <th><input type="checkbox" id="select-all"></th>
+                        <th><input type="checkbox" id="select-all"></th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Client Name</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Representative</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Contact</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Municipality</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Amount Approved</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Date Received</th>
-                        <th class="fw-semibold text-success" style="background: none; border: none;">Date Released</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Claim Status</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Payment Method</th>
+                        <th class="fw-semibold text-success" style="background: none; border: none;">Check No.</th>
                         <th class="fw-semibold text-success" style="background: none; border: none;">Payout Date</th>
                         <th class="fw-semibold text-success text-center" style="background: none; width: 70px; border: none;">Action</th>
                     </tr>
@@ -89,7 +89,7 @@
                             data-status="{{ $claim->disbursement?->claim_status ?? 'pending' }}"
                             style="border: none;"
                         >
-                            <td>
+                            <td class="no-border">
                                  @if ($claim->disbursement?->claim_status !== 'claimed')
                                     <input type="checkbox" class="claim-checkbox" name="selected_claims[]" value="{{ $claim->id }}">
                                 @endif
@@ -103,8 +103,7 @@
                             </td>
                             <td style="border: none;">{{ $claim->client->municipality->name ?? '-' }}</td>
                             <td style="border: none;">₱{{ number_format($claim->amount_approved ?? 0, 2) }}</td>
-                            <td style="border: none;">{{ $claim->disbursement->date_received_claimed ?? '-' }}</td>
-                            <td style="border: none;">{{ $claim->disbursement->date_released ?? '-' }}</td>
+                            <td style="border: none;">{{ $claim->disbursement->date_received_claimed ? \Carbon\Carbon::parse($claim->disbursement->date_received_claimed)->format('F d, Y') : '-' }}</td>
                             <td class="fw-semibold text-capitalize" style="border: none;">
                                 @if($claim->disbursement?->claim_status === 'claimed')
                                     <span class="badge bg-success">Claimed</span>
@@ -115,6 +114,14 @@
                                 @endif
                             </td>
                             <td style="border: none;">{{ ucfirst($claim->form_of_payment ?? '-') }}</td>
+                            <td class="no-border">
+                                @if(strtolower($claim->form_of_payment) === 'cheque')
+                                    {{-- Change this line to get check number from claim instead of disbursement --}}
+                                    {{ $claim->checkPayment->check_no ?? '-' }}
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td style="border: none;">{{ $claim->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</td>
                             <td class="text-center" style="border: none;">
                                 <div class="d-flex justify-content-center gap-1">
@@ -157,12 +164,8 @@
                                 </div>
                                 <div class="modal-body row g-4 pt-3">
                                     <div class="col-md-6">
-                                        <label for="date_received_{{ $claim->id }}" class="form-label fw-semibold">Date Received</label>
+                                        <label for="date_received_{{ $claim->id }}" class="form-label fw-semibold">Date Received (Claimed)</label>
                                         <input type="date" id="date_received_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_received_claimed" value="{{ $claim->disbursement->date_received_claimed }}" style="box-shadow: none;">
-                                    </div>
-                                    <div class="col-md-6">
-                                        <label for="date_released_{{ $claim->id }}" class="form-label fw-semibold">Date Released (Claimed)</label>
-                                        <input type="date" id="date_released_{{ $claim->id }}" class="form-control rounded border border-success bg-light" name="date_released" value="{{ $claim->disbursement->date_released }}" style="box-shadow: none;">
                                     </div>
                                     <div class="col-md-6">
                                         <label class="form-label fw-semibold">Total Amount Claimed</label>
@@ -211,10 +214,6 @@
                                 <input type="date" name="date_received_claimed" class="form-control rounded border border-success bg-light">
                             </div>
                             <div class="col-md-6">
-                                <label class="form-label fw-semibold">Date Released</label>
-                                <input type="date" name="date_released" class="form-control rounded border border-success bg-light">
-                            </div>
-                            <div class="col-md-6">
                                 <label class="form-label fw-semibold">Claim Status</label>
                                 <select name="claim_status" id="batchStatusSelect" class="form-select rounded border border-success bg-light">
                                     <option value="">Do not change</option>
@@ -237,11 +236,80 @@
             No approved claims found.
         </div>
     @endif
+
+    {{-- Custom Alert Modal --}}
+    <div id="customAlert" class="custom-alert">
+      <div class="custom-alert-content">
+        <p id="customAlertMessage"></p>
+        <button id="customAlertClose">OK</button>
+      </div>
+    </div>
+    
 </main>
 @endsection
 
 @section('scripts')
 <script>
+
+    function showCustomAlert(message, type = 'warning') {
+    const alertBox = document.getElementById('customAlert');
+    const alertMessage = document.getElementById('customAlertMessage');
+    const alertClose = document.getElementById('customAlertClose');
+
+    alertMessage.textContent = message;
+
+    // Remove previous types
+    alertBox.classList.remove('success', 'error', 'warning');
+    alertBox.classList.add(type); // add the new type class
+
+    alertBox.style.display = 'flex';
+
+    alertClose.onclick = () => {
+        alertBox.style.display = 'none';
+    };
+}
+
+
+    
+    // warning
+    @foreach($allClaims as $claim)
+    @if ($claim->disbursement)
+        const statusSelect{{ $claim->id }} = document.getElementById('claim_status_{{ $claim->id }}');
+        const dateInput{{ $claim->id }} = document.getElementById('date_received_{{ $claim->id }}');
+        const form{{ $claim->id }} = document.querySelector('#editDisbursementModal{{ $claim->id }} form');
+
+        // Auto-set date when status is claimed
+        statusSelect{{ $claim->id }}.addEventListener('change', () => {
+            if (statusSelect{{ $claim->id }}.value === 'claimed' && !dateInput{{ $claim->id }}.value) {
+                dateInput{{ $claim->id }}.valueAsDate = new Date();
+            }
+        });
+
+        // Warn if date is set but status not claimed
+        form{{ $claim->id }}.addEventListener('submit', (e) => {
+            if (dateInput{{ $claim->id }}.value && statusSelect{{ $claim->id }}.value !== 'claimed') {
+                e.preventDefault();
+                showCustomAlert('You must set the claim status to "Claimed" if you enter a Date Received.');
+            }
+        });
+    @endif
+@endforeach
+
+
+// Batch edit warning validation
+const batchForm = document.querySelector('#batchEditModal form');
+batchForm.addEventListener('submit', function(e) {
+    const status = document.getElementById('batchStatusSelect').value;
+    const dateInput = this.querySelector('input[name="date_received_claimed"]').value;
+
+    if (dateInput && status !== 'claimed') {
+        e.preventDefault();
+        showCustomAlert('You must set the claim status to "claimed" if you enter a received date.');
+    }
+});
+
+
+
     document.getElementById('openBatchEditModalBtn').addEventListener('click', function () {
         const selectedIds = document.getElementById('selectedIdsInput').value.split(',');
         

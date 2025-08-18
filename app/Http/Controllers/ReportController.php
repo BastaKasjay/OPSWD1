@@ -97,7 +97,6 @@ class ReportController extends Controller
         )
         ->where('disbursements.claim_status', '=', 'claimed')
         ->whereNotNull('disbursements.date_received_claimed')
-        ->whereNotNull('disbursements.date_released')
         ->whereBetween('disbursements.date_received_claimed', [$from, $to])
         ->groupBy('municipalities.name')
         ->get();

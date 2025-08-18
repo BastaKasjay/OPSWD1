@@ -58,16 +58,30 @@ class ClaimController extends Controller
               ->findOrFail($id);
 
      // Prevent update if not approved
-    if ($claim->status !== 'approved') {
-        return redirect()->back()->with('error', 'Claim information can only be updated when the status is approved.');
-    }
+    if (!in_array($claim->status, ['approved', 'disapproved'])) {
+    return redirect()->back()->with(
+        'error', 
+        'Claim information can only be updated when the status is approved or disapproved.'
+    );
+}
+
 
     // Only update fields that were actually filled
-    $claim->date_cafoa_prepared = $request->filled('date_cafoa_prepared') ? $request->input('date_cafoa_prepared') : $claim->date_cafoa_prepared;
-    $claim->date_pgo_received   = $request->filled('date_pgo_received')   ? $request->input('date_pgo_received')   : $claim->date_pgo_received;
-    $claim->amount_approved     = $request->filled('amount_approved')     ? $request->input('amount_approved')     : $claim->amount_approved;
-    $claim->form_of_payment     = $request->filled('form_of_payment')     ? $request->input('form_of_payment')     : $claim->form_of_payment;
-    $claim->payout_date         = $request->filled('payout_date')         ? $request->input('payout_date')         : $claim->payout_date;
+    $claim->date_cafoa_prepared = $request->has('date_cafoa_prepared') && $request->input('date_cafoa_prepared') !== ''
+    ? $request->input('date_cafoa_prepared')
+    : null;
+    $claim->date_pgo_received = $request->has('date_pgo_received') && $request->input('date_pgo_received') !== ''
+    ? $request->input('date_pgo_received')
+    : null;
+    $claim->amount_approved = $request->has('amount_approved') && $request->input('amount_approved') !== ''
+    ? $request->input('amount_approved')
+    : null;
+    $claim->form_of_payment = $request->has('form_of_payment') && $request->input('form_of_payment') !== ''
+    ? $request->input('form_of_payment')
+    : null;
+    $claim->payout_date = $request->has('payout_date') && $request->input('payout_date') !== ''
+    ? $request->input('payout_date')
+    : null;
     $claim->source_of_fund = $request->input('source_of_fund', $claim->source_of_fund);
 
     // Clear reason if not disapproved
@@ -83,7 +97,7 @@ class ClaimController extends Controller
     $cashPaymentId = null;
     $checkPaymentId = null;
 
-    $requiresAmount = optional($claim->clientAssistance->assistanceType)->type_name !== 'Transportation Assistance';
+    $requiresAmount = true; // Always allow amount entry
 
         // Allow disbursement even without amount if type is Transportation
         if ($claim->form_of_payment && $claim->payout_date && (!$requiresAmount || $claim->amount_approved)) {
@@ -131,7 +145,7 @@ class ClaimController extends Controller
                 'check_payment_id' => $checkPaymentId,
                 'form_of_payment' => $claim->form_of_payment,
                 'payout_date' => $claim->payout_date,
-                'amount' => $requiresAmount ? $claim->amount_approved : 0, 
+                'amount' => $claim->amount_approved, 
                 'claim_status' => optional($claim->disbursement)->claim_status ?? 'pending',
                 'date_received_claimed' => optional($claim->disbursement)->date_received_claimed,
                 'date_released' => optional($claim->disbursement)->date_released,

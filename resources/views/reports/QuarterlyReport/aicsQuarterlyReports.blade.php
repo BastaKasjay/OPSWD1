@@ -89,7 +89,7 @@
                                 <!-- PDRRM -->
                                 <td>{{ $data['PDRRMESA'] }}</td>
 
-                                <td>&#8369;{{ number_format($data['TotalAmountPaid'], 2) }}</td>
+                                <td>{{ number_format($data['TotalAmountPaid'], 2) }}</td>
                                 <td>{{ $data['unserved_clients'] }}</td>
                             </tr>
                         @empty
@@ -102,27 +102,27 @@
                         <tfoot class="table-light fw-bold">
                             <tr>
                                 <td colspan="2">TOTAL</td>
-                                <td>{{ $data['male'] }}</td>
-                                <td>{{ $data['female'] }}</td>
-                                <td>{{ $data['CKD'] }}</td>
-                                <td>{{ $data['Cancer'] }}</td>
-                                <td>{{ $data['HeartIllness'] }}</td>
-                                <td>{{ $data['DiabetesHypertension'] }}</td>
-                                <td>{{ $data['OtherMedical'] }}</td>
+                                <td>{{ $totals['male'] }}</td>
+                                <td>{{ $totals['female'] }}</td>
+                                <td>{{ $totals['CKD'] }}</td>
+                                <td>{{ $totals['Cancer'] }}</td>
+                                <td>{{ $totals['HeartIllness'] }}</td>
+                                <td>{{ $totals['DiabetesHypertension'] }}</td>
+                                <td>{{ $totals['OtherMedical'] }}</td>
                                 <!-- Regular -->
-                                <td>{{ number_format($data['RegularMedical']) }}</td>
-                                <td>{{ number_format($data['RegularBurial']) }}</td>
-                                <td>{{ number_format($data['RegularESA']) }}</td>
+                                <td>{{ number_format($totals['RegularMedical']) }}</td>
+                                <td>{{ number_format($totals['RegularBurial']) }}</td>
+                                <td>{{ number_format($totals['RegularESA']) }}</td>
 
                                 <!-- Senior -->
-                                <td>{{ number_format($data['SeniorMedical']) }}</td>
-                                <td>{{ number_format($data['SeniorBurial']) }}</td>
+                                <td>{{ number_format($totals['SeniorMedical']) }}</td>
+                                <td>{{ number_format($totals['SeniorBurial']) }}</td>
 
                                 <!-- PDRRM -->
-                                <td>{{ number_format($data['PDRRMESA']) }}</td>
+                                <td>{{ number_format($totals['PDRRMESA']) }}</td>
 
-                                <td>&#8369;{{ number_format($data['TotalAmountPaid'], 2) }}</td>
-                                <td>{{ $data['unserved_clients'] }}</td>
+                                <td>{{ number_format($totals['TotalAmountPaid'], 2) }}</td>
+                                <td>{{ $totals['unserved_clients'] }}</td>
                             </tr>
                         </tfoot>
                     @endif

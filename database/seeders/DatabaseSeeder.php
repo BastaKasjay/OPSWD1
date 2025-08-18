@@ -12,11 +12,10 @@ class DatabaseSeeder extends Seeder
             MunicipalitySeeder::class,
             VulnerabilitySectorSeeder::class,
             AssistanceSeeder::class, 
-            CheckPaymentSeeder::class,
-            // ClientSeeder::class, // Removed to stop seeding default clients
-            UnclaimedSeeder::class,
-            CashPaymentSeeder::class,
-            DisbursementSeeder::class,
+            // CheckPaymentSeeder::class,
+            // UnclaimedSeeder::class,
+            // CashPaymentSeeder::class,
+            // DisbursementSeeder::class,
             RoleSeeder::class,
         ]);
     }

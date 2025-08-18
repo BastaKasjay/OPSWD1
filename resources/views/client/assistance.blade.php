@@ -34,6 +34,7 @@
         <th class="assistance-th bg-success bg-opacity-10" style="color: #374151; font-weight: 600;">Assistance Type</th>
         <th class="assistance-th bg-success bg-opacity-10" style="color: #374151; font-weight: 600;">Assistance Category</th>
         <th class="assistance-th bg-success bg-opacity-10" style="color: #374151; font-weight: 600;">Status</th>
+        <th class="assistance-th bg-success bg-opacity-10" style="color: #374151; font-weight: 600;">Claim Info Progress</th>
         <th class="assistance-th text-center bg-success bg-opacity-10" style="width: 70px; color: #374151; font-weight: 600;">Actions</th>
     </tr>
     </thead>
@@ -69,6 +70,17 @@
                                 {{ ucfirst($status) }}
                             </span>
                         </td>
+                        <td>
+                            @if($assistance->claim_progress === 'Complete')
+                                <span class="badge bg-success">Complete</span>
+                            @elseif($assistance->claim_progress === 'In Progress')
+                                <span class="badge bg-warning text-dark">Inprogress</span>
+                            @else
+                                <span class="badge bg-secondary">No Claim</span>
+                            @endif
+
+                        </td>
+
                         <td class="text-center assistance-td" style="width: 70px;">
                             <div class="d-flex justify-content-center gap-1 assistance-actions" style="border: none;">
                                 <div class="dropdown">
@@ -93,13 +105,14 @@
                                                 </form>
                                             </li>
                                             <li>
-                                                <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
-                                                    @csrf @method('PATCH')
-                                                    <input type="hidden" name="status" value="disapproved">
-                                                    <button type="submit" class="dropdown-item" style="color: #e74c3c; font-weight: 500; border: none;">
-                                                        <i class="fas fa-times me-2"></i> Disapprove
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="dropdown-item disapprove-btn" 
+                                                        style="color: #e74c3c; font-weight: 500; border: none;"
+                                                        data-bs-toggle="modal" 
+                                                        data-bs-target="#disapprovalModal"
+                                                        data-claim-id="{{ $claim->id }}"
+                                                        data-client-name="{{ $client->first_name }} {{ $client->last_name }}">
+                                                    <i class="fas fa-times me-2"></i> Disapprove
+                                                </button>
                                             </li>
                                             <li>
                                                 <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
@@ -126,9 +139,9 @@
 
                                 <!-- Delete button triggers modal -->
                                 <button type="button" class="btn p-1 ms-2 text-danger" style="border: none; background: none;" title="Delete Assistance"
-    data-bs-toggle="modal" data-bs-target="#deleteModal" data-assistance-id="{{ $assistance->id }}">
-    <i class="fas fa-trash"></i>
-</button>
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal" data-assistance-id="{{ $assistance->id }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
 
                             </div>
                         </td>
@@ -172,84 +185,92 @@
                 </div>
 
 
-
+<!-- History Modal -->
             @foreach($assistances as $assistance)
-    @php $client = $assistance->client; @endphp
-    <div class="modal fade" id="historyModal_{{ $client->id }}" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content">
+            @php $client = $assistance->client; @endphp
+            <div class="modal fade" id="historyModal_{{ $client->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content">
 
-                <div class="modal-header">
-                    <h5 class="modal-title">History - {{ $client->first_name }} {{ $client->last_name }}</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="modal-header">
+                            <h5 class="modal-title">History - {{ $client->first_name }} {{ $client->last_name }}</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+
+                        <div class="modal-body">
+                            @php
+                                // ✅ Get all claims for this client
+                                $claims = \App\Models\Claim::where('client_id', $client->id)
+                                    ->with(['clientAssistance.assistanceType', 'disbursement'])
+                                    ->orderBy('created_at', 'desc')
+                                    ->get();
+
+                                // ✅ Separate: 
+                                // 1️⃣ Claims WITH disbursement
+                                $claimsWithDisbursement = $claims->filter(fn($c) => 
+                                $c->disbursement && $c->disbursement->claim_status === 'claimed'
+                            );
+
+
+                                // 2️⃣ Claims WITHOUT disbursement BUT disapproved
+                                $disapprovedWithoutDisbursement = $claims->filter(fn($c) => !$c->disbursement && $c->status === 'disapproved');
+                            @endphp
+
+                            <table class="table table-sm table-bordered">
+                                <thead>
+                                    <tr>
+                                        <th>Assistance Type</th>
+                                        <th>Amount</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {{-- Show all claims WITH disbursement --}}
+                                    @foreach($claimsWithDisbursement as $claim)
+                                        <tr>
+                                            <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
+                                            <td>₱{{ number_format($claim->disbursement->amount ?? 0, 2) }}</td>
+                                            <td>
+                                                @if($claim->disbursement?->claim_status === 'claimed')
+                                                    <span class="badge bg-success">Claimed</span>
+                                                @else
+                                                    {{ ucfirst($claim->disbursement->claim_status ?? $claim->status) }}
+                                                @endif
+                                            </td>
+                                            <td>
+                                                {{ $claim->disbursement->date_received_claimed 
+                                                    ? date('M d, Y', strtotime($claim->disbursement->date_received_claimed)) 
+                                                    : '-' 
+                                                }}
+                                            </td>
+                                        </tr>
+                                    @endforeach
+
+
+                                    {{-- Show only disapproved claims WITHOUT disbursement --}}
+                                    @foreach($disapprovedWithoutDisbursement as $claim)
+                                        <tr>
+                                            <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
+                                            <td>-</td>
+                                            <td class="text-danger fw-bold">Disapproved</td>
+                                            <td>{{ $claim->created_at->format('M d, Y') }}</td>
+                                        </tr>
+                                    @endforeach
+
+                                    {{-- Show empty row if nothing --}}
+                                    @if($claimsWithDisbursement->isEmpty() && $disapprovedWithoutDisbursement->isEmpty())
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted">No history yet.</td>
+                                        </tr>
+                                    @endif
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
                 </div>
-
-                <div class="modal-body">
-                    @php
-                        // ✅ Get all claims for this client
-                        $claims = \App\Models\Claim::where('client_id', $client->id)
-                            ->with(['clientAssistance.assistanceType', 'disbursement'])
-                            ->orderBy('created_at', 'desc')
-                            ->get();
-
-                        // ✅ Separate: 
-                        // 1️⃣ Claims WITH disbursement
-                        $claimsWithDisbursement = $claims->filter(fn($c) => $c->disbursement);
-
-                        // 2️⃣ Claims WITHOUT disbursement BUT disapproved
-                        $disapprovedWithoutDisbursement = $claims->filter(fn($c) => !$c->disbursement && $c->status === 'disapproved');
-                    @endphp
-
-                    <table class="table table-sm table-bordered">
-                        <thead>
-                            <tr>
-                                <th>Assistance Type</th>
-                                <th>Amount</th>
-                                <th>Status</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {{-- Show all claims WITH disbursement --}}
-                            @foreach($claimsWithDisbursement as $claim)
-                                <tr>
-                                    <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
-                                    <td>₱{{ number_format($claim->disbursement->amount ?? 0, 2) }}</td>
-                                    <td>
-                                        @if($claim->disbursement?->claim_status === 'claimed')
-                                            <span class="badge bg-success">Claimed</span>
-                                        @else
-                                            {{ ucfirst($claim->disbursement->claim_status ?? $claim->status) }}
-                                        @endif
-                                    </td>
-                                    <td>{{ $claim->disbursement->created_at?->format('M d, Y') }}</td>
-                                </tr>
-                            @endforeach
-
-
-                            {{-- Show only disapproved claims WITHOUT disbursement --}}
-                            @foreach($disapprovedWithoutDisbursement as $claim)
-                                <tr>
-                                    <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
-                                    <td>-</td>
-                                    <td class="text-danger fw-bold">Disapproved</td>
-                                    <td>{{ $claim->created_at->format('M d, Y') }}</td>
-                                </tr>
-                            @endforeach
-
-                            {{-- Show empty row if nothing --}}
-                            @if($claimsWithDisbursement->isEmpty() && $disapprovedWithoutDisbursement->isEmpty())
-                                <tr>
-                                    <td colspan="4" class="text-center text-muted">No history yet.</td>
-                                </tr>
-                            @endif
-                        </tbody>
-                    </table>
-                </div>
-
             </div>
-        </div>
-    </div>
 @endforeach
 
 </main>
@@ -276,6 +297,35 @@
     </form>
   </div>
 </div>
+
+    <!-- Disapproval Reason Modal -->
+    <div class="modal fade" id="disapprovalModal" tabindex="-1" aria-labelledby="disapprovalModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form method="POST" id="disapprovalForm">
+        @csrf
+        @method('PATCH')
+        <div class="modal-content">
+            <div class="modal-header">
+            <h5 class="modal-title" id="disapprovalModalLabel">Disapprove Claim</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+            <p>You are about to disapprove the claim for <strong id="clientNameDisplay"></strong>.</p>
+            <div class="mb-3">
+                <label for="reasonTextarea" class="form-label fw-semibold">Reason for Disapproval <span class="text-danger">*</span></label>
+                <textarea name="reason_of_disapprovement" id="reasonTextarea" class="form-control" rows="4" 
+                        placeholder="Please provide a detailed reason for disapproving this claim..." required></textarea>
+            </div>
+            <input type="hidden" name="status" value="disapproved">
+            </div>
+            <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-danger">Disapprove Claim</button>
+            </div>
+        </div>
+        </form>
+    </div>
+    </div>
 
 
 
@@ -736,6 +786,42 @@ fetch(`/get-categories/${typeId}`)
         saveBtn.disabled = !(clientSelected && categorySelected && (noRequirements || allNormalChecked));
     }
 
+    });
+
+    // Handle disapproval modal
+    document.addEventListener('DOMContentLoaded', function() {
+        const disapprovalModal = document.getElementById('disapprovalModal');
+        const disapprovalForm = document.getElementById('disapprovalForm');
+        const clientNameDisplay = document.getElementById('clientNameDisplay');
+        const reasonTextarea = document.getElementById('reasonTextarea');
+
+        // Handle disapprove button clicks
+        document.querySelectorAll('.disapprove-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const claimId = this.getAttribute('data-claim-id');
+                const clientName = this.getAttribute('data-client-name');
+                
+                // Set form action
+                disapprovalForm.action = `/claims/${claimId}/update-status`;
+                
+                // Set client name in modal
+                clientNameDisplay.textContent = clientName;
+                
+                // Clear previous reason
+                reasonTextarea.value = '';
+            });
+        });
+
+        // Handle form submission
+        disapprovalForm.addEventListener('submit', function(e) {
+            const reason = reasonTextarea.value.trim();
+            if (reason === '') {
+                e.preventDefault();
+                alert('Please provide a reason for disapproval.');
+                reasonTextarea.focus();
+                return false;
+            }
+        });
     });
 </script>
 @endsection

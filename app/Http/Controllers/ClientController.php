@@ -29,8 +29,10 @@ class ClientController extends Controller
             });
         }
 
-        $clients = $query->paginate(15);
-        $municipalities = Municipality::all();
+        $clients = $query->latest()->paginate(15);
+        
+        $municipalities = Municipality::orderBy('name', 'asc')->get();
+
         $vulnerabilitySectors = VulnerabilitySector::all();
         $assistanceTypes = AssistanceType::all();
         $assistanceCategories = AssistanceCategory::all();
@@ -68,10 +70,10 @@ class ClientController extends Controller
         });
     }
 
-    // ✅ Show newest assistance first
+    // how newest assistance first
     $assistances = $query->latest()->paginate(10);
 
-    $municipalities = Municipality::all();
+    $municipalities = Municipality::orderBy('name', 'asc')->get();
     $vulnerabilitySectors = VulnerabilitySector::all();
     $assistanceTypes = AssistanceType::all();
     $assistanceCategories = AssistanceCategory::all();
@@ -96,18 +98,18 @@ class ClientController extends Controller
             'payee',
         ])->findOrFail($id);
 
-        // ✅ Get latest assistance based on date_received_request
+        
         $latestAssistance = $client->assistances()
             ->with(['assistanceType', 'assistanceCategory'])
             ->latest('date_received_request')
             ->first();
 
-        // ✅ Get claim for that latest assistance
+        
         $claim = $latestAssistance
             ? \App\Models\Claim::where('client_assistance_id', $latestAssistance->id)->first()
             : null;
 
-        $municipalities = Municipality::all();
+        $municipalities = Municipality::orderBy('name', 'asc')->get();
         $vulnerabilitySectors = VulnerabilitySector::all();
         $assistanceTypes = AssistanceType::all();
         $assistanceCategories = AssistanceCategory::all();
@@ -129,7 +131,7 @@ class ClientController extends Controller
 
     public function create()
     {
-        $municipalities = Municipality::all();
+        $municipalities = Municipality::orderBy('name', 'asc')->get();
         $vulnerabilitySectors = VulnerabilitySector::all();
         $assistanceTypes = AssistanceType::with('categories')->get();
 
@@ -179,7 +181,7 @@ class ClientController extends Controller
     {
         $client = Client::with(['vulnerabilitySectors', 'payee'])->findOrFail($id);
 
-        $municipalities = Municipality::all();
+        $municipalities = Municipality::orderBy('name', 'asc')->get();
         $vulnerabilitySectors = VulnerabilitySector::all();
         
         // 🟢 The important part: eager load categories for all assistance types

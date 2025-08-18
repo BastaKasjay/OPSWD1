@@ -13,10 +13,11 @@ class MunicipalitySeeder extends Seeder
      */
     public function run(): void
     {
+
         $municipalities = [
-            'Atok', 'Bakun', 'Bokod', 'Bugias', 'Itogon',
-            'La Trinidad', 'Kabayan', 'Kapangan', 'Mankayan',
-            'Sablan', 'Tuba', 'Tublay', 'Kibungan'
+            'Atok', 'Bakun', 'Bokod', 'Buguias', 'Itogon',
+            'La Trinidad', 'Kabayan', 'Kapangan', 'Kibungan', 'Mankayan',
+            'Sablan', 'Tuba', 'Tublay'
         ];
 
         foreach ($municipalities as $muni) {

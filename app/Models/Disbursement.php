@@ -17,10 +17,10 @@ class Disbursement extends Model
         'cash_payment_id',
         'check_payment_id',
         'form_of_payment',
+        'check_no',
         'amount',
         'payout_date',
         'date_received_claimed',
-        'date_released',
         'claim_status',
     ];
 
@@ -42,6 +42,11 @@ class Disbursement extends Model
     {
         return $this->belongsTo(\App\Models\ClientAssistance::class, 'client_assistance_id');
     }
+    public function checkPayment()
+    {
+        return $this->hasOne(CheckPayment::class);
+    }
+
 
 
 }

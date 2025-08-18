@@ -11,8 +11,8 @@ class ClaimFactory extends Factory
 
     public function definition(): array
     {
-        $client = \App\Models\Client::factory()->create();
-        $clientAssistance = \App\Models\ClientAssistance::factory()->create();
+        $client = \App\Models\Client::inRandomOrder()->first() ?? \App\Models\Client::factory()->create();
+        $clientAssistance = \App\Models\ClientAssistance::inRandomOrder()->first() ?? \App\Models\ClientAssistance::factory()->create();
 
         return [
             'client_id' => $client->id,

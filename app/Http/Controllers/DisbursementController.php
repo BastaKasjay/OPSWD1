@@ -14,7 +14,7 @@ class DisbursementController extends Controller
 
     public function index()
     {
-        $disbursements = Disbursement::with(['client', 'claim'])
+        $disbursements = Disbursement::with(['client', 'claim', 'checkPayment'])
             ->latest()
             ->paginate(20);
 
@@ -25,28 +25,50 @@ class DisbursementController extends Controller
 
 
     public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'claim_id'  => 'required|exists:claims,id',
-            'amount'    => 'required|numeric|min:0',
-            'check_no'  => 'nullable|string',
-        ]);
+{
+    $validated = $request->validate([
+        'claim_id' => 'required|exists:claims,id',
+        'amount' => 'required|numeric|min:0',
+        'date_received_claimed' => 'nullable|date',
+        'claim_status' => 'required|in:claimed,unclaimed', // add statuses
+    ]);
 
-        $claim = Claim::with('clientAssistance')->findOrFail($validated['claim_id']);
-        $claim->amount = $validated['amount'];
+    $claim = Claim::with('clientAssistance')->findOrFail($validated['claim_id']);
+    $claim->amount = $validated['amount'];
 
-        Disbursement::create([
-            'claim_id'        => $claim->id,
-            'client_id'       => $claim->client_id, 
-            'client_assistance_id' => $claim->client_assistance_id,
-            'form_of_payment' => $claim->form_of_payment,
-            'amount'          => $claim->amount,
-            'check_no'        => $validated['check_no'],
-            'claim_status'    => 'unclaimed',
-        ]);
-        
-        return back()->with('success', 'Disbursement created.');
+    // Enforce logic: if date_received_claimed is set, claim_status must be claimed
+    if ($request->date_received_claimed && $request->claim_status !== 'claimed') {
+        return back()->withErrors([
+            'claim_status' => 'You must mark the claim as "claimed" if you enter a received date.'
+        ])->withInput();
     }
+
+    // Auto-set date_received_claimed if claim_status is claimed but date is empty
+    $dateReceived = $request->date_received_claimed;
+    if ($request->claim_status === 'claimed' && !$dateReceived) {
+        $dateReceived = now()->format('Y-m-d');
+    }
+
+    Disbursement::create([
+        'claim_id' => $claim->id,
+        'client_id' => $claim->client_id,
+        'client_assistance_id' => $claim->client_assistance_id,
+        'form_of_payment' => $claim->form_of_payment,
+        'amount' => $claim->amount,
+        'claim_status' => $request->claim_status,
+        'date_received_claimed' => $dateReceived,
+    ]);
+
+    if (strtolower($claim->form_of_payment) === 'cheque' && $claim->checkPayment) {
+        $claim->checkPayment()->create([
+            'check_number' => $claim->checkPayment->check_no,
+            // Add other required fields
+        ]);
+    }
+
+    return back()->with('success', 'Disbursement created.');
+}
+
 
 
 
@@ -55,17 +77,19 @@ class DisbursementController extends Controller
         $validated = $request->validate([
             'claim_status' => 'required|in:claimed,unclaimed,pending',
             'date_received_claimed' => 'nullable|date',
-            'date_released' => 'nullable|date',
             
         ]);
 
         $disbursement = Disbursement::findOrFail($id);
 
+        if ($validated['claim_status'] === 'claimed' && empty($validated['date_received_claimed'])) {
+        $validated['date_received_claimed'] = now();
+    }
+
 
         $disbursement->update([
             'claim_status' => $validated['claim_status'],
             'date_received_claimed' => $validated['date_received_claimed'],
-            'date_released' => $validated['date_released'],
             
         ]);
 
@@ -81,7 +105,7 @@ class DisbursementController extends Controller
     public function batchUpdate(Request $request)
     {
         $ids = explode(',', $request->input('selected_ids'));
-        $data = $request->only(['date_received_claimed', 'date_released', 'claim_status']);
+        $data = $request->only(['date_received_claimed', 'claim_status']);
 
         // Filter out empty values so we don't overwrite existing data unintentionally
         $data = array_filter($data, fn($v) => !is_null($v) && $v !== '');

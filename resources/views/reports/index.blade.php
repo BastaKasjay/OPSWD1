@@ -145,7 +145,7 @@
                                 <!-- PDRRM -->
                                 <td>{{ $data->PDRRMESA }}</td>
 
-                                <td>&#8369;{{ number_format($data->TotalAmountPaid, 2) }}</td>
+                                <td>{{ number_format($data->TotalAmountPaid, 2) }}</td>
                                 <td>{{ $data->unserved_clients }}</td>
                             </tr>
                         @empty
@@ -177,7 +177,7 @@
                                 <!-- PDRRM -->
                                 <td>{{ number_format($totals['pdrrm_esa']) }}</td>
 
-                                <td>&#8369;{{ number_format($totals['amount_total'], 2) }}</td>
+                                <td>{{ number_format($totals['amount_total'], 2) }}</td>
                                 <td>{{ $totals['unreserved'] }}</td>
                             </tr>
                         </tfoot>

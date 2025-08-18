@@ -45,7 +45,6 @@ class ExportController extends Controller
                     $claim->client->municipality->name ?? '-',
                     '₱' . number_format($claim->amount_approved ?? 0, 2),
                     $claim->disbursement->date_received_claimed ?? '-',
-                    $claim->disbursement->date_released ?? '-',
                     ucfirst($claim->disbursement->claim_status ?? 'pending'),
                     ucfirst($claim->form_of_payment ?? '-'),
                     $claim->payout_date
@@ -72,6 +71,12 @@ class ExportController extends Controller
     if ($method) {
         $query->where('form_of_payment', $method);
     }
+
+    // if ($checkNo) {
+    //     $query->whereHas('checkPayment', function ($q) use ($checkNo) {
+    //         $q->where('check_no', $checkNo);
+    //     });
+    // }
 
     if ($date) {
         $query->whereDate('payout_date', $date);
@@ -137,13 +142,13 @@ class ExportController extends Controller
             ->join('assistance_types', 'client_assistance.assistance_type_id', '=', 'assistance_types.id')
             ->select(
                 'municipalities.name as municipality',
-                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN clients.id ELSE NULL END) as male"),
-                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN clients.id ELSE NULL END) as female"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'CKD' THEN clients.id END) as CKD"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Cancer' THEN clients.id END) as Cancer"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Heart Illness' THEN clients.id END) as HeartIllness"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case LIKE '%Diabetes%' OR client_assistance.medical_case LIKE '%Hypertension%' THEN clients.id END) as DiabetesHypertension"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case NOT IN ('CKD','Cancer','Heart Illness') AND client_assistance.medical_case NOT LIKE '%Diabetes%' AND client_assistance.medical_case NOT LIKE '%Hypertension%' THEN clients.id END) as OtherMedical"),
+                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN claims.id ELSE NULL END) as male"),
+                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN claims.id ELSE NULL END) as female"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'CKD' THEN claims.id END) as CKD"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Cancer' THEN claims.id END) as Cancer"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Heart Illness' THEN claims.id END) as HeartIllness"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case LIKE '%Diabetes%' OR client_assistance.medical_case LIKE '%Hypertension%' THEN claims.id END) as DiabetesHypertension"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case NOT IN ('CKD','Cancer','Heart Illness') AND client_assistance.medical_case NOT LIKE '%Diabetes%' AND client_assistance.medical_case NOT LIKE '%Hypertension%' THEN claims.id END) as OtherMedical"),
                 DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Medical%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularMedical"),
                 DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Burial%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularBurial"),
                 DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%ESA%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularESA"),
@@ -154,7 +159,6 @@ class ExportController extends Controller
             )
             ->where('disbursements.claim_status', '=', 'claimed')
             ->whereNotNull('disbursements.date_received_claimed')
-            ->whereNotNull('disbursements.date_released')
             ->whereBetween('disbursements.date_received_claimed', [$from, $to])
             ->groupBy('municipalities.name')
             ->get();
@@ -167,7 +171,7 @@ class ExportController extends Controller
             ->groupBy('municipalities.name')
             ->select(
                 'municipalities.name as municipality',
-                DB::raw('COUNT(DISTINCT claims.client_id) as unserved_clients')
+                DB::raw('COUNT(claims.id) as unserved_clients')
             )
             ->get()
             ->keyBy('municipality');
@@ -276,7 +280,7 @@ class ExportController extends Controller
                 break;
         }
 
-        // Copy data logic from downloadReport()
+                // Copy data logic from downloadReport()
         $reportData = DB::table('clients')
             ->join('claims', 'clients.id', '=', 'claims.client_id')
             ->join('disbursements', 'claims.id', '=', 'disbursements.claim_id')
@@ -285,13 +289,13 @@ class ExportController extends Controller
             ->join('assistance_types', 'client_assistance.assistance_type_id', '=', 'assistance_types.id')
             ->select(
                 'municipalities.name as municipality',
-                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN clients.id ELSE NULL END) as male"),
-                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN clients.id ELSE NULL END) as female"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'CKD' THEN clients.id END) as CKD"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Cancer' THEN clients.id END) as Cancer"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Heart Illness' THEN clients.id END) as HeartIllness"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case LIKE '%Diabetes%' OR client_assistance.medical_case LIKE '%Hypertension%' THEN clients.id END) as DiabetesHypertension"),
-                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case NOT IN ('CKD','Cancer','Heart Illness') AND client_assistance.medical_case NOT LIKE '%Diabetes%' AND client_assistance.medical_case NOT LIKE '%Hypertension%' THEN clients.id END) as OtherMedical"),
+                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'male' THEN claims.id ELSE NULL END) as male"),
+                DB::raw("COUNT(DISTINCT CASE WHEN clients.sex = 'female' THEN claims.id ELSE NULL END) as female"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'CKD' THEN claims.id END) as CKD"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Cancer' THEN claims.id END) as Cancer"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case = 'Heart Illness' THEN claims.id END) as HeartIllness"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case LIKE '%Diabetes%' OR client_assistance.medical_case LIKE '%Hypertension%' THEN claims.id END) as DiabetesHypertension"),
+                DB::raw("COUNT(DISTINCT CASE WHEN client_assistance.medical_case NOT IN ('CKD','Cancer','Heart Illness') AND client_assistance.medical_case NOT LIKE '%Diabetes%' AND client_assistance.medical_case NOT LIKE '%Hypertension%' THEN claims.id END) as OtherMedical"),
                 DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Medical%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularMedical"),
                 DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%Burial%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularBurial"),
                 DB::raw("SUM(CASE WHEN assistance_types.type_name LIKE '%ESA%' AND claims.source_of_fund = 'Regular' THEN 1 ELSE 0 END) as RegularESA"),
@@ -302,7 +306,6 @@ class ExportController extends Controller
             )
             ->where('disbursements.claim_status', '=', 'claimed')
             ->whereNotNull('disbursements.date_received_claimed')
-            ->whereNotNull('disbursements.date_released')
             ->whereBetween('disbursements.date_received_claimed', [$from, $to])
             ->groupBy('municipalities.name')
             ->get();
@@ -315,7 +318,7 @@ class ExportController extends Controller
             ->groupBy('municipalities.name')
             ->select(
                 'municipalities.name as municipality',
-                DB::raw('COUNT(DISTINCT claims.client_id) as unserved_clients')
+                DB::raw('COUNT(claims.id) as unserved_clients')
             )
             ->get()
             ->keyBy('municipality');
@@ -346,8 +349,29 @@ class ExportController extends Controller
                 'unserved_clients' => $unserved[$municipality]->unserved_clients ?? 0,
             ];
         });
+
+        // Calculate totals (same as ReportController)
+        $totals = [
+            'male' => collect($finalData)->sum('male'),
+            'female' => collect($finalData)->sum('female'),
+            'CKD' => collect($finalData)->sum('CKD'),
+            'Cancer' => collect($finalData)->sum('Cancer'),
+            'HeartIllness' => collect($finalData)->sum('HeartIllness'),
+            'DiabetesHypertension' => collect($finalData)->sum('DiabetesHypertension'),
+            'OtherMedical' => collect($finalData)->sum('OtherMedical'),
+            'RegularMedical' => collect($finalData)->sum('RegularMedical'),
+            'RegularBurial' => collect($finalData)->sum('RegularBurial'),
+            'RegularESA' => collect($finalData)->sum('RegularESA'),
+            'SeniorMedical' => collect($finalData)->sum('SeniorMedical'),
+            'SeniorBurial' => collect($finalData)->sum('SeniorBurial'),
+            'PDRRMESA' => collect($finalData)->sum('PDRRMESA'),
+            'TotalAmountPaid' => collect($finalData)->sum('TotalAmountPaid'),
+            'unserved_clients' => collect($finalData)->sum('unserved_clients'),
+        ];
+
         $pdf = Pdf::loadView('reports.QuarterlyReport.aicsQuarterlyReports', [
             'reportData' => $finalData,
+            'totals' => $totals,
             'quarter' => $quarter,
             'year' => $year,
             'pdf' => true // Optional: flag for view logic
