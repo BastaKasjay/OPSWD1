@@ -201,7 +201,7 @@
                             @php
                                 // ✅ Get all claims for this client
                                 $claims = \App\Models\Claim::where('client_id', $client->id)
-                                    ->with(['clientAssistance.assistanceType', 'disbursement'])
+                                    ->with(['clientAssistance.assistanceType', 'clientAssistance.createdByEmployee', 'disbursement'])
                                     ->orderBy('created_at', 'desc')
                                     ->get();
 
@@ -223,6 +223,7 @@
                                         <th>Amount</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th>Created By</th> 
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -244,6 +245,16 @@
                                                     : '-' 
                                                 }}
                                             </td>
+                                            <td>
+            @if ($claim->clientAssistance?->createdByEmployee)
+                {{ $claim->clientAssistance->createdByEmployee->first_name }}
+                {{ $claim->clientAssistance->createdByEmployee->middle_name }}
+                {{ $claim->clientAssistance->createdByEmployee->last_name }}
+            @else
+                N/A
+            @endif
+        </td>
+
                                         </tr>
                                     @endforeach
 
@@ -255,13 +266,22 @@
                                             <td>-</td>
                                             <td class="text-danger fw-bold">Disapproved</td>
                                             <td>{{ $claim->created_at->format('M d, Y') }}</td>
+                                            <td>
+                                                @if ($claim->clientAssistance?->createdByEmployee)
+                                                    {{ $claim->clientAssistance->createdByEmployee->first_name }}
+                                                    {{ $claim->clientAssistance->createdByEmployee->middle_name }}
+                                                    {{ $claim->clientAssistance->createdByEmployee->last_name }}
+                                                @else
+                                                    N/A
+                                                @endif
+                                            </td>
                                         </tr>
                                     @endforeach
 
                                     {{-- Show empty row if nothing --}}
                                     @if($claimsWithDisbursement->isEmpty() && $disapprovedWithoutDisbursement->isEmpty())
                                         <tr>
-                                            <td colspan="4" class="text-center text-muted">No history yet.</td>
+                                            <td colspan="5" class="text-center text-muted">No history yet.</td>
                                         </tr>
                                     @endif
                                 </tbody>

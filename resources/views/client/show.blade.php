@@ -48,6 +48,10 @@
         <div class="col-md-4"><span class="fw-semibold">Assistance Category:</span> {{ $latestAssistance->assistanceCategory->category_name ?? '-' }}</div>
         <div class="col-md-4"><span class="fw-semibold">Medical Case:</span> {{ $latestAssistance->medical_case ?? '-' }}</div>
         <div class="col-md-4"><span class="fw-semibold">Date Received:</span> {{ $latestAssistance->date_received_request ?? '-' }}</div>
+        <div class="col-md-4">
+            <span class="fw-semibold">Created By:</span> 
+             {{ $latestAssistance->createdByEmployee ? $latestAssistance->createdByEmployee->full_name : 'N/A' }}
+        </div>
     </div>
 @else
     <p class="text-muted text-center">No assistance records available.</p>

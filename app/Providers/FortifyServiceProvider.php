@@ -33,7 +33,10 @@ class FortifyServiceProvider extends ServiceProvider
             return new class implements LoginResponse {
                 public function toResponse($request)
                 {
-                    return redirect()->intended('/home');
+                    // Force session regeneration with user ID
+                    $request->session()->regenerate();
+                    
+                    return redirect('/home');
                 }
             };
         });

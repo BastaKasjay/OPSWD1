@@ -144,6 +144,7 @@ return [
 
     'features' => [
         Features::registration(),
+        // Note: Login/logout are always enabled in Fortify
     ],
 
 ];

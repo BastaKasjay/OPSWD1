@@ -53,7 +53,8 @@ class ClientController extends Controller
         'client.vulnerabilitySectors',
         'assistanceType',
         'assistanceCategory',
-        'payee'
+        'payee',
+        'createdByEmployee'
     ]);
 
     if ($request->municipality_id) {
@@ -100,7 +101,7 @@ class ClientController extends Controller
 
         
         $latestAssistance = $client->assistances()
-            ->with(['assistanceType', 'assistanceCategory'])
+            ->with(['assistanceType', 'assistanceCategory', 'createdByEmployee'])
             ->latest('date_received_request')
             ->first();
 
@@ -296,7 +297,8 @@ class ClientController extends Controller
         'client.vulnerabilitySectors',
         'assistanceType',
         'assistanceCategory',
-        'payee'
+        'payee',
+        'createdByEmployee'
     ])->latest(); 
 
     if ($request->search) {

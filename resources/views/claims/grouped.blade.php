@@ -8,12 +8,7 @@
         </a>
     </div>
     <h1 class="fs-3 fw-bold mb-4 text-dark">Grouped Payouts</h1>
-    <a id="downloadExcelBtn" href="#" class="btn btn-success btn-sm">
-        <i class="fas fa-file-excel"></i> Download Excel
-    </a>
-    <a id="downloadPDFBtn" href="#" class="btn btn-danger btn-sm">
-        <i class="fas fa-file-pdf"></i> Download PDF
-    </a>
+    
 
 
     @php
@@ -56,6 +51,15 @@
                     <option value="unclaimed">Unclaimed</option>
                     <option value="claimed">Claimed</option>
                 </select>
+            </div>
+
+            <div class="col-md-3 gap-2">
+                <a id="downloadExcelBtn" href="#" class="btn btn-success btn-sm">
+                <i class="fas fa-file-excel"></i> Download Excel
+                </a>
+                <a id="downloadPDFBtn" href="#" class="btn btn-danger btn-sm">
+                    <i class="fas fa-file-pdf"></i> Download PDF
+                </a>
             </div>
         </div>
 

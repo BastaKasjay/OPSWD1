@@ -30,6 +30,7 @@ class ClientAssistanceController extends Controller
         ]);
 
         DB::beginTransaction();
+        
 
         try {
         // Determine if representative is provided
@@ -66,12 +67,12 @@ class ClientAssistanceController extends Controller
             $assistance = ClientAssistance::create([
                 'client_id' => $request->client_id,
                 'assistance_type_id' => $request->assistance_type_id,
-                // If user typed in custom category, force category to "Others"
+                
                 'assistance_category_id' => $request->filled('other_category_name') 
                     ? ($othersCategory ? $othersCategory->id : $request->assistance_category_id)
                     : $request->assistance_category_id,
 
-                // Only save the custom text, never an ID
+                
                 'other_category_name' => $request->filled('other_category_name') 
                     ? $request->other_category_name 
                     : null,
@@ -81,6 +82,7 @@ class ClientAssistanceController extends Controller
                     ? $request->other_case
                     : $request->medical_case,
                 'payee_id' => $payee->id,
+                'created_by' => auth()->user()->employee->id,
             ]);
 
 // dd($request->all());
@@ -97,6 +99,13 @@ class ClientAssistanceController extends Controller
             
 
             DB::commit();
+            
+    //         return redirect()->back()->with('success', 'Assistance added successfully!');
+    // } catch (\Exception $e) {
+    //     DB::rollBack();
+    //     dd($e->getMessage()); // 👈 will show the exact error
+    //     return back()->with('error', 'Failed to add assistance: ' . $e->getMessage());
+    // }
 
             return redirect()->route('clients.assistance')->with('success', 'Client assistance added successfully.');
         } catch (\Exception $e) {

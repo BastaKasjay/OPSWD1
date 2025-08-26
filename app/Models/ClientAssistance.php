@@ -13,6 +13,7 @@ class ClientAssistance extends Model
 
     protected $fillable = [
         'client_id',
+        'created_by',
         'assistance_type_id',
         'assistance_category_id',
         'other_category_name',
@@ -46,6 +47,11 @@ class ClientAssistance extends Model
     {
         return $this->belongsTo(\App\Models\AssistanceCategory::class);
     }
+
+    public function createdByEmployee()
+{
+    return $this->belongsTo(Employee::class, 'created_by');
+}
 
     
 

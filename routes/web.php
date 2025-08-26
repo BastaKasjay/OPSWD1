@@ -27,34 +27,8 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
-
-
-Route::get('/login', fn() => view('auth.login'))->name('login');
-
-
-Route::post('/login', function (Request $request) {
-    $credentials = $request->validate([
-        'username' => 'required',
-        'password' => 'required',
-    ]);
-
-    if (Auth::attempt($credentials)) {
-        $request->session()->regenerate();
-        return redirect()->route('home');
-    }
-
-    return back()->withErrors(['username' => 'Invalid username or password.']);
-})->name('login.post');
-
-
-Route::post('/logout', function (Request $request) {
-    Auth::logout();
-    $request->session()->invalidate();
-    $request->session()->regenerateToken();
-    return redirect()->route('login');
-})->name('logout');
-
-// Protected routes
+// ✅ Protected routes
+Route::middleware('auth')->group(function () {
 
     Route::get('/home', [DashboardController::class, 'index'])->name('home');
 Route::post('/budgets', [DashboardController::class, 'storeBudget'])->name('budgets.store');
@@ -108,7 +82,4 @@ Route::get('/grouped-payouts/download/pdf', [ExportController::class, 'downloadP
 Route::get('/reports/download/excel', [ExportController::class, 'downloadReport'])->name('reports.download.excel');
 Route::get('/reports/download/pdf', [ExportController::class, 'downloadReportPdf'])->name('reports.download.pdf');
 
-
-
-
-
+}); // End of auth middleware group

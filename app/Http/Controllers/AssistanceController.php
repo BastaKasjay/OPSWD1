@@ -28,7 +28,8 @@ class AssistanceController extends Controller
     $assistances = \App\Models\ClientAssistance::with([
         'client.municipality',
         'assistanceType',
-        'assistanceCategory'
+        'assistanceCategory',
+        'createdByEmployee'
     ])->paginate(10);
 
     $assistanceTypes = \App\Models\AssistanceType::all();

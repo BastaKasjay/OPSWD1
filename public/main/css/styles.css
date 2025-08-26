@@ -962,7 +962,7 @@ h1, h4 {
 
 .custom-alert.warning .custom-alert-content {
     background-color: #76AE91; 
-    color: #ffffff; /* dark yellow text */
+    color: #ffffff; 
 }
 
 .custom-alert-content button {
@@ -972,7 +972,27 @@ h1, h4 {
     border-radius: 0.3rem;
     cursor: pointer;
     font-weight: 600;
-    background-color: #639D7F; /* green button */
+    background-color: #639D7F; 
     color: white;
+}
+
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+th, td {
+    text-align: center;       /* Horizontal centering */
+    vertical-align: middle;   /* Vertical centering */
+    padding: 0.5rem;
+    border: 1px solid #ddd;   /* Optional for PDF */
+}
+.badge {
+    display: inline-block;
+    vertical-align: middle;
+}
+input[type="checkbox"] {
+    display: inline-block;
+    vertical-align: middle;
 }
 

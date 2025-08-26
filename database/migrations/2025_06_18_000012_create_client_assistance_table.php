@@ -16,6 +16,7 @@ return new class extends Migration
 
             //foreign keys
             $table->unsignedBigInteger('client_id');
+            $table->unsignedBigInteger('created_by');
             $table->unsignedBigInteger('assistance_type_id');
             $table->unsignedBigInteger('assistance_category_id');
             $table->string('other_category_name')->nullable();
@@ -30,6 +31,7 @@ return new class extends Migration
 
             // Foreign Key Constraints
             $table->foreign('client_id')->references('id')->on('clients')->onDelete('cascade');
+            $table->foreign('created_by')->references('id')->on('users')->onDelete('cascade');
             $table->foreign('assistance_type_id')->references('id')->on('assistance_types')->onDelete('cascade');
             $table->foreign('assistance_category_id')->references('id')->on('assistance_categories')->onDelete('cascade');
             $table->foreign('payee_id')->references('id')->on('payees')->onDelete('set null');

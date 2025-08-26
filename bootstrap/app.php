@@ -11,7 +11,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
-        //
+        // Middleware for file sessions - no special user ID handling needed
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
