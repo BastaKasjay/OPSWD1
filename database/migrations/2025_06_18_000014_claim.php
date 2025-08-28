@@ -17,7 +17,7 @@ return new class extends Migration {
             $table->date('date_pgo_received')->nullable();
             $table->enum('form_of_payment', ['cheque', 'cash'])->nullable();
             $table->date('payout_date')->nullable();
-            $table->enum('source_of_fund', ['Regular', 'Senior', 'PDRRM'])->nullable();
+            $table->enum('source_of_fund', ['Regular', 'Senior', 'PDRRM', 'Supplemental'])->nullable();
             $table->timestamps();
 
             // Foreign keys (assume clients and client_assistances tables exist)

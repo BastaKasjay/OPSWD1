@@ -33,7 +33,12 @@ class ExportController extends Controller
             $handle = fopen('php://output', 'w');
             fputcsv($handle, $columns);
 
-            $claims = \App\Models\Claim::with(['client', 'client.payee', 'client.municipality', 'disbursement'])->get();
+            // Use the same filtering logic as web view and PDF
+            $claims = \App\Models\Claim::with(['client', 'client.payee', 'client.municipality', 'disbursement'])
+                ->where('status', 'approved')
+                ->whereNotNull('payout_date')
+                ->whereNotNull('form_of_payment')
+                ->get();
 
             foreach ($claims as $claim) {
                 fputcsv($handle, [
@@ -66,17 +71,15 @@ class ExportController extends Controller
     $date = $request->input('date');
     $status = $request->input('status');
 
-    $query = \App\Models\Claim::with(['client', 'client.payee', 'client.municipality', 'disbursement']);
+    // Start with the same base query as the web view
+    $query = \App\Models\Claim::with(['client', 'client.payee', 'client.municipality', 'disbursement'])
+        ->where('status', 'approved')
+        ->whereNotNull('payout_date')
+        ->whereNotNull('form_of_payment');
 
     if ($method) {
         $query->where('form_of_payment', $method);
     }
-
-    // if ($checkNo) {
-    //     $query->whereHas('checkPayment', function ($q) use ($checkNo) {
-    //         $q->where('check_no', $checkNo);
-    //     });
-    // }
 
     if ($date) {
         $query->whereDate('payout_date', $date);

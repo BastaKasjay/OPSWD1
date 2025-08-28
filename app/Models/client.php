@@ -15,7 +15,6 @@ class Client extends Model
         'middle_name',
         'last_name',
         'sex',
-        'age',
         'address',
         'contact_number',
         'birthday',
@@ -23,8 +22,13 @@ class Client extends Model
         'valid_id',
         'assistance_type_id',
         'assistance_category_id',
-
         'assessed_by'
+    ];
+
+    protected $dates = [
+        'birthday',
+        'created_at',
+        'updated_at'
     ];
 
     public function municipality()
@@ -64,6 +68,15 @@ class Client extends Model
     public function getFullNameAttribute()
     {
         return "{$this->first_name} {$this->middle_name} {$this->last_name}";
+    }
+
+    public function getAgeAttribute()
+    {
+        if (!$this->birthday) {
+            return null;
+        }
+        
+        return \Carbon\Carbon::parse($this->birthday)->age;
     }
 
 

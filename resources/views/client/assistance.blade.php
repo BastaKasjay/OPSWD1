@@ -95,34 +95,58 @@
                                         @endphp
 
                                         @if($claim)
-                                            <li>
-                                                <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
-                                                    @csrf @method('PATCH')
-                                                    <input type="hidden" name="status" value="approved">
-                                                    <button type="submit" class="dropdown-item" style="color: #76AE91; font-weight: 500; border: none;">
+                                            @php
+                                                $isStatusFinal = in_array($claim->status, ['approved', 'disapproved']);
+                                                $isAdmin = (auth()->user() && auth()->user()->hasRole('admin')) || session('temp_admin');
+                                                $canModifyStatus = !$isStatusFinal || $isAdmin;
+                                            @endphp
+
+                                            {{-- Show approve/disapprove buttons only if status can be modified --}}
+                                            @if($canModifyStatus)
+                                                <li>
+                                                    <button type="button" class="dropdown-item approve-btn" 
+                                                            style="color: #76AE91; font-weight: 500; border: none;"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#approveConfirmModal"
+                                                            data-claim-id="{{ $claim->id }}"
+                                                            data-client-name="{{ $client->first_name }} {{ $client->last_name }}">
                                                         <i class="fas fa-check me-2"></i> Approve
                                                     </button>
-                                                </form>
-                                            </li>
-                                            <li>
-                                                <button type="button" class="dropdown-item disapprove-btn" 
-                                                        style="color: #e74c3c; font-weight: 500; border: none;"
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#disapprovalModal"
-                                                        data-claim-id="{{ $claim->id }}"
-                                                        data-client-name="{{ $client->first_name }} {{ $client->last_name }}">
-                                                    <i class="fas fa-times me-2"></i> Disapprove
-                                                </button>
-                                            </li>
-                                            <li>
-                                                <form action="{{ route('claims.update-status', $claim->id) }}" method="POST" style="border: none;">
-                                                    @csrf @method('PATCH')
-                                                    <input type="hidden" name="status" value="pending">
-                                                    <button type="submit" class="dropdown-item" style="color: #ffc107; font-weight: 500; border: none;">
+                                                </li>
+                                                <li>
+                                                    <button type="button" class="dropdown-item disapprove-btn" 
+                                                            style="color: #e74c3c; font-weight: 500; border: none;"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#disapprovalModal"
+                                                            data-claim-id="{{ $claim->id }}"
+                                                            data-client-name="{{ $client->first_name }} {{ $client->last_name }}">
+                                                        <i class="fas fa-times me-2"></i> Disapprove
+                                                    </button>
+                                                </li>
+                                            @endif
+
+                                            {{-- Always show pending option for admins, or if status is not final --}}
+                                            @if($isAdmin || !$isStatusFinal)
+                                                <li>
+                                                    <button type="button" class="dropdown-item pending-btn" 
+                                                            style="color: #ffc107; font-weight: 500; border: none;"
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#pendingConfirmModal"
+                                                            data-claim-id="{{ $claim->id }}"
+                                                            data-client-name="{{ $client->first_name }} {{ $client->last_name }}">
                                                         <i class="fas fa-clock me-2"></i> Pending
                                                     </button>
-                                                </form>
-                                            </li>
+                                                </li>
+                                            @endif
+
+                                            {{-- Show status info if status is final and user is not admin --}}
+                                            @if($isStatusFinal && !$isAdmin)
+                                                <li>
+                                                    <span class="dropdown-item-text" style="color: #6c757d; font-style: italic;">
+                                                        <i class="fas fa-lock me-2"></i> Status locked (Admin only)
+                                                    </span>
+                                                </li>
+                                            @endif
                                         @endif
                                     </ul>
                                 </div>
@@ -205,15 +229,15 @@
                                     ->orderBy('created_at', 'desc')
                                     ->get();
 
-                                // ✅ Separate: 
-                                // 1️⃣ Claims WITH disbursement
-                                $claimsWithDisbursement = $claims->filter(fn($c) => 
-                                $c->disbursement && $c->disbursement->claim_status === 'claimed'
-                            );
-
-
-                                // 2️⃣ Claims WITHOUT disbursement BUT disapproved
-                                $disapprovedWithoutDisbursement = $claims->filter(fn($c) => !$c->disbursement && $c->status === 'disapproved');
+                                // ✅ Show ALL relevant claims including:
+                                // 1️⃣ Claims with disbursement (any status)
+                                // 2️⃣ Disapproved claims (with or without disbursement)
+                                // 3️⃣ Approved claims (to show pending)
+                                $relevantClaims = $claims->filter(fn($c) => 
+                                    $c->disbursement || // Has disbursement
+                                    $c->status === 'disapproved' || // Is disapproved
+                                    $c->status === 'approved' // Is approved
+                                );
                             @endphp
 
                             <table class="table table-sm table-bordered">
@@ -227,45 +251,41 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {{-- Show all claims WITH disbursement --}}
-                                    @foreach($claimsWithDisbursement as $claim)
+                                    {{-- Show all relevant claims --}}
+                                    @foreach($relevantClaims as $claim)
                                         <tr>
                                             <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
-                                            <td>₱{{ number_format($claim->disbursement->amount ?? 0, 2) }}</td>
                                             <td>
-                                                @if($claim->disbursement?->claim_status === 'claimed')
-                                                    <span class="badge bg-success">Claimed</span>
+                                                @if($claim->disbursement)
+                                                    ₱{{ number_format($claim->disbursement->amount ?? 0, 2) }}
+                                                @elseif($claim->amount_approved)
+                                                    ₱{{ number_format($claim->amount_approved, 2) }}
                                                 @else
-                                                    {{ ucfirst($claim->disbursement->claim_status ?? $claim->status) }}
+                                                    -
                                                 @endif
                                             </td>
                                             <td>
-                                                {{ $claim->disbursement->date_received_claimed 
-                                                    ? date('M d, Y', strtotime($claim->disbursement->date_received_claimed)) 
-                                                    : '-' 
-                                                }}
+                                                @if($claim->status === 'disapproved')
+                                                    <span class="badge bg-danger">Disapproved</span>
+                                                @elseif($claim->disbursement?->claim_status === 'claimed')
+                                                    <span class="badge bg-success">Claimed</span>
+                                                @elseif($claim->disbursement?->claim_status === 'unclaimed')
+                                                    <span class="badge bg-warning text-dark">Unclaimed</span>
+                                                @elseif($claim->status === 'approved')
+                                                    <span class="badge bg-info">Approved</span>
+                                                @else
+                                                    <span class="badge bg-secondary">{{ ucfirst($claim->status) }}</span>
+                                                @endif
                                             </td>
                                             <td>
-            @if ($claim->clientAssistance?->createdByEmployee)
-                {{ $claim->clientAssistance->createdByEmployee->first_name }}
-                {{ $claim->clientAssistance->createdByEmployee->middle_name }}
-                {{ $claim->clientAssistance->createdByEmployee->last_name }}
-            @else
-                N/A
-            @endif
-        </td>
-
-                                        </tr>
-                                    @endforeach
-
-
-                                    {{-- Show only disapproved claims WITHOUT disbursement --}}
-                                    @foreach($disapprovedWithoutDisbursement as $claim)
-                                        <tr>
-                                            <td>{{ $claim->clientAssistance?->assistanceType?->type_name ?? 'N/A' }}</td>
-                                            <td>-</td>
-                                            <td class="text-danger fw-bold">Disapproved</td>
-                                            <td>{{ $claim->created_at->format('M d, Y') }}</td>
+                                                @if($claim->disbursement?->date_received_claimed)
+                                                    {{ date('M d, Y', strtotime($claim->disbursement->date_received_claimed)) }}
+                                                @elseif($claim->status === 'disapproved' && $claim->updated_at)
+                                                    {{ $claim->updated_at->format('M d, Y') }}
+                                                @else
+                                                    {{ $claim->created_at->format('M d, Y') }}
+                                                @endif
+                                            </td>
                                             <td>
                                                 @if ($claim->clientAssistance?->createdByEmployee)
                                                     {{ $claim->clientAssistance->createdByEmployee->first_name }}
@@ -279,7 +299,7 @@
                                     @endforeach
 
                                     {{-- Show empty row if nothing --}}
-                                    @if($claimsWithDisbursement->isEmpty() && $disapprovedWithoutDisbursement->isEmpty())
+                                    @if($relevantClaims->isEmpty())
                                         <tr>
                                             <td colspan="5" class="text-center text-muted">No history yet.</td>
                                         </tr>
@@ -345,6 +365,66 @@
         </div>
         </form>
     </div>
+    </div>
+
+    <!-- Approve Confirmation Modal -->
+    <div class="modal fade" id="approveConfirmModal" tabindex="-1" aria-labelledby="approveConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" id="approveForm">
+                @csrf
+                @method('PATCH')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="approveConfirmModalLabel">Approve Claim</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-success" role="alert">
+                            <i class="fas fa-check-circle me-2"></i>
+                            You are about to approve the claim for <strong id="approveClientNameDisplay"></strong>.
+                        </div>
+                        <p class="mb-0">Are you sure you want to approve this claim? This action will mark the claim as approved.</p>
+                        <input type="hidden" name="status" value="approved">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check me-1"></i> Approve Claim
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Pending Confirmation Modal -->
+    <div class="modal fade" id="pendingConfirmModal" tabindex="-1" aria-labelledby="pendingConfirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form method="POST" id="pendingForm">
+                @csrf
+                @method('PATCH')
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="pendingConfirmModalLabel">Set Claim to Pending</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="alert alert-warning" role="alert">
+                            <i class="fas fa-clock me-2"></i>
+                            You are about to set the claim for <strong id="pendingClientNameDisplay"></strong> to pending status.
+                        </div>
+                        <p class="mb-0">Are you sure you want to change this claim status to pending? This will reset the claim for further review.</p>
+                        <input type="hidden" name="status" value="pending">
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-clock me-1"></i> Set to Pending
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
     </div>
 
 
@@ -841,6 +921,40 @@ fetch(`/get-categories/${typeId}`)
                 reasonTextarea.focus();
                 return false;
             }
+        });
+
+        // Handle approve button clicks
+        const approveForm = document.getElementById('approveForm');
+        const approveClientNameDisplay = document.getElementById('approveClientNameDisplay');
+
+        document.querySelectorAll('.approve-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const claimId = this.getAttribute('data-claim-id');
+                const clientName = this.getAttribute('data-client-name');
+                
+                // Set form action
+                approveForm.action = `/claims/${claimId}/update-status`;
+                
+                // Set client name in modal
+                approveClientNameDisplay.textContent = clientName;
+            });
+        });
+
+        // Handle pending button clicks
+        const pendingForm = document.getElementById('pendingForm');
+        const pendingClientNameDisplay = document.getElementById('pendingClientNameDisplay');
+
+        document.querySelectorAll('.pending-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const claimId = this.getAttribute('data-claim-id');
+                const clientName = this.getAttribute('data-client-name');
+                
+                // Set form action
+                pendingForm.action = `/claims/${claimId}/update-status`;
+                
+                // Set client name in modal
+                pendingClientNameDisplay.textContent = clientName;
+            });
         });
     });
 </script>

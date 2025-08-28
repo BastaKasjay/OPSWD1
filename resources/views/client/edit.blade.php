@@ -30,8 +30,14 @@
         </div>
 
         <div class="form-group">
-            <label>Age:</label>
-            <input type="number" name="age" class="form-control" value="{{ $client->age }}" required>
+            <label>Birthday:</label>
+            <input type="date" name="birthday" class="form-control" value="{{ $client->birthday ? $client->birthday->format('Y-m-d') : '' }}" required>
+        </div>
+
+        <div class="form-group">
+            <label>Current Age:</label>
+            <input type="text" class="form-control" value="{{ $client->age ?? 'Not calculated' }}" readonly>
+            <small class="text-muted">Age is automatically calculated from birthday</small>
         </div>
 
         <div class="form-group">

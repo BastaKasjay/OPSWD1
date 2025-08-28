@@ -64,9 +64,22 @@
         </div>
 
         <div class="table-responsive bg-white p-1 rounded-lg shadow-md">
-            <button id="openBatchEditModalBtn" class="btn btn-success mb-2"  data-bs-toggle="modal" data-bs-target="#batchEditModal" >
-                Edit Selected Claims
-            </button>
+            @php
+                $isAdmin = (auth()->user() && auth()->user()->hasRole('admin')) || session('temp_admin');
+                $isOfficer = auth()->user() && auth()->user()->hasRole('officer');
+                $canBatchEdit = $isAdmin || $isOfficer;
+            @endphp
+            
+            @if($canBatchEdit)
+                <button id="openBatchEditModalBtn" class="btn btn-success mb-2"  data-bs-toggle="modal" data-bs-target="#batchEditModal" >
+                    Edit Selected Claims
+                </button>
+            @else
+                <div class="alert alert-info mb-2 d-inline-block">
+                    <i class="fas fa-info-circle me-1"></i>
+                    <small>Batch editing requires administrator or officer privileges</small>
+                </div>
+            @endif
 
             <table class="table table-hover" id="claimsTable" style="width:100%; background: transparent; border: none;">
                 <thead class="bg-success bg-opacity-10" style="border: none;">
@@ -94,8 +107,17 @@
                             style="border: none;"
                         >
                             <td class="no-border">
-                                 @if ($claim->disbursement?->claim_status !== 'claimed')
+                                @php
+                                    $isAdmin = (auth()->user() && auth()->user()->hasRole('admin')) || session('temp_admin');
+                                    $canSelectThisClaim = $isAdmin || ($claim->disbursement?->claim_status !== 'claimed');
+                                @endphp
+                                
+                                @if($canSelectThisClaim)
                                     <input type="checkbox" class="claim-checkbox" name="selected_claims[]" value="{{ $claim->id }}">
+                                @else
+                                    <span class="text-muted small" title="Claimed - Admin access required">
+                                        <i class="bi bi-lock"></i>
+                                    </span>
                                 @endif
                             </td>
                             <td style="border: none;">{{ $claim->client->full_name ?? '-' }}</td>
@@ -129,14 +151,21 @@
                             <td style="border: none;">{{ $claim->payout_date ? \Carbon\Carbon::parse($claim->payout_date)->format('F d, Y') : '-' }}</td>
                             <td class="text-center" style="border: none;">
                                 <div class="d-flex justify-content-center gap-1">
-                                    @if($claim->disbursement?->claim_status !== 'claimed')
+                                    @php
+                                        $isAdmin = (auth()->user() && auth()->user()->hasRole('admin')) || session('temp_admin');
+                                        $canEditThisClaim = $isAdmin || ($claim->disbursement?->claim_status !== 'claimed');
+                                    @endphp
+                                    
+                                    @if($canEditThisClaim)
                                         <button class="btn p-1" style="border: none; background: none;" data-bs-toggle="modal" data-bs-target="#editDisbursementModal{{ $claim->id }}" title="Edit">
                                             <i class="bi bi-pencil-square text-success"></i>
                                         </button>
+                                    @else
+                                        <span class="text-muted small" title="Claimed - Admin access required">
+                                            <i class="bi bi-lock"></i> Admin Only
+                                        </span>
                                     @endif
-                                    <a href="{{ route('clients.show', $claim->client_id) }}" class="btn p-1" style="border: none; background: none;" title="View Client">
-                                        <i class="fas fa-eye text-success"></i>
-                                    </a>
+                                    
                                 </div>
                             </td>
                         </tr>
@@ -180,11 +209,25 @@
 
                                     <div class="col-md-6">
                                         <label for="claim_status_{{ $claim->id }}" class="form-label fw-semibold">Claim Status</label>
-                                        <select id="claim_status_{{ $claim->id }}" name="claim_status" class="form-select rounded border border-success bg-light" style="box-shadow: none;">
-                                            <option value="pending" {{ $claim->disbursement->claim_status === 'pending' ? 'selected' : '' }}>Pending</option>
-                                            <option value="claimed" {{ $claim->disbursement->claim_status === 'claimed' ? 'selected' : '' }}>Claimed</option>
-                                            <option value="unclaimed" {{ $claim->disbursement->claim_status === 'unclaimed' ? 'selected' : '' }}>Unclaimed</option>
-                                        </select>
+                                        @php
+                                            $isAdmin = (auth()->user() && auth()->user()->hasRole('admin')) || session('temp_admin');
+                                        @endphp
+                                        
+                                        @if($isAdmin)
+                                            <select id="claim_status_{{ $claim->id }}" name="claim_status" class="form-select rounded border border-success bg-light" style="box-shadow: none;">
+                                                <option value="pending" {{ $claim->disbursement->claim_status === 'pending' ? 'selected' : '' }}>Pending</option>
+                                                <option value="claimed" {{ $claim->disbursement->claim_status === 'claimed' ? 'selected' : '' }}>Claimed</option>
+                                                <option value="unclaimed" {{ $claim->disbursement->claim_status === 'unclaimed' ? 'selected' : '' }}>Unclaimed</option>
+                                            </select>
+                                        @else
+                                            <input type="text" class="form-control rounded border border-success bg-light" 
+                                                   value="{{ ucfirst($claim->disbursement->claim_status) }}" 
+                                                   readonly style="box-shadow: none;">
+                                            <input type="hidden" name="claim_status" value="{{ $claim->disbursement->claim_status }}">
+                                            <small class="text-muted">
+                                                <i class="fas fa-lock me-1"></i>Status can only be changed by administrators
+                                            </small>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="modal-footer border-0 pt-4 d-flex justify-content-end gap-2" style="background: none;">
@@ -254,188 +297,153 @@
 
 @section('scripts')
 <script>
-
+document.addEventListener("DOMContentLoaded", function () {
+    // ===============================
+    // Custom Alert
+    // ===============================
     function showCustomAlert(message, type = 'warning') {
-    const alertBox = document.getElementById('customAlert');
-    const alertMessage = document.getElementById('customAlertMessage');
-    const alertClose = document.getElementById('customAlertClose');
+        const alertBox = document.getElementById('customAlert');
+        const alertMessage = document.getElementById('customAlertMessage');
+        const alertClose = document.getElementById('customAlertClose');
 
-    alertMessage.textContent = message;
+        alertMessage.textContent = message;
+        alertBox.classList.remove('success', 'error', 'warning');
+        alertBox.classList.add(type);
+        alertBox.style.display = 'flex';
+        alertClose.onclick = () => { alertBox.style.display = 'none'; };
+    }
 
-    // Remove previous types
-    alertBox.classList.remove('success', 'error', 'warning');
-    alertBox.classList.add(type); // add the new type class
-
-    alertBox.style.display = 'flex';
-
-    alertClose.onclick = () => {
-        alertBox.style.display = 'none';
-    };
-}
-
-
-    
-    // warning
+    // ===============================
+    // Edit Disbursement Validation
+    // ===============================
     @foreach($allClaims as $claim)
     @if ($claim->disbursement)
         const statusSelect{{ $claim->id }} = document.getElementById('claim_status_{{ $claim->id }}');
         const dateInput{{ $claim->id }} = document.getElementById('date_received_{{ $claim->id }}');
         const form{{ $claim->id }} = document.querySelector('#editDisbursementModal{{ $claim->id }} form');
 
-        // Auto-set date when status is claimed
-        statusSelect{{ $claim->id }}.addEventListener('change', () => {
-            if (statusSelect{{ $claim->id }}.value === 'claimed' && !dateInput{{ $claim->id }}.value) {
-                dateInput{{ $claim->id }}.valueAsDate = new Date();
-            }
-        });
+        if (statusSelect{{ $claim->id }} && dateInput{{ $claim->id }} && form{{ $claim->id }}) {
+            statusSelect{{ $claim->id }}.addEventListener('change', () => {
+                if (statusSelect{{ $claim->id }}.value === 'claimed' && !dateInput{{ $claim->id }}.value) {
+                    dateInput{{ $claim->id }}.valueAsDate = new Date();
+                }
+            });
 
-        // Warn if date is set but status not claimed
-        form{{ $claim->id }}.addEventListener('submit', (e) => {
-            if (dateInput{{ $claim->id }}.value && statusSelect{{ $claim->id }}.value !== 'claimed') {
-                e.preventDefault();
-                showCustomAlert('You must set the claim status to "Claimed" if you enter a Date Received.');
-            }
-        });
+            form{{ $claim->id }}.addEventListener('submit', (e) => {
+                if (dateInput{{ $claim->id }}.value && statusSelect{{ $claim->id }}.value !== 'claimed') {
+                    e.preventDefault();
+                    showCustomAlert('You must set the claim status to "Claimed" if you enter a Date Received.');
+                }
+            });
+        }
     @endif
-@endforeach
+    @endforeach
 
-
-// Batch edit warning validation
-const batchForm = document.querySelector('#batchEditModal form');
-batchForm.addEventListener('submit', function(e) {
-    const status = document.getElementById('batchStatusSelect').value;
-    const dateInput = this.querySelector('input[name="date_received_claimed"]').value;
-
-    if (dateInput && status !== 'claimed') {
-        e.preventDefault();
-        showCustomAlert('You must set the claim status to "claimed" if you enter a received date.');
-    }
-});
-
-
-
-    document.getElementById('openBatchEditModalBtn').addEventListener('click', function () {
-        const selectedIds = document.getElementById('selectedIdsInput').value.split(',');
-        
-        let firstClaimRow = document.querySelector(`.claim-checkbox[value="${selectedIds[0]}"]`).closest('tr');
-        let currentStatus = firstClaimRow.getAttribute('data-status');
-        
-        const statusSelect = document.getElementById('batchStatusSelect'); // your modal's select element
-        if (statusSelect) {
-            statusSelect.value = currentStatus;
-        }
-    });
-
-
-    document.addEventListener("DOMContentLoaded", function () {
-        const selectAllCheckbox = document.getElementById('select-all');
-        const checkboxes = document.querySelectorAll('.claim-checkbox');
-        const batchEditBtn = document.getElementById('openBatchEditModalBtn');
-        const selectedIdsInput = document.getElementById('selectedIdsInput');
-
-        function updateSelectedIds() {
-            const selectedIds = Array.from(checkboxes)
-                .filter(cb => cb.checked)
-                .map(cb => cb.value);
-            selectedIdsInput.value = selectedIds.join(',');
-            batchEditBtn.disabled = selectedIds.length === 0;
-        }
-
-        // Handle individual checkbox change
-        checkboxes.forEach(cb => {
-            cb.addEventListener('change', updateSelectedIds);
+    // ===============================
+    // Batch Edit
+    // ===============================
+    const batchForm = document.querySelector('#batchEditModal form');
+    if (batchForm) {
+        batchForm.addEventListener('submit', function(e) {
+            const status = document.getElementById('batchStatusSelect').value;
+            const dateInput = this.querySelector('input[name="date_received_claimed"]').value;
+            if (dateInput && status !== 'claimed') {
+                e.preventDefault();
+                showCustomAlert('You must set the claim status to "claimed" if you enter a received date.');
+            }
         });
+    }
 
-        // Handle "select all" checkbox
+    const batchBtn = document.getElementById('openBatchEditModalBtn');
+    if (batchBtn) {
+        batchBtn.addEventListener('click', function () {
+            const selectedIds = document.getElementById('selectedIdsInput').value.split(',');
+            let firstClaimRow = document.querySelector(`.claim-checkbox[value="${selectedIds[0]}"]`)?.closest('tr');
+            let currentStatus = firstClaimRow?.getAttribute('data-status');
+            const statusSelect = document.getElementById('batchStatusSelect');
+            if (statusSelect && currentStatus) {
+                statusSelect.value = currentStatus;
+            }
+        });
+    }
+
+    // ===============================
+    // Select All Checkbox
+    // ===============================
+    const selectAllCheckbox = document.getElementById('select-all');
+    const checkboxes = document.querySelectorAll('.claim-checkbox');
+    const selectedIdsInput = document.getElementById('selectedIdsInput');
+
+    if (selectAllCheckbox) {
         selectAllCheckbox.addEventListener('change', function () {
             checkboxes.forEach(cb => cb.checked = this.checked);
             updateSelectedIds();
         });
+    }
 
-        // Filter logic already exists; no need to change
-    });
+    function updateSelectedIds() {
+        const selectedIds = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+        selectedIdsInput.value = selectedIds.join(',');
+        if (batchBtn) batchBtn.disabled = selectedIds.length === 0;
+    }
+    checkboxes.forEach(cb => cb.addEventListener('change', updateSelectedIds));
 
-    document.getElementById('select-all').addEventListener('change', function () {
-        let checkboxes = document.querySelectorAll('.claim-checkbox');
-        checkboxes.forEach(cb => cb.checked = this.checked);
-    });
+    // ===============================
+    // Filters
+    // ===============================
+    const methodFilter = document.getElementById('methodFilter');
+    const dateFilter = document.getElementById('dateFilter');
+    const statusFilter = document.getElementById('statusFilter');
+    const tableRows = document.querySelectorAll('#claimsTable tbody tr');
 
-    document.addEventListener("DOMContentLoaded", function () {
-        @if (session('modal'))
-            const modalId = "{{ session('modal') }}";
-            const modalEl = document.getElementById(modalId);
+    function filterRows() {
+        const method = methodFilter.value;
+        const date = dateFilter.value;
+        const status = statusFilter.value;
 
-            if (modalEl) {
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            } else {
-                console.warn(`Modal with ID '${modalId}' not found in the DOM.`);
-            }
-        @endif
+        tableRows.forEach(row => {
+            const rowMethod = row.getAttribute('data-method') || '';
+            const rowDate = row.getAttribute('data-date') || '';
+            const rowStatus = row.getAttribute('data-status') || '';
+            let show = true;
+            if (method && rowMethod !== method) show = false;
+            if (date && rowDate !== date) show = false;
+            if (status && rowStatus !== status) show = false;
+            row.style.display = show ? '' : 'none';
+        });
+    }
 
-        // Filtering logic
-        const methodFilter = document.getElementById('methodFilter');
-        const dateFilter = document.getElementById('dateFilter');
-        const statusFilter = document.getElementById('statusFilter');
+    methodFilter?.addEventListener('change', filterRows);
+    dateFilter?.addEventListener('change', filterRows);
+    statusFilter?.addEventListener('change', filterRows);
 
-        const tableRows = document.querySelectorAll('#claimsTable tbody tr');
-
-        function filterRows() {
+    // ===============================
+    // Downloads
+    // ===============================
+    const excelBtn = document.getElementById('downloadExcelBtn');
+    if (excelBtn) {
+        excelBtn.addEventListener('click', function (e) {
+            e.preventDefault();
             const method = methodFilter.value;
             const date = dateFilter.value;
             const status = statusFilter.value;
-
-            tableRows.forEach(row => {
-                const rowMethod = row.getAttribute('data-method') || '';
-                const rowDate = row.getAttribute('data-date') || '';
-                const rowStatus = row.getAttribute('data-status') || '';
-
-                let show = true;
-                if (method && rowMethod !== method) show = false;
-                if (date && rowDate !== date) show = false;
-                 if (status && rowStatus !== status) show = false;
-                row.style.display = show ? '' : 'none';
-            });
-        }
-
-        methodFilter?.addEventListener('change', filterRows);
-        dateFilter?.addEventListener('change', filterRows);
-        statusFilter?.addEventListener('change', filterRows);
-    });
-
-    // excelDownloadBtn
-    document.getElementById('downloadExcelBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-
-        const method = document.getElementById('methodFilter').value;
-        const date = document.getElementById('dateFilter').value;
-        const status = document.getElementById('statusFilter').value;
-
-        const query = new URLSearchParams({
-            method: method,
-            date: date,
-            status: status
+            const query = new URLSearchParams({ method, date, status });
+            window.location.href = "{{ route('grouped-payouts.download.excel') }}?" + query.toString();
         });
+    }
 
-        // Redirect to the route with query string
-        window.location.href = "{{ route('grouped-payouts.download.excel') }}?" + query.toString();
-    });
-    // PDFDownloadBtn
-    document.getElementById('downloadPDFBtn').addEventListener('click', function (e) {
-        e.preventDefault();
-
-        const method = document.getElementById('methodFilter').value;
-        const date = document.getElementById('dateFilter').value;
-        const status = document.getElementById('statusFilter').value;
-
-        const query = new URLSearchParams({
-            method: method,
-            date: date,
-            status: status
+    const pdfBtn = document.getElementById('downloadPDFBtn');
+    if (pdfBtn) {
+        pdfBtn.addEventListener('click', function (e) {
+            e.preventDefault();
+            const method = methodFilter.value;
+            const date = dateFilter.value;
+            const status = statusFilter.value;
+            const query = new URLSearchParams({ method, date, status });
+            window.location.href = "{{ route('grouped-payouts.download.pdf') }}?" + query.toString();
         });
-
-        // Redirect to the route with query string
-        window.location.href = "{{ route('grouped-payouts.download.pdf') }}?" + query.toString();
-    });
+    }
+});
 </script>
 @endsection
+

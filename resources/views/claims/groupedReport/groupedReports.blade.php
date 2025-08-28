@@ -44,7 +44,7 @@
                                     : $claim->client->contact_number }}
                             </td>
                             <td style="border: none;">{{ $claim->client->municipality->name ?? '-' }}</td>
-                            <td style="border: none;">₱{{ number_format($claim->amount_approved ?? 0, 2) }}</td>
+                            <td style="border: none;">{{ number_format($claim->amount_approved ?? 0, 2) }}</td>
                             <td style="border: none;">{{ $claim->disbursement->date_received_claimed ? \Carbon\Carbon::parse($claim->disbursement->date_received_claimed)->format('F d, Y') : '-' }}</td>
                             <td class="fw-semibold text-capitalize" style="border: none;">
                                 @if($claim->disbursement?->claim_status === 'claimed')

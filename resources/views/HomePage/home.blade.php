@@ -120,14 +120,15 @@
             </div>
         </div>
 
-        <!-- Served Clients, Upcoming Payouts, Scheduled Payouts, Previous Payouts -->
+        <!-- Served Clients, Scheduled Payouts, Previous Payouts -->
         <div class="row mt-4">
-            <!-- Left Column (Served Clients + Scheduled Payouts) -->
-            <div class="col-lg-4">
-                <!-- Served Clients -->
-                <div class="card served-clients-card mb-4">
+            <!-- Served Clients (Left) -->
+            <div class="col-lg-4 mb-4">
+                <div class="card served-clients-card h-100">
                     <div class="card-body">
-                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">SERVED CLIENTS</h5>
+                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">
+                            SERVED CLIENTS
+                        </h5>
                         <div class="mb-3">
                             <label for="filterCriteria" class="form-label">Filter By:</label>
                             <select id="filterCriteria" class="form-select">
@@ -146,26 +147,26 @@
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <!-- Scheduled Payouts -->
-                <div class="card table-card">
+            <!-- Scheduled Payouts (Middle) -->
+            <div class="col-lg-4 mb-4">
+                <div class="card table-card h-100">
                     <div class="card-body">
-                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">SCHEDULED PAYOUTS</h5>
+                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">
+                            SCHEDULED PAYOUTS
+                        </h5>
                         <div class="table-responsive-wrapper">
-                            <table class="upcoming-payouts-table">
+                            <table class="upcoming-payouts-table text-center">
                                 <thead>
                                     <tr>
-                                        <th>Schedule</th>
-                                        <th>Municipality</th>
-                                        <th>Payout Name</th>
+                                        <th class="text-center">Schedule</th>   
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse ($scheduledPayouts as $payout)
                                         <tr>
                                             <td>{{ \Carbon\Carbon::parse($payout->payout_date)->format('M d, Y') }}</td>
-                                            <td>{{ $payout->client->municipality->name ?? '-' }}</td>
-                                            <td>{{ $payout->client->full_name ?? $payout->client->payee->full_name ?? '-' }}</td>
                                         </tr>
                                     @empty
                                         <tr>
@@ -179,20 +180,19 @@
                 </div>
             </div>
 
-            <!-- Right Column (Upcoming Payouts + Previous Payouts) -->
-            <div class="col-lg-8">
-                
-
-                <!-- Previous Payouts -->
-                <div class="card table-card">
+            <!-- Previous Payouts (Right) -->
+            <div class="col-lg-4 mb-4">
+                <div class="card table-card h-100">
                     <div class="card-body">
-                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">PREVIOUS PAYOUTS</h5>
+                        <h5 class="card-title w-100 text-center fw-bold text-success bg-success bg-opacity-10 rounded py-2 mb-0">
+                            PREVIOUS PAYOUTS
+                        </h5>
                         <div class="table-responsive-wrapper">
-                            <table class="upcoming-payouts-table">
+                            <table class="upcoming-payouts-table text-center">
                                 <thead>
                                     <tr>
-                                        <th>Schedule</th>
-                                        <th>No. of Claims</th>
+                                        <th class="text-center">Schedule</th>
+                                        <th class="text-center">No. of Claims</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -211,9 +211,9 @@
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
+
     </div>
     
 @endsection

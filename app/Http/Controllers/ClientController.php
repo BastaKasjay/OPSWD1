@@ -146,7 +146,6 @@ class ClientController extends Controller
             'middle_name' => 'nullable|string',
             'last_name' => 'required|string',
             'sex' => 'required',
-            'age' => 'required|integer',
             'address' => 'required|string',
             'contact_number' => 'nullable|string',
             'birthday' => 'nullable|date',
@@ -215,7 +214,6 @@ class ClientController extends Controller
             'middle_name' => 'nullable|string',
             'last_name' => 'required|string',
             'sex' => 'required',
-            'age' => 'required|integer',
             'address' => 'required|string',
             'contact_number' => 'nullable|string',
             'birthday' => 'nullable|date',
@@ -225,7 +223,7 @@ class ClientController extends Controller
 
         $clientData = $request->only([
             'first_name', 'middle_name', 'last_name',
-            'sex', 'age', 'address', 'contact_number',
+            'sex', 'address', 'contact_number',
             'birthday', 'municipality_id'
         ]);
         $clientData['valid_id'] = $request->has('valid_id');

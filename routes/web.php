@@ -27,6 +27,7 @@ Route::get('/', function () {
     return redirect('/login');
 });
 
+
 // ✅ Protected routes
 Route::middleware('auth')->group(function () {
 

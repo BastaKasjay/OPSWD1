@@ -15,8 +15,16 @@ class DisbursementController extends Controller
     public function index()
     {
         $disbursements = Disbursement::with(['client', 'claim', 'checkPayment'])
-            ->latest()
-            ->paginate(20);
+    ->orderByRaw("
+        CASE 
+            WHEN claim_status = 'pending' THEN 0 
+            WHEN claim_status = 'unclaimed' THEN 1
+            WHEN claim_status = 'claimed' THEN 2
+            ELSE 3
+        END
+    ")
+    ->orderBy('created_at', 'desc')
+    ->paginate(20);
 
         return view('claims.grouped', compact('disbursements'));
     }

@@ -10,6 +10,10 @@ class EmployeeController extends Controller
     // Show all employees
     public function index()
     {
+        if (!auth()->user()->hasRole('admin')) {
+            abort(403, 'Access denied. Admin role required.');
+        }
+        
         $employees = Employee::all();
         return view('employee.index', compact('employees'));
     }

@@ -126,10 +126,11 @@
                                 <input type="date" class="form-control" id="birthday{{ $client->id }}" name="birthday" value="{{ $client->birthday }}">
                                 </div>
 
-                                <!-- Age -->
+                                <!-- Age (readonly, calculated) -->
                                 <div class="col-md-2">
                                 <label for="age{{ $client->id }}" class="form-label">Age</label>
-                                <input type="number" class="form-control" id="age{{ $client->id }}" name="age" value="{{ $client->age }}" readonly>
+                                <input type="text" class="form-control" id="age{{ $client->id }}" value="{{ $client->age ?? 'N/A' }}" readonly>
+                                <small class="text-muted">Calculated from birthday</small>
                                 </div>
 
                                 <!-- sex -->
@@ -278,10 +279,6 @@
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label fw-semibold">Age</label>
-                        <input type="number" name="age" class="form-control rounded border border-success bg-light" required style="box-shadow: none;">
                     </div>
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Municipality</label>

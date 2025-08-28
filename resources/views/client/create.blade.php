@@ -27,8 +27,8 @@
                 </select>
             </div>
             <div class="col-md-3">
-                <label class="form-label">Age:</label>
-                <input type="number" name="age" class="form-control" required>
+                <label class="form-label">Birthday:</label>
+                <input type="date" name="birthday" class="form-control" required>
             </div>
             <div class="col-md-6">
                 <label class="form-label">Municipality:</label>

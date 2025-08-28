@@ -233,6 +233,7 @@
                             <option value="Regular" {{ $claim && $claim->source_of_fund === 'Regular' ? 'selected' : '' }}>Regular</option>
                             <option value="Senior" {{ $claim && $claim->source_of_fund === 'Senior' ? 'selected' : '' }}>Senior Citizen</option>
                             <option value="PDRRM" {{ $claim && $claim->source_of_fund === 'PDRRM' ? 'selected' : '' }}>PDRRM</option>
+                            <option value="Supplemental" {{ $claim && $claim->source_of_fund === 'Supplemental' ? 'selected' : '' }}>Supplemental</option>
                         </select>
                     </div>
 

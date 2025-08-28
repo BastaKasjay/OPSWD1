@@ -12,6 +12,10 @@ class UserController extends Controller
 {
     public function index(Request $request)
 {
+    if (!auth()->user()->hasRole('admin')) {
+        abort(403, 'Access denied. Admin role required.');
+    }
+    
     $query = User::with('employee', 'roles');
 
     if ($request->search) {

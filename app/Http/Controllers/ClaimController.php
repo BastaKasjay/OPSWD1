@@ -15,6 +15,15 @@ class ClaimController extends Controller
 
         try {
             $claim = Claim::findOrFail($id);
+            $user = auth()->user();
+
+            // Check if the status is already approved or disapproved
+            if (in_array($claim->status, ['approved', 'disapproved'])) {
+                // Only admins can change status once it's approved/disapproved
+                if (!($user && $user->hasRole('admin')) && !session('temp_admin')) {
+                    return redirect()->back()->with('error', 'Only administrators can modify approved or disapproved claims.');
+                }
+            }
 
             // Only update if status has changed
             if ($claim->status !== $status) {

@@ -94,13 +94,14 @@ class DashboardController extends Controller
         ->when($year || $month, fn($q) => $filterByDate($q, 'disbursements.payout_date'))
         ->selectRaw("
             CASE
-                WHEN clients.age BETWEEN 0 AND 18 THEN '0-18'
-                WHEN clients.age BETWEEN 19 AND 35 THEN '19-35'
-                WHEN clients.age BETWEEN 36 AND 60 THEN '36-59'
+                WHEN YEAR(CURDATE()) - YEAR(clients.birthday) - (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(clients.birthday, '%m%d')) BETWEEN 0 AND 18 THEN '0-18'
+                WHEN YEAR(CURDATE()) - YEAR(clients.birthday) - (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(clients.birthday, '%m%d')) BETWEEN 19 AND 35 THEN '19-35'
+                WHEN YEAR(CURDATE()) - YEAR(clients.birthday) - (DATE_FORMAT(CURDATE(), '%m%d') < DATE_FORMAT(clients.birthday, '%m%d')) BETWEEN 36 AND 60 THEN '36-59'
                 ELSE '60+'
             END as age_group,
             COUNT(*) as total
         ")
+        ->whereNotNull('clients.birthday')
         ->groupBy('age_group')
         ->pluck('total', 'age_group');
 

@@ -939,6 +939,11 @@ h1, h4 {
     border-bottom: none !important;
 }
 
+th, td {
+    border: none;
+}
+
+
 .custom-alert {
     display: none; /* hidden by default */
     position: fixed;
@@ -985,7 +990,7 @@ th, td {
     text-align: center;       /* Horizontal centering */
     vertical-align: middle;   /* Vertical centering */
     padding: 0.5rem;
-    border: 1px solid #ddd;   /* Optional for PDF */
+    /* border: 1px solid #ddd;   Optional for PDF */
 }
 .badge {
     display: inline-block;
@@ -995,4 +1000,20 @@ input[type="checkbox"] {
     display: inline-block;
     vertical-align: middle;
 }
+
+/* ////////////////////////////////////////////////////////////////////////////////////// */
+/* Login page */
+
+.logo-bg {
+  background-color: #e6f4ea;   /* light mint green */
+  padding: 15px;
+  border-radius: 50%;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+  width: 100px;
+  height: 100px;
+}
+.logo-bg img {
+  max-height: 70px;
+}
+
 
